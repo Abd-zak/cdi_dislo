@@ -1,0 +1,54 @@
+# Core Scientific Libraries
+numpy
+scipy
+matplotlib
+pandas
+h5py
+seaborn
+scikit-learn
+
+# Signal Processing & Image Analysis
+pywavelets
+scikit-image
+vtk
+pyvista
+imageio
+ruptures
+
+# Interactive & Visualization
+ipywidgets
+ipyvolume
+plotly
+mpl_interactions
+networkx
+tabulate
+mpld3
+
+# Mathematical & Statistical Utilities
+xrayutilities
+astropy
+cryptography
+gekko
+yapf
+decimal
+
+# Machine Learning
+scikit-learn
+
+# File Handling & Utilities
+hdf5plugin
+silx
+json
+logging
+shutil
+importlib
+traceback
+
+# Specialized Scientific Libraries
+cdiutils  # Custom CDI utilities package
+bcdi  # Bragg CDI utilities
+xrayutilities  # X-ray diffraction analysis
+
+# Miscellaneous
+pytest
+ipywidgets
