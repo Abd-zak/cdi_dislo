@@ -63,7 +63,7 @@ from skimage.transform              import hough_circle, hough_circle_peaks
 from skimage.draw                   import circle_perimeter
 from skimage.morphology             import binary_closing, ball
 
-
+from xrayutilities                  import en2lam
 
 # Matplotlib settings
 from matplotlib import animation, rcParams, colors as mcolors

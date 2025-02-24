@@ -154,7 +154,7 @@ def setup_preprocessing(
     energy=8500,  # Required, in eV
     hkl=[1, 1, 1],  # Required
     voxel_reference_methods=["max", "com", "com"],
-    binning_factors=(1, 1, 1),  # Binning in the 3 directions
+    binning_factors="1, 1, 1",  # Binning in the 3 directions
     apodize=True,    flip=False,    usetex=False,    show=False,    verbose=True,    debug=True,binning_along_axis0=None,  # Whether or not you want to bin in the RC direction
     light_loading=False,  # Load only the roi defined by the det_reference_voxel and preprocessing_output_shape
     voxel_size=[10.,10.,10.], size=[10.,10.,10.] ,  isosurface=0.05,    handle_defects=True,    jump_to_cluster=False,    clear_former_results=True,
@@ -219,7 +219,7 @@ def setup_preprocessing(
     return params
 
 
-def remove_phase_ramp(phase: np.array):
+def remove_phase_ramp_abd(phase: np.array):
     """
     Remove the phase ramp of a 3D volume phase.                                                                                                                                                              
 
