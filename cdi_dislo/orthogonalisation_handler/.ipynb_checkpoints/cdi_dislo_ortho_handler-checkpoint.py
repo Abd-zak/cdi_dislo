@@ -62,7 +62,6 @@
 
 
 from cdi_dislo.common_imports import *
-#from cdi_dislo.ewen_utilities.plot_utilities                      import *  #plot_2D_slices_middle_one_array3D
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
 #####################################################################################################################
 #####################################################################################################################
@@ -464,8 +463,8 @@ def getting_strain_mapvti(path="", obj=None, voxel_size=[1,1,1], nb_of_phase_to_
         print("no obj or path to mode are provided")
         return None, None
 
-    if str(abs(obj_list).max()) == "nan":
-        obj_list = nan_to_zero(abs(obj_list)) * np.exp(1j * nan_to_zero(np.angle(obj_list)))
+    if str(np.np.abs(obj_list).max()) == "nan":
+        obj_list = nan_to_zero(np.abs(obj_list)) * np.exp(1j * nan_to_zero(np.angle(obj_list)))
     
     modulus = zero_to_nan(np.abs(obj_list))
     phase_0 = np.angle(np.exp(1j * zero_to_nan(np.angle(obj_list))))

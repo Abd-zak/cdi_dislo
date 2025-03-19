@@ -710,4 +710,237 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
         else:
             plt.close()
     return fwhm_xyz,fwhm_integral_xyz,skewness_xyz,kurtosis_xyz
+#----------------------------------------------------------------------------------------------------------
+def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names, 
+                                stat_param_names=None, desired_order=None, 
+                                line_style="-", font_dict=None, 
+                                list_of_particle_to_plot=None,
+                                save_fig=None):
+    """
+    Creates a figure with multiple rows of subplots.
+    
+    Each row corresponds to a group of statistical parameters (e.g., FWHM, FWHM Integral).
+    Within each row, there are 3 subplots for the X, Y, and Z coordinates.
+    The same temperature ordering and particle labeling is used across all subplots.
+    
+    Additional Features:
+      - font_dict: A dictionary of font properties (e.g., {"family": "serif", "size": 14})
+                   that is applied to all titles, axis labels, and the legend.
+      - list_of_particle_to_plot: If provided, only data for these particles will be plotted.
+      - When desired_order is provided, the x-axis is constructed by mapping temperatures
+        to numeric indices following desired_order.
+      - save_fig: If not None, the plot is saved to the provided filename (e.g., "plot.png").
+    
+    Parameters
+    ----------
+    temperatures : array-like, shape (N,)
+        Temperature values (as strings) for the x-axis.
+    stat_params_groups : list
+        A list of groups, where each group is a list (or tuple) of 3 array-like objects:
+            group[0] -> values for coordinate X,
+            group[1] -> values for coordinate Y,
+            group[2] -> values for coordinate Z.
+        Each array-like must have length N.
+    particle_names : array-like, shape (N,)
+        Particle names corresponding to each data point.
+    stat_param_names : list of str or None, optional
+        A list of names for each stat parameter group (used for y-labels and subplot titles).
+        If None, default names will be assigned.
+    desired_order : array-like of str or None, optional
+        If provided, should be an array-like of temperature strings defining the desired order.
+        The data will be re-ordered to follow this order and the x-axis will be constructed 
+        accordingly.
+    line_style : str or None, optional
+        A common line style for all particles (e.g., "-", "--", "-.").
+        If set to None, only markers (no connecting lines) are plotted.
+    font_dict : dict or None, optional
+        A dictionary of font properties (e.g., {"family": "serif", "size": 14}) to be applied
+        to subplot titles, axis labels, and legend text.
+    list_of_particle_to_plot : list or None, optional
+        If provided, only the particles in this list will be plotted.
+    save_fig : str or None, optional
+        If provided, the plot will be saved to this filename.
+    
+    Returns
+    -------
+    None
+        Displays (and optionally saves) the resulting plot.
+
+    # Example input definitions:
+    
+    # Temperature values (as strings)
+    temperatures = np.array([
+        '27', '27', '27', '100', '100', '370', '370', '27 Af 370', '27 Af 370', '27 Af 800', '27 Af 950'
+    ])
+    
+    # Group 1: e.g., FWHM values for X, Y, Z coordinates
+    stat_params_group1 = [
+        np.array([0.5, 0.55, 0.6, 0.65, 0.66, 0.7, 0.72, 0.75, 0.76, 0.8, 0.82]),  # X values
+        np.array([0.7, 0.73, 0.75, 0.8, 0.82, 0.85, 0.87, 0.9, 0.92, 0.95, 0.96]),   # Y values
+        np.array([0.6, 0.62, 0.65, 0.68, 0.7, 0.72, 0.74, 0.77, 0.79, 0.81, 0.83])     # Z values
+    ]
+    
+    # Group 2: e.g., FWHM Integral values for X, Y, Z coordinates
+    stat_params_group2 = [
+        np.array([1.5, 1.55, 1.6, 1.65, 1.66, 1.7, 1.72, 1.75, 1.76, 1.8, 1.82]),  # X values
+        np.array([1.7, 1.73, 1.75, 1.8, 1.82, 1.85, 1.87, 1.9, 1.92, 1.95, 1.97]),   # Y values
+        np.array([1.6, 1.62, 1.65, 1.68, 1.7, 1.72, 1.74, 1.77, 1.79, 1.81, 1.83])     # Z values
+    ]
+    
+    # Combine both groups into a list
+    stat_params_groups = [stat_params_group1, stat_params_group2]
+    
+    # Particle names corresponding to each data point
+    particle_names = np.array([
+        'Particle_A', 'Particle_A', 'Particle_A', 'Particle_A', 'Particle_A',
+        'Particle_B', 'Particle_B', 'Particle_B', 'Particle_B',
+        'Particle_C', 'Particle_C'
+    ])
+    
+    # Desired order for temperatures (only those present in the data will be used)
+    desired_order = ['27', '100', '370', '27 Af 370', '27 Af 800', '27 Af 950']
+    
+    # Names for each group of statistical parameters (will be used in subplot titles and y-labels)
+    stat_param_names = ["FWHM", "FWHM Integral"]
+    
+    # Font properties to be applied to titles, axis labels, and legend
+    font_dict = {"family": "serif", "size": 12, "weight": "bold"}
+    
+    # Specify which particles to plot (optional; here we include all available particles)
+    list_of_particle_to_plot = ["Particle_A", "Particle_B", "Particle_C"]
+    
+    # Filename to save the figure (if None, the plot is not saved)
+    save_fig = "example_plot.png"
+    
+    # Call the function (assuming it has been defined/imported)
+    anealing_plot_stat_multiple(
+        temperatures, 
+        stat_params_groups, 
+        particle_names,
+        stat_param_names=stat_param_names,
+        desired_order=desired_order,
+        line_style="--",          # dashed line; use None for markers only
+        font_dict=font_dict,
+        list_of_particle_to_plot=list_of_particle_to_plot,
+        save_fig=save_fig
+    )
+
+    """
+    # Convert inputs to numpy arrays and ensure each group's arrays are numpy arrays.
+    temperatures = np.array(temperatures)
+    particle_names = np.array(particle_names)
+    stat_params_groups = [
+        [np.array(arr) for arr in group] for group in stat_params_groups
+    ]
+    
+    # Filter data if list_of_particle_to_plot is provided.
+    if list_of_particle_to_plot is not None:
+        mask = np.isin(particle_names, list_of_particle_to_plot)
+        temperatures = temperatures[mask]
+        particle_names = particle_names[mask]
+        stat_params_groups = [
+            [arr[mask] for arr in group] for group in stat_params_groups
+        ]
+    
+    # Reorder data if desired_order is provided.
+    if desired_order is not None:
+        indices = []
+        for t in desired_order:
+            matching = np.where(temperatures == t)[0]
+            if matching.size > 0:
+                indices.extend(matching.tolist())
+        temperatures = temperatures[indices]
+        particle_names = particle_names[indices]
+        stat_params_groups = [
+            [arr[indices] for arr in group] for group in stat_params_groups
+        ]
+    
+    # Construct numeric x-axis values that follow desired_order if provided.
+    if desired_order is not None:
+        # Use desired_order order, but only those present in temperatures.
+        unique_temps = np.array([t for t in desired_order if t in temperatures])
+        mapping = {temp: i for i, temp in enumerate(unique_temps)}
+        x_numeric = np.array([mapping[t] for t in temperatures])
+    else:
+        unique_temps, x_numeric = np.unique(temperatures, return_inverse=True)
+    
+    # Determine number of groups and coordinates.
+    n_groups = len(stat_params_groups)
+    n_coords = 3  # assuming X, Y, Z
+    
+    # If stat_param_names not provided, create default names.
+    if stat_param_names is None or len(stat_param_names) != n_groups:
+        stat_param_names = [f"StatParam {i+1}" for i in range(n_groups)]
+    
+    # Determine unique particles and assign a unique color and marker to each.
+    unique_particles = np.unique(particle_names)
+    n_particles = len(unique_particles)
+    color_map = matplotlib.cm.get_cmap("tab10", n_particles)
+    particle_to_color = {particle: color_map(i) for i, particle in enumerate(unique_particles)}
+    
+    # Automatic marker assignment from a preset list.
+    marker_list = ['o', 's', '^', 'd', 'v', '<', '>', 'P', 'X', '*']
+    particle_to_marker = {particle: marker_list[i % len(marker_list)]
+                          for i, particle in enumerate(unique_particles)}
+    
+    # Create subplots: rows = n_groups, columns = 3 (for X, Y, Z)
+    fig, axes = plt.subplots(nrows=n_groups, ncols=n_coords, 
+                             figsize=(18, 6*n_groups), sharex=True, sharey='row')
+    
+    # Ensure axes is a 2D array even if n_groups == 1.
+    if n_groups == 1:
+        axes = np.array([axes])
+    
+    # Dictionary for combined legend (one representative line per particle).
+    legend_dict = {}
+    
+    # Loop over groups (rows) and coordinates (columns)
+    for i_group in range(n_groups):
+        for i_coord in range(n_coords):
+            ax = axes[i_group, i_coord]
+            # For each unique particle, plot its data.
+            for particle in unique_particles:
+                idx = np.where(particle_names == particle)[0]
+                # Use the factorized numeric x-axis values.
+                x_vals = x_numeric[idx]
+                y_vals = stat_params_groups[i_group][i_coord][idx]
+                
+                # If line_style is None, plot only markers.
+                ls = line_style if line_style is not None else 'None'
+                
+                line, = ax.plot(x_vals, y_vals,
+                                marker=particle_to_marker[particle],
+                                linestyle=ls,
+                                color=particle_to_color[particle],
+                                label=particle)
+                if particle not in legend_dict:
+                    legend_dict[particle] = line
+            
+            # Set subplot title (e.g., "FWHM X" or "FWHM Integral Y").
+            coord = ['X', 'Y', 'Z'][i_coord]
+            ax.set_title(f"{stat_param_names[i_group]} {coord}", fontdict=font_dict)
+            ax.grid(True)
+            
+            # For the left column, set y-label.
+            if i_coord == 0:
+                ax.set_ylabel(stat_param_names[i_group], fontdict=font_dict)
+            
+            # For the bottom row, set x-label and custom x-tick labels.
+            if i_group == n_groups - 1:
+                ax.set_xlabel("Temperature (K)", fontdict=font_dict)
+                # Set x-ticks based on unique temperature indices.
+                ax.set_xticks(np.arange(len(unique_temps)))
+                ax.set_xticklabels(unique_temps, rotation=45, ha="right", fontdict=font_dict)
+    
+    # Create a single combined legend at the top center.
+    fig.legend(legend_dict.values(), legend_dict.keys(), loc='upper center',
+               ncol=n_particles, bbox_to_anchor=(0.5, 1.0), prop=font_dict)
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    
+    # Save figure if save_fig is provided.
+    if save_fig is not None:
+        plt.savefig(save_fig, bbox_inches='tight',dpi=150)
+    
+    plt.show()
 
