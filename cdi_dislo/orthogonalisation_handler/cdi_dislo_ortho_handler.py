@@ -77,7 +77,7 @@ def setup_phase_retrieval(
     support_update_period=0,    support_smooth_width_begin=2,    support_smooth_width_end=1,    support_post_expand="1,-2,1",
     psf="pseudo-voigt,0.5,0.1,10",    nb_raar=10000,    nb_hio=800,    nb_er=10000,    nb_ml=0,    nb_run=50,    nb_run_keep=200,
     nb_run_keep_max_obj2_out=200,    zero_mask=False,    crop_output=0,    positivity=False,    beta=0.9,    detwin=False,
-    rebin="1,1,1",    pixel_size_detector=55e-6,    verbose=100,    output_format="cxi",    live_plot=False,    save_plot=True,
+    rebin="1,1,1",    pixel_size_detector=55e-6,    verbose=100,    output_format="cxi",    live_plot=False,    save_plot=True,roi="full",
     mpi="run",    print_params=True  # New parameter to control whether to print parameters
 ):
     """
@@ -134,7 +134,8 @@ def setup_phase_retrieval(
         'output_format': output_format,
         'live_plot': live_plot,
         'save_plot': save_plot,
-        'mpi': mpi
+        'mpi': mpi,
+        'roi': roi
     }
     
     # Print parameters if print_params is True
@@ -463,7 +464,7 @@ def getting_strain_mapvti(path="", obj=None, voxel_size=[1,1,1], nb_of_phase_to_
         print("no obj or path to mode are provided")
         return None, None
 
-    if str(np.np.abs(obj_list).max()) == "nan":
+    if str(np.abs(obj_list).max()) == "nan":
         obj_list = nan_to_zero(np.abs(obj_list)) * np.exp(1j * nan_to_zero(np.angle(obj_list)))
     
     modulus = zero_to_nan(np.abs(obj_list))
@@ -510,14 +511,14 @@ def getting_strain_mapvti(path="", obj=None, voxel_size=[1,1,1], nb_of_phase_to_
 
     if save_filename_vti:
         gu.save_to_vti(filename=save_filename_vti,voxel_size=list(voxel_size),
-                           tuple_array=(nan_to_zero(modulus)                     ,nan_to_zero(phase_0)                   ,nan_to_zero(phase_1),
+                           tuple_array=(nan_to_zero(modulus)                     ,nan_to_zero(phase_0)                   ,zero_to_nan(phase_1),
                                         nan_to_zero(displacement_gradient_min[0]),nan_to_zero(displacement_gradient_0[0]),
                                         nan_to_zero(displacement_gradient_min[1]),nan_to_zero(displacement_gradient_0[1]),
-                                        nan_to_zero(displacement_gradient_min[2]),nan_to_zero(displacement_gradient_0[2]),strain_mask),
+                                        nan_to_zero(displacement_gradient_min[2]),nan_to_zero(displacement_gradient_0[2]),strain_mask,strain_amp),
                        tuple_fieldnames=("modulus"                               ,"phase_0"                              ,"phase_1",
                                         "displacement_gradient_min_x"            ,"displacement_gradient_0_x"            ,
                                         "displacement_gradient_min_y"            ,"displacement_gradient_0_y"            ,
-                                        "displacement_gradient_min_z"            ,"displacement_gradient_0_z"            ,"strain_mask"),
+                                        "displacement_gradient_min_z"            ,"displacement_gradient_0_z"            ,"strain_mask","strain_amp"),
                        amplitude_threshold=0.1,    )
     if plot_debug:
         plot_2D_slices_middle_one_array3D(phase_0,vmin=-3,vmax=3,cmap="jet",fig_title="original phase midlle slice")

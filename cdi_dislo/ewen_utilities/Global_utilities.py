@@ -181,23 +181,29 @@ def hot_pixel_filter(data, threshold=1e2):
     return data_clean
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-def add_colorbar_subplot(fig,axes,imgs,
+def add_colorbar_subplot(fig, axes, imgs,
                          size='5%',
-                         return_cbar = False):
-    if not type(imgs)==list:
+                         tick_fontsize=12,
+                         return_cbar=False):
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    
+    if not isinstance(imgs, list):
         imgs = [imgs]
-        axes = [axes] 
+        axes = [axes]
     
     cbar_list = []
-    for im, ax in zip(imgs,np.array(axes).flatten()):
+    for im, ax in zip(imgs, np.array(axes).flatten()):
         divider = make_axes_locatable(ax)
         cax = divider.append_axes('right', size=size, pad=0.05)
-        cbar_list.append(fig.colorbar(im, cax=cax, orientation='vertical'))
-    fig.tight_layout()
+        cbar = fig.colorbar(im, cax=cax, orientation='vertical')
+        cax.tick_params(labelsize=tick_fontsize)  # Set tick fontsize here
+        cbar_list.append(cbar)
+
     if return_cbar:
         return cbar_list
     else:
         return
+
 
 def subplots_numerous_images(img_list,
                              fw=4, ncol=4,

@@ -17,6 +17,7 @@ from decimal                        import Decimal, getcontext
 from contextlib import redirect_stdout
 import pyvista as pv
 import random as py_random 
+from scipy.stats import pearsonr
 
 import xrayutilities as xu
 from xrayutilities                  import lam2en

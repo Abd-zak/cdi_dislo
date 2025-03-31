@@ -1521,7 +1521,7 @@ def create_circular_mask_with_angles(data_shape, line_points, selected_point_ind
     z_axis = z_axis / np.linalg.norm(z_axis)
 
     # Define a random perpendicular vector to the Z-axis as the X-axis
-    random_vector = np.array([1, 0, 0]) if abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
+    random_vector = np.array([1, 0, 0]) if np.abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
     x_axis = np.cross(z_axis, random_vector)
     x_axis = x_axis / np.linalg.norm(x_axis)
 
@@ -1792,7 +1792,7 @@ def remove_phase_ramp_dislo(phase, dislo_position,radius_1=6, radius_2=15,functi
         
         # Keep only the first few terms (filter high frequencies)
         fft_filtered = fft_data.copy()
-        fft_filtered[abs(frequencies) > 1] = 0
+        fft_filtered[np.abs(frequencies) > 1] = 0
         
         # Inverse Fourier Transform to reconstruct the signal
         fit= fft.ifft(fft_filtered).real
@@ -1907,7 +1907,7 @@ def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selecte
         
         # Keep only the first few terms (filter high frequencies)
         fft_filtered = fft_data.copy()
-        fft_filtered[abs(frequencies) > 1] = 0
+        fft_filtered[np.abs(frequencies) > 1] = 0
         
         # Inverse Fourier Transform to reconstruct the signal
         fit= fft.ifft(fft_filtered).real
@@ -2003,7 +2003,7 @@ def process_dislocation_scan(scan, files_data_ortho, scan_list, save_path,thresh
     coord_dislo_all_filtered = [
         [
             tuple(ii) for ii in np.array(coord_dislo_all)[:, coord_dislo_all[dislocation_axis] == i][
-                :, np.where(np.logical_and.reduce((abs(np.diff(np.array(coord_dislo_all)
+                :, np.where(np.logical_and.reduce((np.abs(np.diff(np.array(coord_dislo_all)
                     [:, coord_dislo_all[dislocation_axis] == i])) < 5), axis=0))[0]
             ]
         ]
@@ -2113,7 +2113,7 @@ def create_circular_mask_with_angles_new      (data_shape, centroid, direction, 
     z_axis = direction
 
     # Define a random perpendicular vector to the Z-axis as the X-axis
-    random_vector = np.array([1, 0, 0]) if abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
+    random_vector = np.array([1, 0, 0]) if np.abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
     x_axis = np.cross(z_axis, random_vector)
     x_axis = x_axis / np.linalg.norm(x_axis)
 
@@ -2181,7 +2181,7 @@ def create_circular_mask_with_angles_and_vectors(data_shape, centroid, direction
     z_axis = direction
 
     # Define a random perpendicular vector to the Z-axis as the X-axis
-    random_vector = np.array([1, 0, 0]) if abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
+    random_vector = np.array([1, 0, 0]) if np.abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
     x_axis = np.cross(z_axis, random_vector)
     x_axis = x_axis / np.linalg.norm(x_axis)
 
@@ -2777,7 +2777,7 @@ def process_phase_ring_ortho_old(angle,phase,factor_phase=1):
 
     # Remove points with large jumps
     for _ in range(3):  # Repeat cleaning process multiple times
-        trigger_new_period = np.array(np.where(abs(np.diff(phase_ring)) > 0.5))[0]
+        trigger_new_period = np.array(np.where(np.abs(np.diff(phase_ring)) > 0.5))[0]
         trigger_new_period = np.concatenate((trigger_new_period, trigger_new_period + 1, trigger_new_period - 1))
         phase_ring = np.delete(phase_ring, trigger_new_period)
         angle_ring = np.delete(angle_ring, trigger_new_period)
@@ -2961,7 +2961,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
     ax0.scatter(theta_data, phase_data, label='Exp', s=20, alpha=0.7,
                 color='black', edgecolors='white', zorder=3)
     for i_b in range(num_cases):
-        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(abs(b_cases[i_b])))).astype(int)))
+        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(np.abs(b_cases[i_b])))).astype(int)))
         ax0.plot(theta_data, phase_theo_3_cases[i_b], "-", label=f'Theory {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
     ax0.set_ylabel(r"$\phi$")
@@ -2979,7 +2979,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
     # --- Subplot 2: Difference (Error) Between Experimental & Theoretical ---
     ax1 = axs[0, 1]
     for i_b in range(num_cases):    
-        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(abs(b_cases[i_b])))).astype(int)))
+        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(np.abs(b_cases[i_b])))).astype(int)))
         ax1.plot(theta_data, phase_diff[i_b], "--", label=f'Error {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
     ax1.set_ylabel(r"$\phi$ Difference (Error)");    ax1.set_title(f"$\phi$ Difference: Theory - {type_data_to_comp} {title_suffix}")
@@ -2990,7 +2990,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
     ax2 = axs[1, 0]
     ax2.scatter(theta_data, phase_data_oscillation, label='Exp', s=20, alpha=0.7,color='black', edgecolors='white', zorder=3)
     for i_b in range(num_cases):        
-        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(abs(b_cases[i_b])))).astype(int)))
+        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(np.abs(b_cases[i_b])))).astype(int)))
         ax2.plot(theta_data, phase_diff_oscillation_exp_based[i_b], "-", label=f'Theory {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
     ax2.set_xlabel(r"$\theta$");    ax2.set_ylabel(r"$\phi - \alpha_{ref}\theta - \beta_{ref}$")
@@ -3001,7 +3001,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
     ax3 = axs[1, 1]
     ax3.scatter(theta_data, phase_data_oscillation, label='Exp', s=20, alpha=0.7,color='black', edgecolors='white', zorder=3)
     for i_b in range(num_cases):     
-        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(abs(b_cases[i_b])))).astype(int)))
+        label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(np.abs(b_cases[i_b])))).astype(int)))
         ax3.plot(theta_data, phase_diff_oscillation[i_b], "-", label=f'Theory {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
     ax3.set_xlabel(r"$\theta$");    ax3.set_ylabel(r"$\phi - \alpha\theta - \beta$")
@@ -3431,7 +3431,7 @@ def process_phase_mode_ring(angle,phase,loop_cleaning_diff=6):
 
     # Remove points with large jumps
     for _ in range(loop_cleaning_diff):  # Repeat cleaning process multiple times
-        trigger_new_period = np.array(np.where(abs(np.diff(phase_ring)) > 0.5))[0]
+        trigger_new_period = np.array(np.where(np.abs(np.diff(phase_ring)) > 0.5))[0]
         trigger_new_period = np.concatenate((trigger_new_period, trigger_new_period + 1, trigger_new_period - 1))
         phase_ring = np.delete(phase_ring, trigger_new_period)
         angle_ring = np.delete(angle_ring, trigger_new_period)
@@ -4146,7 +4146,7 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
     
     # Compute gradient-based masks
     supp_1 = fill_up_support(np.where(data_mod < 0.15, 0, 1))
-    gradient_mask = 1 - (np.max(nan_to_zero(abs(array(get_displacement_gradient(supp_1, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
+    gradient_mask = 1 - (np.max(nan_to_zero(np.abs(array(get_displacement_gradient(supp_1, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
     
     # Construct complex object with phase information
     obj = data_mod * supp * np.exp(1j * simu_phase)
@@ -4157,7 +4157,7 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
     strain_mask, strain_amp = compute_strain_map(obj, (1, 1, 1), nb_of_phase_to_test)
 
     _mask = fill_up_support(data_mod > 0.2)
-    gradient_modes_mask = (np.max(nan_to_zero(abs(array(get_displacement_gradient(_mask, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
+    gradient_modes_mask = (np.max(nan_to_zero(np.abs(array(get_displacement_gradient(_mask, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
     strain_amp = ((1 - gradient_modes_mask) * strain_amp).astype(float)
     strain_amp[strain_amp < cut_strain_lower] = 0
     strain_amp[strain_amp > cut_strain_upper] = 0
@@ -4269,7 +4269,7 @@ def calculate_phasetheo_for_dislo_particle(data_shape, centroid, direction, b_, 
 
     # Define coordinate system
     z_axis = direction
-    random_vector = np.array([1, 0, 0]) if abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
+    random_vector = np.array([1, 0, 0]) if np.abs(z_axis[0]) < 0.9 else np.array([0, 1, 0])
     x_axis = np.cross(z_axis, random_vector)
     x_axis /= np.linalg.norm(x_axis)
     y_axis = np.cross(z_axis, x_axis)

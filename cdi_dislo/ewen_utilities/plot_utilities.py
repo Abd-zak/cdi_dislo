@@ -220,7 +220,7 @@ def plot_3D_projections(data,
                         log_scale=True,
                         log_threshold=False,
                         max_projection=False,
-                        vmin=None,vmax=None,
+                        vmin=None,vmax=None,fontsize=15,
                       cmap=None,tight_layout=True):
     if cmap is None:
         cmap=my_cmap
@@ -254,20 +254,26 @@ def plot_3D_projections(data,
                                      np.zeros(mask_plot.shape), alpha_mask*mask_plot]), aspect='auto')
             
     if axes_labels:
-        ax[0].set_xlabel('detector horizontal', fontsize=15*fw/4)
-        ax[0].set_ylabel('detector vertical', fontsize=15*fw/4)
+        ax[0].set_xlabel('detector horizontal', fontsize=fontsize*fw/4)
+        ax[0].set_ylabel('detector vertical', fontsize=fontsize*fw/4)
         
-        ax[1].set_xlabel('detector horizontal', fontsize=15*fw/4)
-        ax[1].set_ylabel('rocking curve', fontsize=15*fw/4)
+        ax[1].set_xlabel('detector horizontal', fontsize=fontsize*fw/4)
+        ax[1].set_ylabel('rocking curve', fontsize=fontsize*fw/4)
         
-        ax[2].set_xlabel('detector vertical', fontsize=15*fw/4)
-        ax[2].set_ylabel('rocking curve', fontsize=15*fw/4)
+        ax[2].set_xlabel('detector vertical', fontsize=fontsize*fw/4)
+        ax[2].set_ylabel('rocking curve', fontsize=fontsize*fw/4)
+    ax[0].tick_params(axis='y', labelsize=fontsize)
+    ax[0].tick_params(axis='x', labelsize=fontsize)
+    ax[1].tick_params(axis='y', labelsize=fontsize)
+    ax[1].tick_params(axis='x', labelsize=fontsize)
+    ax[2].tick_params(axis='y', labelsize=fontsize)
+    ax[2].tick_params(axis='x', labelsize=fontsize)
         
     if colorbar:
-        add_colorbar_subplot(fig, ax, plots)
+        add_colorbar_subplot(fig, ax, plots,tick_fontsize=fontsize)
         
     if fig_title is not None:
-        fig.suptitle(fig_title, fontsize=15*fw/4)
+        fig.suptitle(fig_title, fontsize=fontsize*fw/4)
     if tight_layout:
         fig.tight_layout()
     return fig

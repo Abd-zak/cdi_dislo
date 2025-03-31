@@ -503,7 +503,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
                                         plot=True,
                                         eliminate_linear_background=False,
                                         plot_show=True,
-                                        f_s=14):
+                                        f_s=14,vmin=1e0,vmax=1e6):
     """
     Analyze the intensity distribution in a 3D dataset along X, Y, and Z directions, 
     computing key statistical properties including:
@@ -574,7 +574,8 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
     h_len=20
     background_degree = 1  # Adjust the degree of the polynomial as needed
     first_and_last_pixel=[0,-1]
-    
+    #plot_3D_projections(data,log_scale=True,cmap="jet",vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False)
+    #plt.show()
     if plot:
         figsize = get_figure_size(scale=3)
         figure = plt.figure( figsize=figsize, dpi=150)
@@ -588,7 +589,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
         ax1 = figure.add_subplot(gs[2, 0])
         ax2 = figure.add_subplot(gs[2, 1])
         ax3 = figure.add_subplot(gs[2, 2])
-        plot_3D_projections(data,ax=[ax1,ax2,ax3],fig=figure,log_scale=True,cmap="jet",vmin=1e0,vmax=1e6,colorbar=True,tight_layout=False)
+        plot_3D_projections(data,ax=[ax1,ax2,ax3],fig=figure,log_scale=True,cmap="jet",vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False)
         ax1.axis('tight')
         ax2.axis('tight')
         ax3.axis('tight')
@@ -711,10 +712,10 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
             plt.close()
     return fwhm_xyz,fwhm_integral_xyz,skewness_xyz,kurtosis_xyz
 #----------------------------------------------------------------------------------------------------------
-def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names, 
+def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names, x_label="Temperature (°K)",
                                 stat_param_names=None, desired_order=None, 
-                                line_style="-", font_dict=None, 
-                                list_of_particle_to_plot=None,
+                                line_style="-", font_dict= {"family": "serif", "size": 20}, linewidth=3,
+                                list_of_particle_to_plot=None,markersize=10,show_legend=True,
                                 save_fig=None):
     """
     Creates a figure with multiple rows of subplots.
@@ -911,7 +912,7 @@ def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names
                 line, = ax.plot(x_vals, y_vals,
                                 marker=particle_to_marker[particle],
                                 linestyle=ls,
-                                color=particle_to_color[particle],
+                                color=particle_to_color[particle],markersize=markersize,linewidth=linewidth,
                                 label=particle)
                 if particle not in legend_dict:
                     legend_dict[particle] = line
@@ -927,15 +928,19 @@ def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names
             
             # For the bottom row, set x-label and custom x-tick labels.
             if i_group == n_groups - 1:
-                ax.set_xlabel("Temperature (K)", fontdict=font_dict)
+                ax.set_xlabel(x_label, fontdict=font_dict)
                 # Set x-ticks based on unique temperature indices.
                 ax.set_xticks(np.arange(len(unique_temps)))
                 ax.set_xticklabels(unique_temps, rotation=45, ha="right", fontdict=font_dict)
-    
+            # Set y-tick font properties directly:
+            ax.tick_params(axis='y', labelsize=font_dict['size'])
+            for label in ax.get_yticklabels():
+                label.set_fontfamily(font_dict['family'])    
     # Create a single combined legend at the top center.
-    fig.legend(legend_dict.values(), legend_dict.keys(), loc='upper center',
-               ncol=n_particles, bbox_to_anchor=(0.5, 1.0), prop=font_dict)
-    
+    if show_legend:
+        fig.legend(legend_dict.values(), legend_dict.keys(), loc='upper center',
+                   ncol=n_particles, bbox_to_anchor=(0.5, 1.05), prop=font_dict)
+        
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     
     # Save figure if save_fig is provided.

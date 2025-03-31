@@ -118,7 +118,7 @@ from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D
 #####################################################################################################################
 def extract_coefficient_and_exponent(number):
     # Extract the exponent
-    exponent = int(math.log10(abs(number)))
+    exponent = int(math.log10(np.abs(number)))
     # Calculate the coefficient
     coefficient = number / (10 ** exponent)
     return coefficient, exponent
@@ -145,7 +145,7 @@ def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=
     Parameters:
         m (int): Integer m to compute possible Burgers vectors. If m = 0, function returns an empty list.
         G (list or numpy array): Reciprocal lattice vector G = [Gx, Gy, Gz].
-        hkl_max (int): Maximum absolute value for h, k, l components.
+        hkl_max (int): Maximum np.absolute value for h, k, l components.
         sort_by_hkl (bool): If True, sort by h, k, l. If False, sort by angle.
         angle_vector (list or numpy array): Vector to compute angle with. If None, use G.
 
@@ -157,7 +157,7 @@ def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=
         return []  # Skip m = 0 as it corresponds to invisible dislocations.
 
     def is_primitive_vector(vector):
-        non_zero = [abs(x) for x in vector if x != 0]
+        non_zero = [np.abs(x) for x in vector if x != 0]
         if not non_zero:
             return False
         common_divisor = reduce(gcd, non_zero)
@@ -536,9 +536,9 @@ def std_data(data):
 #####################################################################################################################
 ##################################################################################################################### 
 def remove_bordersurface_mask(mask,order=2):
-    graadient_modes_mask=(np.max(nan_to_zero(abs(array(get_displacement_gradient((mask),voxel_size=(1,1,1))))),axis=0)!=0).astype(float)
+    graadient_modes_mask=(np.max(nan_to_zero(np.abs(array(get_displacement_gradient((mask),voxel_size=(1,1,1))))),axis=0)!=0).astype(float)
     if order ==2:
-        graadient_graadient_modes_mask=np.max(nan_to_zero(abs(array(get_displacement_gradient((graadient_modes_mask),voxel_size=(1,1,1))))),axis=0)!=0
+        graadient_graadient_modes_mask=np.max(nan_to_zero(np.abs(array(get_displacement_gradient((graadient_modes_mask),voxel_size=(1,1,1))))),axis=0)!=0
         mask=(((graadient_modes_mask)*(graadient_graadient_modes_mask)-mask)<0).astype(float)    
     else:
         #print("order is one")
@@ -640,7 +640,7 @@ def crop_data_and_update_coordinates(x, y, z, data, finalshape, pos="com", k_add
         assert len(new_x_crop) == finalshape[0] and len(new_y_crop) == finalshape[1] and len(new_z_crop) == finalshape[2], "Cropped coordinate array lengths don't match finalshape"
         
         new_com = cropped_det_ref
-        assert all(abs(com - finalshape[i]//2) < 2 for i, com in enumerate(new_com)), "Center of mass is not near the center of the new coordinate system"
+        assert all(np.abs(com - finalshape[i]//2) < 2 for i, com in enumerate(new_com)), "Center of mass is not near the center of the new coordinate system"
     except AssertionError as e:
         logging.error(f"Assertion failed: {str(e)}")
         raise
@@ -716,10 +716,10 @@ def crop_3d_obj_pos_and_update_coordinates(obj, x, y, z, output_shape=(100,100,1
         
         if pos == "com":
             new_com = C_O_M(np.abs(cropped_obj))
-            assert all(abs(com - output_shape[i]//2) < 2 for i, com in enumerate(new_com)), "Center of mass is not near the center of the new coordinate system"
+            assert all(np.abs(com - output_shape[i]//2) < 2 for i, com in enumerate(new_com)), "Center of mass is not near the center of the new coordinate system"
         elif pos == "max":
             new_max = np.unravel_index(np.argmax(np.abs(cropped_obj)), cropped_obj.shape)
-            assert all(abs(m - output_shape[i]//2) < 2 for i, m in enumerate(new_max)), "Maximum value is not near the center of the new coordinate system"
+            assert all(np.abs(m - output_shape[i]//2) < 2 for i, m in enumerate(new_max)), "Maximum value is not near the center of the new coordinate system"
     except AssertionError as e:
         logging.error(f"Assertion failed: {str(e)}")
         raise
@@ -1434,7 +1434,7 @@ def format_vector(vector, decimal_places=4):
     for num in vector:
         num = float(num)
         rounded = round(num, decimal_places)
-        if abs(rounded) < 0.001 or abs(rounded) >= 1000:
+        if np.abs(rounded) < 0.001 or np.abs(rounded) >= 1000:
             str_num = f"{rounded:.{decimal_places}e}"
         else:
             str_num = f"{rounded:.{decimal_places}f}".rstrip('0').rstrip('.')

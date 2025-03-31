@@ -124,7 +124,7 @@ def mean_data(data):
 
 def extract_coefficient_and_exponent(number):
     # Extract the exponent
-    exponent = int(math.log10(abs(number)))
+    exponent = int(math.log10(np.abs(number)))
     # Calculate the coefficient
     coefficient = number / (10 ** exponent)
     return coefficient, exponent
@@ -276,7 +276,7 @@ def format_vector(vector, decimal_places=4):
     for num in vector:
         num = float(num)
         rounded = round(num, decimal_places)
-        if abs(rounded) < 0.001 or abs(rounded) >= 1000:
+        if np.abs(rounded) < 0.001 or np.abs(rounded) >= 1000:
             str_num = f"{rounded:.{decimal_places}e}"
         else:
             str_num = f"{rounded:.{decimal_places}f}".rstrip('0').rstrip('.')
