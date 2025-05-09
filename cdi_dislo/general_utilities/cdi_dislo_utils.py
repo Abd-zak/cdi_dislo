@@ -114,6 +114,8 @@ from cdi_dislo.plotutilities.cdi_dislo_plotutilities              import plotqxq
 from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import get_displacement_gradient
 
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
+from scipy.ndimage import map_coordinates
+
 #####################################################################################################################
 #####################################################################################################################
 def extract_coefficient_and_exponent(number):
@@ -320,48 +322,6 @@ def fill_up_support(support, plot=False):
 
 
 
-# Function to apply centered affine transformation
-def centered_affine_transform(data, rotation_matrix):
-    """Applies a centered affine transformation to a 3D array."""
-    shape = np.array(data.shape)
-    center = (shape - 1) / 2  # Compute center of the volume
-
-    # Create coordinate grid
-    x, y, z = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), np.arange(shape[2]), indexing='ij')
-    coords = np.stack((x, y, z), axis=-1).reshape(-1, 3)
-
-    # Shift to center, apply rotation, and shift back
-    coords_centered = coords - center
-    rotated_coords = (rotation_matrix @ coords_centered.T).T + center
-
-    # Interpolate values at the transformed coordinates
-    transformed_data = map_coordinates(data, rotated_coords.T, order=1, mode='constant', cval=0)
-    
-    return transformed_data.reshape(shape)
-# Function to create a rotation matrix from angles
-
-def rotation_matrix_from_angles(angle_x, angle_y, angle_z):
-    """Compute the 3D rotation matrix from given Euler angles (in degrees)."""
-    angle_x, angle_y, angle_z = np.radians([angle_x, angle_y, angle_z])
-    
-    # Rotation matrices
-    Rx = np.array([[1, 0, 0],
-                   [0, np.cos(angle_x), -np.sin(angle_x)],
-                   [0, np.sin(angle_x), np.cos(angle_x)]])
-    
-    Ry = np.array([[np.cos(angle_y), 0, np.sin(angle_y)],
-                   [0, 1, 0],
-                   [-np.sin(angle_y), 0, np.cos(angle_y)]])
-    
-    Rz = np.array([[np.cos(angle_z), -np.sin(angle_z), 0],
-                   [np.sin(angle_z), np.cos(angle_z), 0],
-                   [0, 0, 1]])
-    
-    # Combined rotation order: Z -> Y -> X
-    R = Rx @ Ry @ Rz
-    return R
-
-
 
 def nan_to_zero(phase):
     return np.nan_to_num(phase, nan=0)
@@ -529,6 +489,115 @@ def std_data(data):
     mean_d= np.sum(data)/len(data)
     std= np.sqrt(np.square(data-mean_d).sum() /len(data) )
     return std
+
+#####################################################################################################################
+#####################################################################################################################
+############################################      Rotation utility ##################################################
+#####################################################################################################################
+##################################################################################################################### 
+def build_rotation_matrix_from_axes(angle_x=0, angle_y=0, angle_z=0, degrees=True, order='xyz'):
+    from scipy.spatial.transform import Rotation as R
+    """
+    Builds a composite rotation matrix from sequential rotations around X, Y, Z axes.
+    
+    Parameters:
+        angle_x, angle_y, angle_z (float): Rotation angles (degrees or radians)
+        degrees (bool): Whether the input angles are in degrees (default: True)
+        order (str): Order of application, e.g., 'xyz', 'zyx', etc.
+    
+    Returns:
+        (3, 3) ndarray: Final rotation matrix.
+    """
+    if degrees:
+        angle_x = np.radians(angle_x)
+        angle_y = np.radians(angle_y)
+        angle_z = np.radians(angle_z)
+
+    # Axis rotation matrices
+    Rx = R.from_rotvec(angle_x * np.array([1, 0, 0])).as_matrix()
+    Ry = R.from_rotvec(angle_y * np.array([0, 1, 0])).as_matrix()
+    Rz = R.from_rotvec(angle_z * np.array([0, 0, 1])).as_matrix()
+
+    # Apply in specified order (default 'xyz')
+    rotation_matrices = {'x': Rx, 'y': Ry, 'z': Rz}
+    R_total = np.eye(3)
+    for axis in order:
+        R_total = rotation_matrices[axis] @ R_total
+
+    return R_total
+
+def alignment_euler_angles(source_vec, target_vec, order='xyz', degrees=True):
+    """
+    Computes the Euler angles to rotate source_vec to align with target_vec.
+
+    Parameters:
+        source_vec (array-like): Starting 3D vector.
+        target_vec (array-like): Target 3D vector.
+        order (str): Rotation order for Euler angles (e.g. 'xyz', 'zyx').
+        degrees (bool): Return angles in degrees if True, radians if False.
+
+    Returns:
+        angles (tuple): Rotation angles in the given order.
+        rotation_matrix (ndarray): The rotation matrix that aligns the vectors.
+    """
+    from scipy.spatial.transform import Rotation as R
+    source_vec = np.array(source_vec, dtype=float)
+    target_vec = np.array(target_vec, dtype=float)
+    source_vec /= np.linalg.norm(source_vec)
+    target_vec /= np.linalg.norm(target_vec)
+
+    # Compute optimal rotation
+    rot, _ = R.align_vectors([target_vec], [source_vec])
+    rotation_matrix = rot.as_matrix()
+
+    # Convert to Euler angles
+    angles = rot.as_euler(order, degrees=degrees)
+    return tuple(angles), rotation_matrix
+
+# Function to apply centered affine transformation
+def centered_affine_transform(data, transformation_matrix, order=1):
+    """Applies a centered orthogonal transformation to a 3D array."""
+    # Validation checks (keep from previous version)
+    assert transformation_matrix.shape == (3, 3), "Matrix must be 3x3"
+    assert np.allclose(transformation_matrix @ transformation_matrix.T, np.eye(3), atol=1e-6), "Matrix must be orthogonal"
+    
+    shape = np.array(data.shape)
+    center = (shape - 1) / 2
+    
+    # Fixed coordinate grid generation
+    indices = np.indices(shape)  # Shape (3, dim_x, dim_y, dim_z)
+    x, y, z = indices[0], indices[1], indices[2]
+    coords = np.stack((x.ravel(), y.ravel(), z.ravel()), axis=-1)
+    
+    # Rest remains unchanged
+    coords_centered = coords - center
+    transformed_coords = (transformation_matrix @ coords_centered.T).T + center
+    transformed_data = map_coordinates(data, transformed_coords.T, order=order, mode='constant', cval=0)
+    
+    return transformed_data.reshape(shape)
+# Function to create a rotation matrix from angles
+def rotation_matrix_from_angles(angle_x, angle_y, angle_z):
+    """Compute the 3D rotation matrix from given Euler angles (in degrees)."""
+    angle_x, angle_y, angle_z = np.radians([angle_x, angle_y, angle_z])
+    
+    # Rotation matrices
+    Rx = np.array([[1, 0, 0],
+                   [0, np.cos(angle_x), -np.sin(angle_x)],
+                   [0, np.sin(angle_x), np.cos(angle_x)]])
+    
+    Ry = np.array([[np.cos(angle_y), 0, np.sin(angle_y)],
+                   [0, 1, 0],
+                   [-np.sin(angle_y), 0, np.cos(angle_y)]])
+    
+    Rz = np.array([[np.cos(angle_z), -np.sin(angle_z), 0],
+                   [np.sin(angle_z), np.cos(angle_z), 0],
+                   [0, 0, 1]])
+    
+    # Combined rotation order: Z -> Y -> X
+    R = Rx @ Ry @ Rz
+    return R
+
+
 
 #####################################################################################################################
 #####################################################################################################################

@@ -2037,15 +2037,34 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.show()
 
 
-def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allscan_list, y_label="", y_label_unit="", label_rot=-70, fontsize_ticks=24, figsize=(20, 42), n=4, m=1, save_path=None):
+def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allscan_list, y_label="", y_label_unit="", label_rot=-70, fontsize_ticks=60, figsize=(20, 42), n=4, m=1, line_width=8,marker_size=15,linestyle="-",marker="^",
+                              save_path=None,f_s_labels=50,labelpad=50
+                             ):
+    import matplotlib.ticker as mticker
+    from matplotlib.ticker import ScalarFormatter
     
-    def figure_axes_desidn(ax,label_rot):
+    def figure_axes_desidn(ax, label_rot):
         plt.axis('tight')
-        #ax.tick_params(labelsize=f_s2)
-        plt.xticks(rotation=label_rot)    
-        plt.grid(alpha=0.01)
+        plt.xticks(rotation=label_rot)
+        ax.grid(alpha=0.01)
+        
+        # Tick colors
         ax.tick_params('y', colors='b')
         ax.tick_params('x', colors='b')
+    
+        # Unified tick font sizes
+        ax.tick_params(axis='x', labelsize=fontsize_ticks)
+        ax.tick_params(axis='y', labelsize=int(fontsize_ticks * 1.15))
+    
+        # Scientific notation formatting on Y-axis (if needed)
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-2, 2))  # Show scientific notation if values are very small/large
+        ax.yaxis.set_major_formatter(formatter)
+    
+        # Move offset text to the top-left
+        ax.yaxis.get_offset_text().set_fontsize(int(fontsize_ticks * 0.9))
+        ax.yaxis.set_offset_position('left')
     
     stat_all = np.array([stats_x, stats_y, stats_z])
     min_value = np.min(stat_all)
@@ -2090,33 +2109,35 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     # Skewness X
     ax1 = fig.add_subplot(gs[0, 0])
     add_colored_bands(ax1)
-    ax1.plot(range(len(x_absis)), stats_x, '-+')
-    ax1.set_ylabel(y_label + " X" + y_label_unit)
-    ax1.set_title("Evolution of " + str(y_label))
+    ax1.plot(range(len(x_absis)), stats_x, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
+    ax1.set_ylabel(y_label + " $Q_X$" + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax1.set_title("Evolution of " + str(y_label),fontsize=f_s_labels)
     figure_axes_desidn(ax1, label_rot)  # Assuming this is your custom function
     ax1.get_xaxis().set_visible(False)  # Hide x-axis for the first subplot
 
     # Skewness Y
     ax2 = fig.add_subplot(gs[1, 0])
     add_colored_bands(ax2)
-    ax2.plot(range(len(x_absis)), stats_y, '-+')
-    ax2.set_ylabel(y_label + " Y" + y_label_unit)
+    ax2.plot(range(len(x_absis)), stats_y, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
+    ax2.set_ylabel(y_label + " $Q_Y$" + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
     figure_axes_desidn(ax2, label_rot)
     ax2.get_xaxis().set_visible(False)  # Hide x-axis for the second subplot
 
     # Skewness Z
     ax3 = fig.add_subplot(gs[2, 0])
     add_colored_bands(ax3)
-    ax3.plot(range(len(x_absis)), stats_z, '-+')
-    ax3.set_ylabel(y_label + " Z" + y_label_unit)
-    ax3.set_xlabel('Pressure (GPa)')
+    ax3.plot(range(len(x_absis)), stats_z, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
+    ax3.set_ylabel(y_label + " $Q_Z$" + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax3.set_xlabel('Pressure (GPa)',fontsize=f_s_labels,labelpad=labelpad)
     ax3.set_xticks(list_indices_to_replace)
-    ax3.set_xticklabels(list_presure_to_show, rotation=label_rot, fontsize=fontsize_ticks)
-    ax3.tick_params(axis='x', which='major', length=20, width=4, color='b', pad=5)
-    ax3.tick_params(axis='y', which='major', length=20, width=4, color='b', pad=5)
-    ax2.tick_params(axis='y', which='major', length=20, width=4, color='b', pad=5)
-    ax1.tick_params(axis='y', which='major', length=20, width=4, color='b', pad=5)
+    ax3.set_xticklabels(list_presure_to_show, rotation=label_rot)
+    
+    ax3.tick_params(axis='x', which='major', length=20, width=4, color='b', pad=5, labelsize=fontsize_ticks)    
+    ax3.tick_params(axis='y', which='major', length=20, width=4, color='b', pad=5, labelsize=fontsize_ticks*1.15)
+    ax2.tick_params(axis='y', which='major', length=20, width=4, color='b', pad=5, labelsize=fontsize_ticks*1.15)
+    ax1.tick_params(axis='y', which='major', length=20, width=4, color='b', pad=5, labelsize=fontsize_ticks*1.15)
 
+    
     figure_axes_desidn(ax3, label_rot)
 
     # Create zoomed labels
@@ -2128,7 +2149,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
 
     
     if len(zoom_indices) > 0:
-        ax_zoom = fig.add_axes([0.645, .147, 0.15, 0.0005])
+        ax_zoom = fig.add_axes([0.64, .14, 0.15, 0.0005])
         ax_zoom.set_xlim(ax3.get_xlim())
         ax_zoom.set_xticks(zoom_indices)
         figure_axes_desidn(ax_zoom,label_rot)
@@ -2152,6 +2173,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     ax1.set_ylim(y_min,y_max)
     ax2.set_ylim(y_min,y_max)
     ax3.set_ylim(y_min,y_max)
+
     
     # Adjust the layout
     #plt.tight_layout()

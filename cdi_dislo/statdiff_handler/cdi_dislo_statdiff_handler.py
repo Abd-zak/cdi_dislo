@@ -48,6 +48,67 @@ from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D
 from tabulate import tabulate
 
 #####################################################################################################################
+# Gaussian profile
+def gaussian(x, A, x0, sigma):
+    return A * np.exp(-(x - x0)**2 / (2 * sigma**2))
+
+# Lorentzian profile
+def lorentzian(x, A, x0, gamma):
+    return A / (1 + ((x - x0) / gamma)**2)
+
+# Pseudo-Voigt profile
+def pseudo_voigt(x, A, x0, sigma, gamma, alpha):
+    """Returns the pseudo-Voigt distribution function for the given parameters.
+
+    Args:
+        x: A NumPy array of values to evaluate the function at.
+        eta: The mixing ratio of the Gaussian and Lorentzian distributions.
+        sigma: The standard deviation of the Gaussian distribution.
+        gamma: The half-width at half-maximum (HWHM) of the Lorentzian distribution.
+
+    Returns:
+       A NumPy array of the values of the pseudo-Voigt distribution function at the given values of x.
+    """
+    gaussian = np.exp(-(x - x0)**2 / (2 * sigma**2))
+    lorentzian = 1 / (1 + ((x - x0) / gamma)**2)
+    return  A *(1 - alpha) * gaussian + A *alpha * lorentzian
+# Pearson VII profile
+def pearson_vii(x, A, x0, gamma, m):
+    gamma_safe = np.maximum(gamma, 1e-10)
+    x_diff = (x - x0) / gamma_safe
+    x_diff_sq = x_diff**2
+
+    threshold = 1e6  # define a threshold for "large"
+
+    # Masks
+    mask_safe = x_diff_sq < threshold
+    mask_large = ~mask_safe
+
+    denom = np.empty_like(x_diff_sq)
+
+    # Safe branch: moderate x_diff
+    denom[mask_safe] = np.exp(m * np.log1p(x_diff_sq[mask_safe]))
+
+    # Approximate branch: huge x_diff
+    # We must be careful: extremely large x_diff_sq can still cause overflows in x_diff_sq**m
+    with np.errstate(over='ignore'):  # Silence overflow temporarily
+        denom[mask_large] = x_diff_sq[mask_large]**m
+
+    # Final protection against infinities/zero
+    denom = np.maximum(denom, 1e-300)
+    denom = np.where(np.isfinite(denom), denom, np.finfo(float).max)
+
+    return A / denom
+def fwhm_calculation_geom_methode2(x_data,y_fit):    
+    peaks, _ = find_peaks(y_fit)
+    half_max = max(y_fit) / 2
+    indices_higher_than_hm=np.where(y_fit>=half_max)[0]
+    left_peak = indices_higher_than_hm[0]
+    right_peak = indices_higher_than_hm[-1]   
+    
+    fwhm = x_data[right_peak] - x_data[left_peak]
+    return fwhm
+
 #####################################################################################################################
 
 
@@ -170,30 +231,6 @@ def plot_Int(data,i_scan ):
     #plt.xlim(50,300)
     fwhm_=np.array([fwhm_yz,fwhm_xz,fwhm_xy])
     return fwhm_
-# Gaussian profile
-def gaussian(x, A, x0, sigma):
-    return A * np.exp(-(x - x0)**2 / (2 * sigma**2))
-
-# Lorentzian profile
-def lorentzian(x, A, x0, gamma):
-    return A / (1 + ((x - x0) / gamma)**2)
-
-# Pseudo-Voigt profile
-def pseudo_voigt(x, A, x0, sigma, gamma, alpha):
-    """Returns the pseudo-Voigt distribution function for the given parameters.
-
-    Args:
-        x: A NumPy array of values to evaluate the function at.
-        eta: The mixing ratio of the Gaussian and Lorentzian distributions.
-        sigma: The standard deviation of the Gaussian distribution.
-        gamma: The half-width at half-maximum (HWHM) of the Lorentzian distribution.
-
-    Returns:
-       A NumPy array of the values of the pseudo-Voigt distribution function at the given values of x.
-    """
-    gaussian = np.exp(-(x - x0)**2 / (2 * sigma**2))
-    lorentzian = 1 / (1 + ((x - x0) / gamma)**2)
-    return  A *(1 - alpha) * gaussian + A *alpha * lorentzian
 # Voigt profile
 def voigt(x, A, x0, sigma_g, gamma, alpha):
     return A * (1 - alpha) * gaussian(x, A, x0, sigma_g) + alpha * lorentzian(x, A, x0, gamma)
@@ -205,13 +242,7 @@ def doniach_sunjic(x, I0, gamma, beta, alpha):
     term1 = I0 * (1 + (x / gamma)**2)**(-beta)
     term2 = alpha * I0 * np.exp(-(x / gamma))
     return term1 + term2
-# Pearson VII profile
-def pearson_vii(x, A, x0, gamma, m):
-    gamma_safe = np.maximum(gamma, 1e-10)  # Prevent division by near-zero gamma
-    x_diff = np.clip((x - x0) / gamma_safe, -1e10, 1e10)  # Clip extreme values
 
-    term1 = A / ((1 + x_diff**2)**m)
-    return term1
 
 # Skewed Lorentzian profile
 def skewed_lorentzian(x, A, x0, gamma, delta):
@@ -255,15 +286,6 @@ def fwhm_calculation_geom_methode1(x_data,y_fit):
         left_peak -= 1
     while y_fit[right_peak] > half_max:
         right_peak += 1
-    
-    fwhm = x_data[right_peak] - x_data[left_peak]
-    return fwhm
-def fwhm_calculation_geom_methode2(x_data,y_fit):    
-    peaks, _ = find_peaks(y_fit)
-    half_max = max(y_fit) / 2
-    indices_higher_than_hm=np.where(y_fit>=half_max)[0]
-    left_peak = indices_higher_than_hm[0]
-    right_peak = indices_higher_than_hm[-1]   
     
     fwhm = x_data[right_peak] - x_data[left_peak]
     return fwhm
@@ -333,6 +355,7 @@ def theta_bragg_pt(lambda_,h,k,l,a0=3.924):
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
 def find_fwhm_all(x_data_fit, y_fit):
+    
     """
     Compute the Full-Width at Half Maximum (FWHM) of a given peak function.
 
@@ -421,9 +444,43 @@ def integral_fwhm(x, y):
     peak_max = np.max(y)
     
     return integral_intensity / peak_max if peak_max != 0 else 0
-#-------------------------------------------------------------------------------------------------------------
 
+def fwhm_integral_1(x, y):
+    """
+    Compute the integral over the Full Width at Half Maximum (FWHM) range using raw data points.
+    
+    Parameters:
+    x : numpy.ndarray
+        The x-axis values.
+    y : numpy.ndarray
+        The corresponding y-axis values (intensity).
+        
+    Returns:
+    float
+        Integral of y over the FWHM range.
+    """
+    peak_max = np.max(y)
+    if peak_max == 0:
+        return 0.0
+    
+    half_max = peak_max / 2
+    mask = y >= half_max  # Boolean mask of points above half-max
+    
+    if not np.any(mask):
+        return 0.0
+    
+    # Get first and last indices where y >= half_max
+    left_idx = np.argmax(mask)  # First True in mask
+    right_idx = len(mask) - np.argmax(mask[::-1]) - 1  # Last True in mask
+    
+    # Extract the FWHM range
+    x_fwhm = x[left_idx:right_idx+1]
+    y_fwhm = y[left_idx:right_idx+1]
+    
+    return np.trapz(y_fwhm, x_fwhm)
+#-------------------------------------------------------------------------------------------------------------
 def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
+    
     """
     Fit the best peak profile (Gaussian, Lorentzian, Pearson VII, Pseudo-Voigt) 
     to noisy data and compute both standard FWHM and Integral FWHM.
@@ -494,23 +551,32 @@ def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
                 continue  
 
     return best_profile
-
 #-------------------------------------------------------------------------------------------------------------
-def get_plot_fwhm_and_skewness_kurtosis(data,
-                                        plot_title="Sum of intensity in each direction",
-                                        center_peak=False,
-                                        save_fig=None,
-                                        plot=True,
-                                        eliminate_linear_background=False,
-                                        plot_show=True,
-                                        f_s=14,vmin=1e0,vmax=1e6):
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------
+
+
+def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity in each direction",center_peak=False,save_fig=None,plot=True,eliminate_linear_background=False,log_distribution=False,plot_show=True,f_s=28,
+    f_s_table=18,scale_table=[2, 2],vmin=1e0,vmax=1e6,tight_layout=False,hspace_gridspec=0.05,wspace_gridspec=0.1,y_padding_factor=1.35):
     """
     Analyze the intensity distribution in a 3D dataset along X, Y, and Z directions, 
-    computing key statistical properties including:
-    - Full-Width at Half Maximum (FWHM) and Integral FWHM.
-    - Skewness and kurtosis for shape analysis.
-    - R-squared value for the quality of peak fitting.
-    - Visualizing the distribution through plots with peak fitting.
+    computing statistical and shape metrics (FWHM, skewness, etc.) with visual output.
 
     Parameters:
     -----------
@@ -518,70 +584,437 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
         3D array representing the intensity data (e.g., from Bragg Coherent Diffraction Imaging).
     
     plot_title : str, optional
-        Title of the intensity sum plot. Default is `"Sum of intensity in each direction"`.
-    
+        Title of the main plot. Default: "Sum of intensity in each direction".
+
     center_peak : bool, optional
-        If `True`, recenters the peak before fitting. Useful for analyzing small ROIs.
-    
+        If True, centers the peak before fitting to improve robustness in small ROIs.
+
     save_fig : str or None, optional
-        If a file path is provided, saves the generated plot instead of displaying it.
+        If provided, path to save the generated figure as an image.
 
     plot : bool, optional
-        Whether to generate plots of the data and fits. Default is `True`.
+        If True, generates plots of the summed profiles and fits.
 
     eliminate_linear_background : bool, optional
-        If `True`, subtracts a linear background before fitting to improve accuracy.
+        If True, subtracts linear background before fitting along each direction.
+
+    log_distribution : bool, optional
+        If True, displays intensity profiles in log scale (y-axis).
 
     plot_show : bool, optional
-        If `True`, displays the plot. If `False`, suppresses display for batch processing.
+        Whether to display the figure interactively with plt.show().
 
     f_s : int, optional
-        Font size for labels, titles, and legends. Default is `14`.
+        Font size for all labels, titles, tick labels, and legend (default: 28).
+
+    f_s_table : int, optional
+        Font size for text inside the embedded result summary table.
+
+    scale_table : list of float, optional
+        Scaling factor [x, y] for the summary table’s size.
+
+    vmin : float, optional
+        Minimum intensity value (for color scale of 2D projections).
+
+    vmax : float, optional
+        Maximum intensity value (for color scale of 2D projections).
+
+    tight_layout : bool, optional
+        If True, uses figure.tight_layout() to optimize subplot spacing.
+
+    hspace_gridspec : float, optional
+        Vertical spacing between subplot rows (GridSpec hspace).
+
+    wspace_gridspec : float, optional
+        Horizontal spacing between subplot columns (GridSpec wspace).
+
+    y_padding_factor : float, optional
+        Factor to extend y-limit above maximum peak height (default: 1.35). Ensures headroom for table.
 
     Returns:
     --------
     fwhm_xyz : list of float
-        Standard Full-Width at Half Maximum (FWHM) values for each axis.
+        Full-Width at Half Maximum (FWHM) for each axis (X, Y, Z).
 
     integral_fwhm_xyz : list of float
-        Integral Full-Width at Half Maximum values for each axis.
+        Integral-based FWHM estimates for each axis.
 
     skewness_xyz : list of float
-        Skewness values for intensity distributions along each axis.
+        Skewness of the summed intensity profiles for X, Y, Z.
 
     kurtosis_xyz : list of float
-        Kurtosis values for intensity distributions along each axis.
+        Kurtosis of the summed intensity profiles for X, Y, Z.
 
     rsquared_xyz : list of float
-        R² values indicating fit quality for each direction.
+        R² value of the best-fit profile along each direction.
 
     Notes:
     ------
-    - This function first sums the data along each axis, creating 1D distributions.
-    - It fits each distribution with multiple peak profiles (Gaussian, Lorentzian, Pseudo-Voigt, Pearson VII) 
-      and selects the best one based on R² score.
-    - If peak fitting fails, fallback strategies ensure meaningful results.
-    - It plots 1D projections and fits, including FWHM markers and a summary table.
+    - Supports multiple fitting models (Gaussian, Lorentzian, Voigt, Pearson VII).
+    - Auto-selects best fit by R² and overlays FWHM markers.
+    - Embedded table summarizes all quantitative fit metrics.
+    - Layout is fully managed with constrained_layout + manual spacing controls.
 
-    Example Usage:
-    --------------
-    >>> fwhm_xyz, integral_fwhm_xyz, skewness_xyz, kurtosis_xyz, rsquared_xyz = get_plot_fwhm_and_skewness_kurtosis(data)
+    Example:
+    --------
+    >>> get_plot_fwhm_and_skewness_kurtosis(data, center_peak=True, save_fig="output.png")
     """
+    # === Required Imports ===
+    from IPython.display import display
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib import gridspec
+    from matplotlib.table import Table
+    from matplotlib import ticker as mticker
+    from scipy.stats import skew, kurtosis
+    from tabulate import tabulate
+    from sklearn.metrics import r2_score
+    from scipy.signal import find_peaks
+    from scipy.optimize import curve_fit
+    from matplotlib.colors import LogNorm
+
+    import matplotlib
+    def MIR_Colormap():
+        cdict = {'red':  ((0.0, 1.0, 1.0),
+                          (0.11, 0.0, 0.0),
+                          (0.36, 0.0, 0.0),
+                          (0.62, 1.0, 1.0),
+                          (0.87, 1.0, 1.0),
+                          (1.0, 0.0, 0.0)),
+                  'green': ((0.0, 1.0, 1.0),
+                          (0.11, 0.0, 0.0),
+                          (0.36, 1.0, 1.0),
+                          (0.62, 1.0, 1.0),
+                          (0.87, 0.0, 0.0),
+                          (1.0, 0.0, 0.0)),
+                  'blue': ((0.0, 1.0, 1.0),
+                          (0.11, 1.0, 1.0),
+                          (0.36, 1.0, 1.0),
+                          (0.62, 0.0, 0.0),
+                          (0.87, 0.0, 0.0),
+                          (1.0, 0.0, 0.0))}
+        my_cmap = matplotlib.colors.LinearSegmentedColormap('my_colormap',cdict,256)
+        return my_cmap
+
+    my_cmap = MIR_Colormap()
+    def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
+        """
+        Fit the best peak profile (Gaussian, Lorentzian, Pearson VII, Pseudo-Voigt) 
+        to noisy data and compute both standard FWHM and Integral FWHM.
+    
+        Parameters:
+        -----------
+        x_data : numpy.ndarray
+            The x-axis values (e.g., spatial coordinates, pixel positions).
+        y_data : numpy.ndarray
+            The corresponding y-axis intensity values.
+        x_data_fit : numpy.ndarray
+            The x-axis values for evaluating the fitted profile.
+        noise_levels : list or numpy.ndarray, optional
+            List of noise levels to iterate over (default: np.arange(0.01, 0.5, 0.01)).
+    
+        Returns:
+        --------
+        best_profile : tuple
+            (profile_name, popt, r_squared, y_fit, fwhm, integral_fwhm)
+            - profile_name : str : Name of the best fitting function.
+            - popt : numpy.ndarray : Optimized parameters for the best fit.
+            - r_squared : float : R-squared value for fit quality.
+            - y_fit : numpy.ndarray : Best fitted data values.
+            - fwhm : float : Full-Width at Half Maximum (geometric method).
+            - integral_fwhm : float : Integral Full-Width at Half Maximum.
+        """
+        if noise_levels is None:
+            noise_levels = np.arange(0.01, 0.5, 0.01)
+    
+        profiles = [
+            (gaussian, "Gaussian", [max(y_data), np.argmax(y_data), 5]),
+            (lorentzian, "Lorentzian", [max(y_data), np.argmax(y_data), 5]),
+            (pearson_vii, "Pearson VII", [max(y_data), 6, 0.5, 3]),
+            (pseudo_voigt, "Pseudo-Voigt", [max(y_data), np.argmax(y_data), 10, 5, 0.15])
+        ]
+    
+        best_r_squared = -1
+        best_profile = None
+    
+        # Loop over noise levels
+        for noise_level in noise_levels:
+            # Add Gaussian noise to data
+            noisy_y_data = y_data + np.random.normal(scale=noise_level, size=len(y_data))
+    
+            # Loop over peak profiles
+            for profile_func, profile_name, initial_guess in profiles:
+                try:
+                    # Fit the profile to noisy data
+                    popt, _ = curve_fit(profile_func, x_data, noisy_y_data, p0=initial_guess, maxfev=5000)
+    
+                    # Evaluate fit quality
+                    y_fit = profile_func(x_data_fit, *popt)
+                    y_fit_ = profile_func(x_data, *popt)
+                    r_squared = r2_score(noisy_y_data, y_fit_)
+    
+                    # Compute Standard FWHM using geometric method or model fitting
+                    fwhm = find_fwhm_all(x_data_fit, y_fit)
+    
+                    # Compute Integral FWHM
+                    integral_fwhm_value = integral_fwhm(x_data_fit, y_fit)
+    
+                    # Update best fit if current fit has higher R²
+                    if r_squared > best_r_squared:
+                        best_r_squared = r_squared
+                        best_profile = (profile_name, popt, r_squared, y_fit, fwhm, integral_fwhm_value)
+                        
+                except:
+                    continue  
+    
+        return best_profile
+    def get_figure_size(width: int | str = "default",scale: float = 1,subplots: tuple = (1, 1)) -> tuple:
+        """
+        Get the figure dimensions to avoid scaling in LaTex.
+    
+        This function was taken from
+        https://jwalton.info/Embed-Publication-Matplotlib-Latex/
+    
+        :param width: Document width in points, or string of predefined
+        document type (float or string)
+        :param fraction: fraction of the width which you wish the figure to
+        occupy (float)
+        :param subplots: the number of rows and columns of subplots
+    
+        :return: dimensions of the figure in inches (tuple)
+        """
+        if width == 'default':
+            width_pt = 420
+        elif width == 'thesis':
+            width_pt = 455.30101
+        elif width == 'beamer':
+            width_pt = 398.3386
+        elif width == "nature":
+            width_pt = 518.74
+        else:
+            width_pt = width
+    
+        # Width of figure (in pts)
+        fig_width_pt = width_pt * scale
+    
+        # Golden ratio to set aesthetic figure height
+        # https://disq.us/p/2940ij3
+        golden_ratio = (5**.5 - 1) / 2
+    
+        # Convert from pt to inches
+        inches_per_pt = 1 / 72.27
+    
+        # Figure width in inches
+        fig_width_in = fig_width_pt * inches_per_pt
+        # Figure height in inches
+        fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
+    
+        return (fig_width_in, fig_height_in)
+
+    #-------------------------------------------------------------------------------------------------------------
+    def integral_fwhm(x, y):
+        """
+        Compute the Integral Full-Width at Half Maximum (Integral FWHM).
+    
+        Parameters:
+        x : numpy.ndarray
+            The x-axis values (e.g., pixel positions or spatial coordinates).
+        y : numpy.ndarray
+            The corresponding y-axis values (intensity or function values).
+    
+        Returns:
+        float
+            The Integral FWHM value.
+        """
+        integral_intensity = np.trapz(y, x)  # Numerical integration
+        peak_max = np.max(y)
+        
+        return integral_intensity / peak_max if peak_max != 0 else 0
+    #-------------------------------------------------------------------------------------------------------------
+    def find_fwhm_all(x_data_fit, y_fit):
+        """
+        Compute the Full-Width at Half Maximum (FWHM) of a given peak function
+        using a geometric method.
+    
+        Parameters:
+        -----------
+        x_data_fit : numpy.ndarray
+            The x-axis values of the fitted data (e.g., pixel or spatial coordinates).
+        y_fit : numpy.ndarray
+            The corresponding y-axis values (intensity or function values).
+    
+        Returns:
+        --------
+        fwhm : float
+            The computed Full-Width at Half Maximum (FWHM). Returns 0 if computation fails.
+        
+        Notes:
+        ------
+        - This method finds the left and right points where the signal crosses half of its maximum value.
+        - It uses `find_peaks` and thresholding to estimate the FWHM geometrically.
+        """
+        try:
+            fwhm = fwhm_calculation_geom_methode2(x_data_fit, y_fit)
+        except Exception as e:
+            print(f"Warning: FWHM calculation failed with error: {e}")
+            fwhm = 0
+        return fwhm
+    # Gaussian profile
+    def gaussian(x, A, x0, sigma):
+        return A * np.exp(-(x - x0)**2 / (2 * sigma**2))
+    
+    # Lorentzian profile
+    def lorentzian(x, A, x0, gamma):
+        return A / (1 + ((x - x0) / gamma)**2)
+    
+    # Pseudo-Voigt profile
+    def pseudo_voigt(x, A, x0, sigma, gamma, alpha):
+        """Returns the pseudo-Voigt distribution function for the given parameters.
+    
+        Args:
+            x: A NumPy array of values to evaluate the function at.
+            eta: The mixing ratio of the Gaussian and Lorentzian distributions.
+            sigma: The standard deviation of the Gaussian distribution.
+            gamma: The half-width at half-maximum (HWHM) of the Lorentzian distribution.
+    
+        Returns:
+           A NumPy array of the values of the pseudo-Voigt distribution function at the given values of x.
+        """
+        gaussian = np.exp(-(x - x0)**2 / (2 * sigma**2))
+        lorentzian = 1 / (1 + ((x - x0) / gamma)**2)
+        return  A *(1 - alpha) * gaussian + A *alpha * lorentzian
+    # Pearson VII profile
+    def pearson_vii(x, A, x0, gamma, m):
+        gamma_safe = np.maximum(gamma, 1e-10)
+        x_diff = (x - x0) / gamma_safe
+        x_diff_sq = x_diff**2
+    
+        threshold = 1e6  # define a threshold for "large"
+    
+        # Masks
+        mask_safe = x_diff_sq < threshold
+        mask_large = ~mask_safe
+    
+        denom = np.empty_like(x_diff_sq)
+    
+        # Safe branch: moderate x_diff
+        denom[mask_safe] = np.exp(m * np.log1p(x_diff_sq[mask_safe]))
+    
+        # Approximate branch: huge x_diff
+        # We must be careful: extremely large x_diff_sq can still cause overflows in x_diff_sq**m
+        with np.errstate(over='ignore'):  # Silence overflow temporarily
+            denom[mask_large] = x_diff_sq[mask_large]**m
+    
+        # Final protection against infinities/zero
+        denom = np.maximum(denom, 1e-300)
+        denom = np.where(np.isfinite(denom), denom, np.finfo(float).max)
+    
+        return A / denom
+    def fwhm_calculation_geom_methode2(x_data,y_fit):    
+        peaks, _ = find_peaks(y_fit)
+        half_max = max(y_fit) / 2
+        indices_higher_than_hm=np.where(y_fit>=half_max)[0]
+        left_peak = indices_higher_than_hm[0]
+        right_peak = indices_higher_than_hm[-1]   
+        
+        fwhm = x_data[right_peak] - x_data[left_peak]
+        return fwhm
+    def plot_3D_projections(data,mask=None, alpha_mask=.3,ax=None, fig=None, fw=4,fig_title=None, axes_labels=False, colorbar=False,log_scale=True,
+                            log_threshold=False,max_projection=False,vmin=None,vmax=None,fontsize=15,cmap=None,tight_layout=True):
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        import xrayutilities as xu
+        def add_colorbar_subplot(fig, axes, imgs,
+                                 size='5%',
+                                 tick_fontsize=12,
+                                 return_cbar=False):
+            
+            
+            if not isinstance(imgs, list):
+                imgs = [imgs]
+                axes = [axes]
+            
+            cbar_list = []
+            for im, ax in zip(imgs, np.array(axes).flatten()):
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes('right', size=size, pad=0.05)
+                cbar = fig.colorbar(im, cax=cax, orientation='vertical')
+                cax.tick_params(labelsize=tick_fontsize)  # Set tick fontsize here
+                cbar_list.append(cbar)
+        
+            if return_cbar:
+                return cbar_list
+            else:
+                return
+        if cmap is None:
+            cmap=my_cmap
+        
+        if fig is None:
+            if colorbar:
+                fig, ax = plt.subplots(1,3, figsize=(3.5*fw,fw))
+            else:
+                fig, ax = plt.subplots(1,3, figsize=(3*fw,fw))
+            
+        plots = []
+            
+        for n in range(3):
+            if max_projection:
+                img = np.nanmax(data,axis=n)
+            else:
+                img = np.nansum(data, axis=n)
+            if log_scale:
+                if log_threshold:
+                    
+                    plots.append(ax[n].matshow(xu.maplog(img,5,0),cmap=cmap, aspect='auto', vmin=vmin,vmax=vmax))
+                else:
+                    plots.append(ax[n].matshow(img,cmap=cmap, aspect='auto', norm=LogNorm(vmin=vmin,vmax=vmax)))
+            else:
+                plots.append(ax[n].matshow(img,cmap=cmap, aspect='auto', vmin=vmin,vmax=vmax))
+                
+            if mask is not None :
+                mask_plot = np.nanmean(mask, axis=n)
+                mask_plot[mask_plot != 0.] = 1.
+                ax[n].imshow( np.dstack([mask_plot, np.zeros(mask_plot.shape),
+                                         np.zeros(mask_plot.shape), alpha_mask*mask_plot]), aspect='auto')
+                
+        if axes_labels:
+            ax[0].set_xlabel('detector horizontal', fontsize=fontsize*fw/4)
+            ax[0].set_ylabel('detector vertical', fontsize=fontsize*fw/4)
+            
+            ax[1].set_xlabel('detector horizontal', fontsize=fontsize*fw/4)
+            ax[1].set_ylabel('rocking curve', fontsize=fontsize*fw/4)
+            
+            ax[2].set_xlabel('detector vertical', fontsize=fontsize*fw/4)
+            ax[2].set_ylabel('rocking curve', fontsize=fontsize*fw/4)
+        ax[0].tick_params(axis='y', labelsize=fontsize)
+        ax[0].tick_params(axis='x', labelsize=fontsize)
+        ax[1].tick_params(axis='y', labelsize=fontsize)
+        ax[1].tick_params(axis='x', labelsize=fontsize)
+        ax[2].tick_params(axis='y', labelsize=fontsize)
+        ax[2].tick_params(axis='x', labelsize=fontsize)
+            
+        if colorbar:
+            add_colorbar_subplot(fig, ax, plots,tick_fontsize=fontsize)
+            
+        if fig_title is not None:
+            fig.suptitle(fig_title, fontsize=fontsize*fw/4)
+        if tight_layout:
+            fig.tight_layout()
+        return fig
+    ##########################################################################################################################
+    # === Main Function ===
     plt.style.use('grayscale')
     step_x_fit=0.25
     color_list=('#1f77b4','#2ca02c','#ff7f0e')
     directions=["X","Y","Z"]
-    h_len=20
+    
     background_degree = 1  # Adjust the degree of the polynomial as needed
     first_and_last_pixel=[0,-1]
-    #plot_3D_projections(data,log_scale=True,cmap="jet",vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False)
-    #plt.show()
     if plot:
         figsize = get_figure_size(scale=3)
         figure = plt.figure( figsize=figsize, dpi=150)
         figure.set_constrained_layout(True)  # Preferred for automatic handling
         # Define the grid layout with one row for the large subplot and three subplots in the second row
-        gs = gridspec.GridSpec(nrows=3, ncols=3, wspace=0.3, hspace=0.5)
+        gs = gridspec.GridSpec(nrows=3, ncols=3, wspace=wspace_gridspec, hspace=hspace_gridspec,figure=figure)
         
         ax_dummy = figure.add_subplot(gs[1, -1])  # Add subplot to the last position (rightmost in the second row)
         ax_dummy.axis('off')  # Turn off visibility of the dummy subplot        
@@ -589,31 +1022,40 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
         ax1 = figure.add_subplot(gs[2, 0])
         ax2 = figure.add_subplot(gs[2, 1])
         ax3 = figure.add_subplot(gs[2, 2])
-        plot_3D_projections(data,ax=[ax1,ax2,ax3],fig=figure,log_scale=True,cmap="jet",vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False)
+        plot_3D_projections(data,ax=[ax1,ax2,ax3],fig=figure,log_scale=True,cmap=my_cmap,vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False)
         ax1.axis('tight')
         ax2.axis('tight')
         ax3.axis('tight')
-        ax1.set_xlabel('Z')
-        ax2.set_xlabel('Z')
-        ax3.set_xlabel('Y')
-        ax1.set_ylabel('Y')
-        ax2.set_ylabel('X')
-        ax3.set_ylabel('X')
+        ax1.set_xlabel('$Q_Z$ (pixel)')
+        ax2.set_xlabel('$Q_Z$ (pixel)')
+        ax3.set_xlabel('$Q_Y$ (pixel)')
+        ax1.set_ylabel('$Q_Y$ (pixel)')
+        ax2.set_ylabel('$Q_X$ (pixel)')
+        ax3.set_ylabel('$Q_X$ (pixel)')
         
         ax.set_title(plot_title)
-        ax.set_ylabel("Intensity", fontsize=f_s)
-        ax.set_xlabel("(x,y,z)", fontsize=f_s)
+        ax.set_ylabel("Integrated Intensity [a.u.]", fontsize=f_s)
+        ax.set_xlabel("($Q_x,Q_y,Q_z$) (pixel)", fontsize=f_s)
+        ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        # Unify exponent (offset text) font
+        offset_text = ax.yaxis.get_offset_text()
+        offset_text.set_fontsize(f_s)
+        offset_text.set_weight("normal")  # or "bold"
+        ax.yaxis.set_offset_position('left')
         #figure.tight_layout()
     axes = [(1,2), (0,2), (0,1)]
     data_sum_all                    = [data.sum(axis=axis)                                                     for axis in axes]  # Vectorized summation
     X_data_all                      = [np.arange(len(d))                                                       for d in data_sum_all]  # Avoid recomputation
     X_fit_all                       = [np.linspace(0, len(d), int(len(d) / step_x_fit))                        for d in data_sum_all]  # More robust
+    peak_positions = [np.argmax(d) for d in data_sum_all]
+    h_len = min(min(peak_positions), min(len(d) - p for d, p in zip(data_sum_all, peak_positions))) - 1
+    
     if center_peak:
-        loc_max_all                 = [np.where(d==d.max())[0][0]                                              for d in data_sum_all]      
-        loc_max                     = [np.array(data_sum_all[d] [loc_max_all[d]-h_len:loc_max_all[d]+h_len])   for d in range(len(data_sum_all))]  
-        X_data_all                  = [np.arange(len(d))                                                       for d in data_sum_all]  # Avoid recomputation
-        X_fit_all                   = [np.linspace(0, len(d), int(len(d) / step_x_fit))                        for d in data_sum_all]  # More robust
-         
+        data_sum_all = [d[max(0, peak-h_len):peak+h_len] for d, peak in zip(data_sum_all, peak_positions)]
+        X_data_all = [np.arange(len(d)) for d in data_sum_all]
+        X_fit_all = [np.linspace(0, len(d), int(len(d) / step_x_fit)) for d in data_sum_all]
+
     if eliminate_linear_background:
         background_coefficients_all = [np.polyfit(X_data_all[d][first_and_last_pixel], data_sum_all[d][first_and_last_pixel], background_degree)        for d in range(len(data_sum_all))]
         background_fit_all          = [np.polyval(background_coefficients_all[d], X_data_all[d] )                                                        for d in range(len(data_sum_all))]
@@ -623,6 +1065,9 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
     kurtosis_xyz                    = np.array([kurtosis(d)                             for d in data_sum_all])
     fits                            = [fit_best_profile_with_noise(X_data_all[i], data_sum_all[i], X_fit_all[i]) for i in range(len(data_sum_all))]
     names, popt_xyz, rsquared_xyz, fitted_data, fwhm_xyz, fwhm_integral_xyz = zip(*fits)
+    if plot and log_distribution:
+        ax.set_yscale('log')
+
     for i in range(len(data_sum_all)):
         if i==0:            axis,direction=(1,2),"X"
         if (i==1):          axis,direction=(0,2),"Y"
@@ -634,61 +1079,55 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
         except:
             print('Not pseudo-voigt')       
         if plot:
-            ax.scatter(X_data_all[i],data_sum_all[i], s=10, color=color_list[i])
-            ax.plot(X_fit_all[i], fitted_data[i]         , color=color_list[i] ,label=f"Fit {direction} {names[i]}")  
+            fit_safe = np.clip(fitted_data[i], 1e-12, None)
+            scatter_safe = np.clip(data_sum_all[i], 1e-12, None)
+            ax.scatter(X_data_all[i], scatter_safe, s=10, color=color_list[i])
+            ax.plot(X_fit_all[i], fit_safe, color=color_list[i], label=f"Fit {direction} {names[i]}")
 
 
-    
     if plot:
         data_sum_fit_max = np.array([max(fit) for fit in fitted_data])  # Get max values for each fitted dataset
         data_sum_fit_max_max = data_sum_fit_max.max()  # Overall max value for normalization
-    
+        #ax.set_ylim(0,2 * data_sum_fit_max_max)  # 20% headroom above the tallest peak
         for i, (fit, color, popt) in enumerate(zip(fitted_data, color_list, popt_xyz)):
-            half_max_norm = 0.51 * data_sum_fit_max[i] / data_sum_fit_max_max  # Normalize half max value
-    
-            # Draw vertical lines for FWHM bounds
+            try:
+                half_max_norm = 0.51 * data_sum_fit_max[i] / data_sum_fit_max_max
+            except ZeroDivisionError:
+                half_max_norm = 0.5  # Fallback to mid-range if fit is flat
+                
             ax.axvline(x=popt[1] - fwhm_xyz[i] / 2, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
             ax.axvline(x=popt[1] + fwhm_xyz[i] / 2, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
-    
+
         ax.tick_params(labelsize=f_s)
         ax.grid(alpha=0.01)
         ax.legend(loc="best")
 
     if plot:
         # Round numerical values before constructing the table
-        rounded_values = np.round(
-            np.column_stack((fwhm_xyz, fwhm_integral_xyz, skewness_xyz, kurtosis_xyz, rsquared_xyz)), 4
-        )
-    
+        rounded_values = np.round(            np.column_stack((fwhm_xyz, fwhm_integral_xyz, skewness_xyz, kurtosis_xyz, rsquared_xyz)), 4        )
         # Create a list of lists to represent the table data
-        table_data = np.vstack((
-            ['Direction', 'FWHM', 'Integral FWHM', 'Skewness', 'Kurtosis', 'R-squared'],
-            np.column_stack((directions, rounded_values))
-        )).tolist()
-    
+        table_data = np.vstack((            ['Direction', 'FWHM', 'Integral FWHM', 'Skewness', 'Kurtosis', 'R-squared'],np.column_stack((directions, rounded_values))        )).tolist()
         # Create table
         table = Table(ax, loc='upper left')
         table.auto_set_font_size(False)
-        table.set_fontsize(18)
-        table.scale(2, 2)  # Adjust scale as needed
-    
+        table.set_fontsize(f_s_table)
+        table.scale(scale_table[0], scale_table[1])  # Adjust scale as needed
         # Add table data
         for i, row in enumerate(table_data):
             for j, cell in enumerate(row):
-                if isinstance(cell, float):  # Check if the cell value is a float
-                    cell = round(cell, 4)  # Round float values to four decimal places
+                if isinstance(cell, float):
+                    cell = round(cell, 4)
                 table.add_cell(i, j, width=1, height=0.05, text=str(cell),
                                facecolor='darkblue', loc='center', edgecolor='darkblue')
-                table[i, j].set_text_props(color='w', weight='bold')
-    
+                text = table[i, j].get_text()
+                text.set_fontsize(f_s_table)                # << set font size here
+                text.set_color('w')
+                text.set_weight('bold')
         # Adjust column widths
         for col in range(len(table_data[0])):
             table.auto_set_column_width(col)
-    
         ax.add_table(table)
         ax.axis('tight')
-    
-    
     # Prepare table data
     table_data = [
         ["Metric", "X", "Y", "Z"],
@@ -697,12 +1136,26 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
         ["Skewness", skewness_xyz[0], skewness_xyz[1], skewness_xyz[2]],
         ["Kurtosis", kurtosis_xyz[0], kurtosis_xyz[1], kurtosis_xyz[2]],
     ]
-    
-    # Print formatted table
-    print(tabulate(table_data, headers="firstrow", tablefmt="fancy_grid"))
 
-    #if plot:
-    #    figure.tight_layout()
+
+    if plot:
+        # Apply font size to all axes
+        for ax_obj in figure.get_axes():
+            ax_obj.tick_params(labelsize=f_s)  # Tick labels
+            ax_obj.title.set_fontsize(f_s)
+            ax_obj.xaxis.label.set_size(f_s)
+            ax_obj.yaxis.label.set_size(f_s)
+            legend = ax_obj.get_legend()
+            if legend:
+                for text in legend.get_texts():
+                    text.set_fontsize(f_s)
+
+    if plot:
+        y_max = max([max(fit) for fit in fitted_data])
+        ax.set_ylim(0, y_padding_factor * y_max)  # Set bottom to 0, top with headroom
+
+    if tight_layout:
+        figure.tight_layout()
     if save_fig:
         plt.savefig(save_fig)            
     if plot:
@@ -711,241 +1164,4 @@ def get_plot_fwhm_and_skewness_kurtosis(data,
         else:
             plt.close()
     return fwhm_xyz,fwhm_integral_xyz,skewness_xyz,kurtosis_xyz
-#----------------------------------------------------------------------------------------------------------
-def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names, x_label="Temperature (°K)",
-                                stat_param_names=None, desired_order=None, 
-                                line_style="-", font_dict= {"family": "serif", "size": 20}, linewidth=3,
-                                list_of_particle_to_plot=None,markersize=10,show_legend=True,
-                                save_fig=None):
-    """
-    Creates a figure with multiple rows of subplots.
-    
-    Each row corresponds to a group of statistical parameters (e.g., FWHM, FWHM Integral).
-    Within each row, there are 3 subplots for the X, Y, and Z coordinates.
-    The same temperature ordering and particle labeling is used across all subplots.
-    
-    Additional Features:
-      - font_dict: A dictionary of font properties (e.g., {"family": "serif", "size": 14})
-                   that is applied to all titles, axis labels, and the legend.
-      - list_of_particle_to_plot: If provided, only data for these particles will be plotted.
-      - When desired_order is provided, the x-axis is constructed by mapping temperatures
-        to numeric indices following desired_order.
-      - save_fig: If not None, the plot is saved to the provided filename (e.g., "plot.png").
-    
-    Parameters
-    ----------
-    temperatures : array-like, shape (N,)
-        Temperature values (as strings) for the x-axis.
-    stat_params_groups : list
-        A list of groups, where each group is a list (or tuple) of 3 array-like objects:
-            group[0] -> values for coordinate X,
-            group[1] -> values for coordinate Y,
-            group[2] -> values for coordinate Z.
-        Each array-like must have length N.
-    particle_names : array-like, shape (N,)
-        Particle names corresponding to each data point.
-    stat_param_names : list of str or None, optional
-        A list of names for each stat parameter group (used for y-labels and subplot titles).
-        If None, default names will be assigned.
-    desired_order : array-like of str or None, optional
-        If provided, should be an array-like of temperature strings defining the desired order.
-        The data will be re-ordered to follow this order and the x-axis will be constructed 
-        accordingly.
-    line_style : str or None, optional
-        A common line style for all particles (e.g., "-", "--", "-.").
-        If set to None, only markers (no connecting lines) are plotted.
-    font_dict : dict or None, optional
-        A dictionary of font properties (e.g., {"family": "serif", "size": 14}) to be applied
-        to subplot titles, axis labels, and legend text.
-    list_of_particle_to_plot : list or None, optional
-        If provided, only the particles in this list will be plotted.
-    save_fig : str or None, optional
-        If provided, the plot will be saved to this filename.
-    
-    Returns
-    -------
-    None
-        Displays (and optionally saves) the resulting plot.
-
-    # Example input definitions:
-    
-    # Temperature values (as strings)
-    temperatures = np.array([
-        '27', '27', '27', '100', '100', '370', '370', '27 Af 370', '27 Af 370', '27 Af 800', '27 Af 950'
-    ])
-    
-    # Group 1: e.g., FWHM values for X, Y, Z coordinates
-    stat_params_group1 = [
-        np.array([0.5, 0.55, 0.6, 0.65, 0.66, 0.7, 0.72, 0.75, 0.76, 0.8, 0.82]),  # X values
-        np.array([0.7, 0.73, 0.75, 0.8, 0.82, 0.85, 0.87, 0.9, 0.92, 0.95, 0.96]),   # Y values
-        np.array([0.6, 0.62, 0.65, 0.68, 0.7, 0.72, 0.74, 0.77, 0.79, 0.81, 0.83])     # Z values
-    ]
-    
-    # Group 2: e.g., FWHM Integral values for X, Y, Z coordinates
-    stat_params_group2 = [
-        np.array([1.5, 1.55, 1.6, 1.65, 1.66, 1.7, 1.72, 1.75, 1.76, 1.8, 1.82]),  # X values
-        np.array([1.7, 1.73, 1.75, 1.8, 1.82, 1.85, 1.87, 1.9, 1.92, 1.95, 1.97]),   # Y values
-        np.array([1.6, 1.62, 1.65, 1.68, 1.7, 1.72, 1.74, 1.77, 1.79, 1.81, 1.83])     # Z values
-    ]
-    
-    # Combine both groups into a list
-    stat_params_groups = [stat_params_group1, stat_params_group2]
-    
-    # Particle names corresponding to each data point
-    particle_names = np.array([
-        'Particle_A', 'Particle_A', 'Particle_A', 'Particle_A', 'Particle_A',
-        'Particle_B', 'Particle_B', 'Particle_B', 'Particle_B',
-        'Particle_C', 'Particle_C'
-    ])
-    
-    # Desired order for temperatures (only those present in the data will be used)
-    desired_order = ['27', '100', '370', '27 Af 370', '27 Af 800', '27 Af 950']
-    
-    # Names for each group of statistical parameters (will be used in subplot titles and y-labels)
-    stat_param_names = ["FWHM", "FWHM Integral"]
-    
-    # Font properties to be applied to titles, axis labels, and legend
-    font_dict = {"family": "serif", "size": 12, "weight": "bold"}
-    
-    # Specify which particles to plot (optional; here we include all available particles)
-    list_of_particle_to_plot = ["Particle_A", "Particle_B", "Particle_C"]
-    
-    # Filename to save the figure (if None, the plot is not saved)
-    save_fig = "example_plot.png"
-    
-    # Call the function (assuming it has been defined/imported)
-    anealing_plot_stat_multiple(
-        temperatures, 
-        stat_params_groups, 
-        particle_names,
-        stat_param_names=stat_param_names,
-        desired_order=desired_order,
-        line_style="--",          # dashed line; use None for markers only
-        font_dict=font_dict,
-        list_of_particle_to_plot=list_of_particle_to_plot,
-        save_fig=save_fig
-    )
-
-    """
-    # Convert inputs to numpy arrays and ensure each group's arrays are numpy arrays.
-    temperatures = np.array(temperatures)
-    particle_names = np.array(particle_names)
-    stat_params_groups = [
-        [np.array(arr) for arr in group] for group in stat_params_groups
-    ]
-    
-    # Filter data if list_of_particle_to_plot is provided.
-    if list_of_particle_to_plot is not None:
-        mask = np.isin(particle_names, list_of_particle_to_plot)
-        temperatures = temperatures[mask]
-        particle_names = particle_names[mask]
-        stat_params_groups = [
-            [arr[mask] for arr in group] for group in stat_params_groups
-        ]
-    
-    # Reorder data if desired_order is provided.
-    if desired_order is not None:
-        indices = []
-        for t in desired_order:
-            matching = np.where(temperatures == t)[0]
-            if matching.size > 0:
-                indices.extend(matching.tolist())
-        temperatures = temperatures[indices]
-        particle_names = particle_names[indices]
-        stat_params_groups = [
-            [arr[indices] for arr in group] for group in stat_params_groups
-        ]
-    
-    # Construct numeric x-axis values that follow desired_order if provided.
-    if desired_order is not None:
-        # Use desired_order order, but only those present in temperatures.
-        unique_temps = np.array([t for t in desired_order if t in temperatures])
-        mapping = {temp: i for i, temp in enumerate(unique_temps)}
-        x_numeric = np.array([mapping[t] for t in temperatures])
-    else:
-        unique_temps, x_numeric = np.unique(temperatures, return_inverse=True)
-    
-    # Determine number of groups and coordinates.
-    n_groups = len(stat_params_groups)
-    n_coords = 3  # assuming X, Y, Z
-    
-    # If stat_param_names not provided, create default names.
-    if stat_param_names is None or len(stat_param_names) != n_groups:
-        stat_param_names = [f"StatParam {i+1}" for i in range(n_groups)]
-    
-    # Determine unique particles and assign a unique color and marker to each.
-    unique_particles = np.unique(particle_names)
-    n_particles = len(unique_particles)
-    color_map = matplotlib.cm.get_cmap("tab10", n_particles)
-    particle_to_color = {particle: color_map(i) for i, particle in enumerate(unique_particles)}
-    
-    # Automatic marker assignment from a preset list.
-    marker_list = ['o', 's', '^', 'd', 'v', '<', '>', 'P', 'X', '*']
-    particle_to_marker = {particle: marker_list[i % len(marker_list)]
-                          for i, particle in enumerate(unique_particles)}
-    
-    # Create subplots: rows = n_groups, columns = 3 (for X, Y, Z)
-    fig, axes = plt.subplots(nrows=n_groups, ncols=n_coords, 
-                             figsize=(18, 6*n_groups), sharex=True, sharey='row')
-    
-    # Ensure axes is a 2D array even if n_groups == 1.
-    if n_groups == 1:
-        axes = np.array([axes])
-    
-    # Dictionary for combined legend (one representative line per particle).
-    legend_dict = {}
-    
-    # Loop over groups (rows) and coordinates (columns)
-    for i_group in range(n_groups):
-        for i_coord in range(n_coords):
-            ax = axes[i_group, i_coord]
-            # For each unique particle, plot its data.
-            for particle in unique_particles:
-                idx = np.where(particle_names == particle)[0]
-                # Use the factorized numeric x-axis values.
-                x_vals = x_numeric[idx]
-                y_vals = stat_params_groups[i_group][i_coord][idx]
-                
-                # If line_style is None, plot only markers.
-                ls = line_style if line_style is not None else 'None'
-                
-                line, = ax.plot(x_vals, y_vals,
-                                marker=particle_to_marker[particle],
-                                linestyle=ls,
-                                color=particle_to_color[particle],markersize=markersize,linewidth=linewidth,
-                                label=particle)
-                if particle not in legend_dict:
-                    legend_dict[particle] = line
-            
-            # Set subplot title (e.g., "FWHM X" or "FWHM Integral Y").
-            coord = ['X', 'Y', 'Z'][i_coord]
-            ax.set_title(f"{stat_param_names[i_group]} {coord}", fontdict=font_dict)
-            ax.grid(True)
-            
-            # For the left column, set y-label.
-            if i_coord == 0:
-                ax.set_ylabel(stat_param_names[i_group], fontdict=font_dict)
-            
-            # For the bottom row, set x-label and custom x-tick labels.
-            if i_group == n_groups - 1:
-                ax.set_xlabel(x_label, fontdict=font_dict)
-                # Set x-ticks based on unique temperature indices.
-                ax.set_xticks(np.arange(len(unique_temps)))
-                ax.set_xticklabels(unique_temps, rotation=45, ha="right", fontdict=font_dict)
-            # Set y-tick font properties directly:
-            ax.tick_params(axis='y', labelsize=font_dict['size'])
-            for label in ax.get_yticklabels():
-                label.set_fontfamily(font_dict['family'])    
-    # Create a single combined legend at the top center.
-    if show_legend:
-        fig.legend(legend_dict.values(), legend_dict.keys(), loc='upper center',
-                   ncol=n_particles, bbox_to_anchor=(0.5, 1.05), prop=font_dict)
-        
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-    
-    # Save figure if save_fig is provided.
-    if save_fig is not None:
-        plt.savefig(save_fig, bbox_inches='tight',dpi=150)
-    
-    plt.show()
 

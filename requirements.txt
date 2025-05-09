@@ -30,7 +30,7 @@ astropy
 cryptography
 gekko
 yapf
-decimal
+#decimal
 
 # Machine Learning
 scikit-learn
