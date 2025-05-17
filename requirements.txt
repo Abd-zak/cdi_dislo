@@ -30,25 +30,14 @@ astropy
 cryptography
 gekko
 yapf
-#decimal
-
-# Machine Learning
-scikit-learn
 
 # File Handling & Utilities
 hdf5plugin
 silx
-json
-logging
-shutil
-importlib
-traceback
 
 # Specialized Scientific Libraries
-cdiutils  # Custom CDI utilities package
-bcdi  # Bragg CDI utilities
-xrayutilities  # X-ray diffraction analysis
+# cdiutils  # Install manually if local or specify git+https url
+# bcdi      # Install manually if local or specify git+https url
 
 # Miscellaneous
 pytest
-ipywidgets
