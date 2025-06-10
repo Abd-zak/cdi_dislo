@@ -1679,8 +1679,8 @@ def conf_plot__(x_label,y_label,fig_tilte,a_min,a_max
     plt.legend(loc='best', ncols=3)
     plt.ylim(a_min, a_max)
 def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=None, a_max=None, data_sets=[], desired_order=None, marker_size=10,
-              marker='+', show_plt=True, save_dir_plot=None, all_in_one=True,xyz_plot=False,norm=False
-                                ):
+              marker='+', show_plt=True, save_dir_plot=None, all_in_one=True,xyz_plot=False,norm=False,linestyle="--",linewidth=4,rotation_xtick=-45,
+              f_s=16, f_s_legend=12):
     
     """
     Plot data for comparison.
@@ -1711,14 +1711,28 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         ValueError: If number of subtitles does not match the number of plots, or if the length of desired_order
             does not match the number of subplots.
     """
-    num_plots = len(data_sets)
+    plt.rcParams.update({
+        'font.size': f_s,
+        'font.weight': 'bold',
+        'axes.titlesize': f_s,
+        'axes.titleweight': 'bold',
+        'axes.labelsize': f_s,
+        'axes.labelweight': 'bold',
+        'xtick.labelsize': f_s,
+        'ytick.labelsize': f_s,
+        'xtick.major.width': 1.5,
+        'ytick.major.width': 1.5,
+        'legend.fontsize': f_s_legend,
+        'legend.title_fontsize': f_s_legend,
+        'figure.titlesize': f_s
+    })
     # Ensure subtitles list matches the number of plots
-    if len(subtitles) != num_plots:
+    if xyz_plot:
+        num_plots = len(data_sets[0])
+    else:
+        num_plots = len(data_sets)
+    if (len(subtitles) != num_plots ) :
         raise ValueError("Number of subtitles must match the number of plots.")
-    
-    # Ensure the length of desired_order matches the number of subplots
-    if desired_order and len(desired_order) != num_plots:
-        raise ValueError("Length of desired_order must match the number of subplots.")
     
     if norm:
         max_for_norm=(array([ data_sets[i_dataset][i_exp][1].max() for i_dataset in range(len(data_sets)) for i_exp in range(len(data_sets[i_dataset]))]).max())
@@ -1764,9 +1778,6 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         if all(color_diffs[i, j] > threshold for j in range(i)):
             filtered_colors.append(dark_colors[i])
             unique_colors.add(color)
-    
-    
-
     if not xyz_plot:
         color_map = {}
         all_part_name_lists = []
@@ -1822,7 +1833,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
             #plt.style.use('grayscale')
             for i_datasets_pos in range(3):
                 for i, data_set in enumerate(data_sets[i_datasets_pos]):
-                    ax = plt.subplot(3, num_plots, 3*(i_datasets_pos)+1+i)
+                    ax = plt.subplot(3, num_plots, num_plots*(i_datasets_pos)+1+i)
                     X, Y, part_name_list = data_set
                     if desired_order:
                             X_new = np.array([desired_order[i].index(m) for m in X])
@@ -1835,7 +1846,9 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                         y_plot = array([y for y, p in zip(Y, part_name_list) if p == particle])
                         if norm:
                             y_plot/=max_for_norm
-                        plt.plot(x_plot,y_plot, marker, ms=marker_size,label=particle, color=color_map[particle])
+                        plt.plot(x_plot,y_plot, marker=marker, ms=marker_size,label=particle, color=color_map[particle],linestyle=linestyle,linewidth=linewidth,)
+                        plt.xticks(rotation=rotation_xtick, fontsize=f_s, fontweight='bold')
+
                     
                     plt.xlabel(x_label)
                     if norm:
@@ -1888,7 +1901,8 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                     # Convert back to lists if needed
                     x_plot = list(x_plot_sorted)
                     y_plot = list(y_plot_sorted)
-                    plt.plot(x_plot, y_plot, marker, ms=marker_size, label=particle, color=color_map[particle])
+                    plt.plot(x_plot, y_plot, marker, ms=marker_size, label=particle, color=color_map[particle],linestyle=linestyle,linewidth=linewidth)
+                    plt.xticks(rotation=rotation_xtick, fontsize=f_s, fontweight='bold')
                 
                 plt.xlabel(x_label)
                 plt.ylabel(y_label)
@@ -1910,34 +1924,33 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         if xyz_plot:
             colors = plt.cm.tab10(np.linspace(0, 0.5, 3))
             for particle in np.unique(unique_particles):
-                fig, axes = plt.subplots(nrows=1, ncols=num_plots, figsize=(6*num_plots, 5))
-                
-                #plt.style.use('grayscale')
-                trigger_subplots=[0,0,0]
+                trigger_subplots=np.zeros(num_plots, dtype=bool)  # One for X, Y, Z
                 for i_datasets_pos in range(3):
-                    for i, data_set in enumerate(data_sets[i_datasets_pos]):                
+                    for i, data_set in enumerate(data_sets[i_datasets_pos]):
                         X, Y, part_name_list = data_set
                         if particle  in part_name_list:
                             trigger_subplots[i]+=1  
-                    if trigger_subplots[i_datasets_pos]==0:
-                        #ax.set_visible(False)                 #ax.set_axis_off()
-                        fig.delaxes(axes[i_datasets_pos])
                 trigger_subplots=array(trigger_subplots)
-                for i_datasets_pos in range(3):     
-                    i_subplots=0                    
+                num_plots_loc=(trigger_subplots.sum()).astype(int)
+                print(trigger_subplots,num_plots_loc)
+                fig, axes = plt.subplots(nrows=1, ncols=num_plots_loc, figsize=(6*num_plots_loc, 5))
+                for i_datasets_pos in range(3):
+                    i_subplots=0
                     for i, data_set in enumerate(data_sets[i_datasets_pos]):   
-                        if trigger_subplots[i]==0:
-                            i_subplots+=1
-                            continue
                         X, Y, part_name_list = data_set
-                        if particle not in part_name_list:
+                        if (trigger_subplots[i]==0) or (particle not in part_name_list):
                             continue
+                        if num_plots_loc==1:
+                            ax_loc=axes
+                        else:
+                            ax_loc=axes[i_subplots]
                         if desired_order:
                                 X_new = np.array([desired_order[i].index(m) for m in X])
-                                axes[i_subplots].set_xticks(range(len(desired_order[i])))
-                                axes[i_subplots].set_xticklabels(desired_order[i])
+                                ax_loc.set_xticks(range(len(desired_order[i])))
+                                ax_loc.set_xticklabels(desired_order[i])
                         else:
                             X_new=X
+                        ax_loc.tick_params(axis='x', labelrotation=rotation_xtick)
                         x_plot = array([x for x, p in zip(X_new, part_name_list) if p == particle])
                         y_plot = array([y for y, p in zip(Y, part_name_list) if p == particle])
 
@@ -1945,42 +1958,33 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                             y_plot/=max_for_norm
 
                         
-                        axes[i_subplots].plot(x_plot, y_plot, marker,  ms=marker_size,color=colors[i_datasets_pos],label=y_labels[i_datasets_pos])
-                        axes[i_subplots].set_xlabel( x_label  )
+                        ax_loc.plot(x_plot, y_plot, marker,  ms=marker_size,color=colors[i_datasets_pos],label=y_labels[i_datasets_pos],linestyle=linestyle,linewidth=linewidth)
+                        ax_loc.set_xlabel( x_label  )
                         if norm:
                             if unit_y:
-                                axes[i_subplots].set_ylabel(y_label_+ ' ' +f"/({max_for_norm}"+f"$_{{(\mathrm{{{unit_y}}})}}$)")
+                                ax_loc.set_ylabel(y_label_+ ' ' +f"/({max_for_norm}"+f"$_{{(\mathrm{{{unit_y}}})}}$)")
                             else:
-                                axes[i_subplots].set_ylabel(y_label_+ ' ' +f"/({max_for_norm}")
+                                ax_loc.set_ylabel(y_label_+ ' ' +f"/({max_for_norm}")
       
                         else:
                             if unit_y:
-                                axes[i_subplots].set_ylabel(y_label_+ ' ' +f"$_{{(\mathrm{{{unit_y}}})}}$")
+                                ax_loc.set_ylabel(y_label_+ ' ' +f"$_{{(\mathrm{{{unit_y}}})}}$")
                             else:
-                                axes[i_subplots].set_ylabel(y_label_)
-                        axes[i_subplots].legend(loc='best', ncols=3)
+                                ax_loc.set_ylabel(y_label_)
+                        ax_loc.legend(loc='best', ncols=3)
                         if (a_min and a_max):
-                            axes[i_subplots].set_ylim(a_min, a_max)
+                            ax_loc.set_ylim(a_min, a_max)
                 
                         if subtitles:
-                            axes[i_subplots].set_title(subtitles[i])
+                            ax_loc.set_title(subtitles[i])
                         else:
-                            axes[i_subplots].set_title("{}".format(i+1))
+                            ax_loc.set_title("{}".format(i+1))
                         i_subplots+=1
-                
-
                 suptitle=plt.suptitle(fig_title + " "+particle ,ha='center')
-
-                title_posx = np.mean([axes[i].title.get_window_extent(renderer=fig.canvas.get_renderer()
-                                                                     ).transformed(fig.transFigure.inverted()
-                                                                                ).x0 for i in np.where(trigger_subplots>0)[0] ])
-                if trigger_subplots[2]>0:
-                        title_posx=title_posx+0.09    
-                remaining_axes = [axes[i] for i in range(3) if trigger_subplots[i]>0 ]
-                y_coords = array([ax.get_position().y1 for ax in remaining_axes])
-                # Set the position of the suptitle to center it across the remaining axes
-                suptitle.set_x( title_posx )
-                suptitle.set_y(y_coords.max()+0.08 )
+                try:
+                    suptitle.set_y(y_coords.max()+0.08 )
+                except:
+                    pass
                 plt.tight_layout()
                 
                 if save_dir_plot:
@@ -2016,7 +2020,9 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                         # Convert back to lists if needed
                         x_plot = list(x_plot_sorted)
                         y_plot = list(y_plot_sorted)
-                        plt.plot(x_plot, y_plot, marker, ms=marker_size, label=particle, color=color_map[particle])
+                        plt.plot(x_plot, y_plot, marker, ms=marker_size, label=particle, color=color_map[particle],linestyle=linestyle,linewidth=linewidth)
+                        plt.xticks(rotation=rotation_xtick, fontsize=f_s, fontweight='bold')
+
                     
                         plt.xlabel(x_label)
                         plt.ylabel(y_label)
@@ -2110,7 +2116,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     ax1 = fig.add_subplot(gs[0, 0])
     add_colored_bands(ax1)
     ax1.plot(range(len(x_absis)), stats_x, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
-    ax1.set_ylabel(y_label + " $Q_X$" + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax1.set_ylabel(y_label + " $_{QX}$ " + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
     ax1.set_title("Evolution of " + str(y_label),fontsize=f_s_labels)
     figure_axes_desidn(ax1, label_rot)  # Assuming this is your custom function
     ax1.get_xaxis().set_visible(False)  # Hide x-axis for the first subplot
@@ -2119,7 +2125,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     ax2 = fig.add_subplot(gs[1, 0])
     add_colored_bands(ax2)
     ax2.plot(range(len(x_absis)), stats_y, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
-    ax2.set_ylabel(y_label + " $Q_Y$" + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax2.set_ylabel(y_label + " $_{QY}$ " + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
     figure_axes_desidn(ax2, label_rot)
     ax2.get_xaxis().set_visible(False)  # Hide x-axis for the second subplot
 
@@ -2127,8 +2133,14 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     ax3 = fig.add_subplot(gs[2, 0])
     add_colored_bands(ax3)
     ax3.plot(range(len(x_absis)), stats_z, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
-    ax3.set_ylabel(y_label + " $Q_Z$" + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
-    ax3.set_xlabel('Pressure (GPa)',fontsize=f_s_labels,labelpad=labelpad)
+    ax3.set_ylabel(y_label + " $_{QZ}$ " + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax3.set_xlabel("")  # remove default
+    ax3.annotate('Pressure (GPa)', 
+                 xy=(0, -0.2), xycoords='axes fraction', 
+                 fontsize=f_s_labels, ha='left', va='center', fontweight='bold')
+
+    #ax3.set_xlabel('Pressure (GPa)',fontsize=f_s_labels,labelpad=labelpad)
+    ax3.set_xlabel('')
     ax3.set_xticks(list_indices_to_replace)
     ax3.set_xticklabels(list_presure_to_show, rotation=label_rot)
     
@@ -2187,6 +2199,139 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
 
 
 
+def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names, 
+                                stat_param_names=None, desired_order=None, 
+                                line_style="-",linewidth=4,markersize=15,rotation_x=45,
+                                font_size=24, xtick_fontsize=18,
+                                list_of_particle_to_plot=None,rect =[0, 0, 1, 0.97],
+                                save_fig=None, x_label="Stage"):
+    """
+    Creates a figure with multiple rows of subplots for statistical parameters.
 
+    Parameters
+    ----------
+    temperatures : array-like
+        X-axis values (e.g., temperature or scan labels).
+    stat_params_groups : list of 3-element lists
+        Each group contains [X, Y, Z] arrays for one stat (e.g., FWHM).
+    particle_names : array-like
+        Names of particles for each datapoint.
+    stat_param_names : list of str, optional
+        Names for the statistical parameter groups.
+    desired_order : array-like, optional
+        Custom x-axis order (e.g., sorted temperatures).
+    line_style : str or None, optional
+        Line style (e.g., "--" or None for markers only).
+    font_size : int, optional
+        Font size for all text elements (bold).
+    xtick_fontsize : int, optional
+        Font size (bold) for x-tick labels only.
+    list_of_particle_to_plot : list of str, optional
+        Subset of particle names to plot.
+    save_fig : str or None, optional
+        If provided, saves the plot to this filename.
+    x_label : str, optional
+        X-axis label to use.
 
+    Returns
+    -------
+    None
+    """
+    plt.rcParams.update({
+        'font.weight': 'bold',
+        'axes.titleweight': 'bold',
+        'axes.labelweight': 'bold',
+    })
+    temperatures = np.array(temperatures)
+    particle_names = np.array(particle_names)
+    stat_params_groups = [[np.array(arr) for arr in group] for group in stat_params_groups]
+    
+    if list_of_particle_to_plot is not None:
+        mask = np.isin(particle_names, list_of_particle_to_plot)
+        temperatures = temperatures[mask]
+        particle_names = particle_names[mask]
+        stat_params_groups = [[arr[mask] for arr in group] for group in stat_params_groups]
+    
+    if desired_order is not None:
+        indices = []
+        for t in desired_order:
+            matching = np.where(temperatures == t)[0]
+            if matching.size > 0:
+                indices.extend(matching.tolist())
+        temperatures = temperatures[indices]
+        particle_names = particle_names[indices]
+        stat_params_groups = [[arr[indices] for arr in group] for group in stat_params_groups]
+    
+    if desired_order is not None:
+        unique_temps = np.array([t for t in desired_order if t in temperatures])
+        mapping = {temp: i for i, temp in enumerate(unique_temps)}
+        x_numeric = np.array([mapping[t] for t in temperatures])
+    else:
+        unique_temps, x_numeric = np.unique(temperatures, return_inverse=True)
+    
+    n_groups = len(stat_params_groups)
+    n_coords = 3
+    
+    if stat_param_names is None or len(stat_param_names) != n_groups:
+        stat_param_names = [f"StatParam {i+1}" for i in range(n_groups)]
+    
+    unique_particles = np.unique(particle_names)
+    n_particles = len(unique_particles)
+    color_map = matplotlib.cm.get_cmap("tab10", n_particles)
+    particle_to_color = {particle: color_map(i) for i, particle in enumerate(unique_particles)}
+    marker_list = ['o', 's', '^', 'd', 'v', '<', '>', 'P', 'X', '*']
+    particle_to_marker = {particle: marker_list[i % len(marker_list)] for i, particle in enumerate(unique_particles)}
+    
+    fig, axes = plt.subplots(nrows=n_groups, ncols=n_coords, figsize=(18, 6*n_groups), sharex=True, sharey='row')
+    if n_groups == 1:
+        axes = np.array([axes])
+    
+    legend_dict = {}
+    
+    for i_group in range(n_groups):
+        for i_coord in range(n_coords):
+            ax = axes[i_group, i_coord]
+            for particle in unique_particles:
+                idx = np.where(particle_names == particle)[0]
+                x_vals = x_numeric[idx]
+                y_vals = stat_params_groups[i_group][i_coord][idx]
+                ls = line_style if line_style is not None else 'None'
+                
+                line, = ax.plot(x_vals, y_vals,
+                                marker=particle_to_marker[particle],
+                                linestyle=ls,
+                                color=particle_to_color[particle],linewidth=linewidth,ms=markersize,
+                                label=particle)
+                if particle not in legend_dict:
+                    legend_dict[particle] = line
+            
+            coord = ['X', 'Y', 'Z'][i_coord]
+            ax.set_title(f"{stat_param_names[i_group]} {coord}",
+                         fontsize=font_size, fontweight='bold')
+            ax.grid(True)
+            
+            if i_coord == 0:
+                ax.set_ylabel(stat_param_names[i_group],
+                              fontsize=font_size, fontweight='bold')
+            
+            if i_group == n_groups - 1:
+                ax.set_xlabel(x_label, fontsize=font_size, fontweight='bold')
+                ax.set_xticks(np.arange(len(unique_temps)))
+                ax.set_xticklabels(unique_temps, rotation=rotation_x, ha="right",
+                                   fontsize=xtick_fontsize, fontweight='bold')
+            
+            ax.tick_params(axis='y', labelsize=font_size)
+            ax.tick_params(axis='x', labelsize=xtick_fontsize)
+    
+    fig.legend(legend_dict.values(), legend_dict.keys(),
+               loc='upper center', ncol=n_particles,
+               bbox_to_anchor=(0.5, 1.0),
+               fontsize=font_size, frameon=False)
+    
+    plt.tight_layout(rect=rect)
+    
+    if save_fig is not None:
+        plt.savefig(save_fig, bbox_inches='tight')
+    
+    plt.show()
 

@@ -570,10 +570,9 @@ def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
-
-
-def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity in each direction",center_peak=False,save_fig=None,plot=True,eliminate_linear_background=False,log_distribution=False,plot_show=True,f_s=28,
-    f_s_table=18,scale_table=[2, 2],vmin=1e0,vmax=1e6,tight_layout=False,hspace_gridspec=0.05,wspace_gridspec=0.1,y_padding_factor=1.35):
+def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along each direction",center_peak=False,save_fig=None,plot=True,eliminate_linear_background=False,
+                                        log_distribution=False,plot_show=True,f_s=28,
+                                        f_s_table=28,scale_table=[4, 6],vmin=1e0,vmax=1e6,tight_layout=False,hspace_gridspec=0.05,wspace_gridspec=0.1,y_padding_factor=1.05,subplots=(4,3)):
     """
     Analyze the intensity distribution in a 3D dataset along X, Y, and Z directions, 
     computing statistical and shape metrics (FWHM, skewness, etc.) with visual output.
@@ -1003,6 +1002,9 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity in eac
     ##########################################################################################################################
     # === Main Function ===
     plt.style.use('grayscale')
+    plt.rcParams['font.weight'] = 'bold'
+    plt.rcParams['axes.labelweight'] = 'bold'
+    plt.rcParams['axes.titleweight'] = 'bold'
     step_x_fit=0.25
     color_list=('#1f77b4','#2ca02c','#ff7f0e')
     directions=["X","Y","Z"]
@@ -1010,32 +1012,32 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity in eac
     background_degree = 1  # Adjust the degree of the polynomial as needed
     first_and_last_pixel=[0,-1]
     if plot:
-        figsize = get_figure_size(scale=3)
+        figsize = get_figure_size(scale=3,subplots=subplots)
         figure = plt.figure( figsize=figsize, dpi=150)
         figure.set_constrained_layout(True)  # Preferred for automatic handling
         # Define the grid layout with one row for the large subplot and three subplots in the second row
-        gs = gridspec.GridSpec(nrows=3, ncols=3, wspace=wspace_gridspec, hspace=hspace_gridspec,figure=figure)
-        
-        ax_dummy = figure.add_subplot(gs[1, -1])  # Add subplot to the last position (rightmost in the second row)
-        ax_dummy.axis('off')  # Turn off visibility of the dummy subplot        
-        ax = figure.add_subplot(gs[0:2, :])  # Colons (:) span all columns in the first row
-        ax1 = figure.add_subplot(gs[2, 0])
-        ax2 = figure.add_subplot(gs[2, 1])
-        ax3 = figure.add_subplot(gs[2, 2])
+        gs = gridspec.GridSpec(nrows=4, ncols=3, wspace=wspace_gridspec, hspace=hspace_gridspec, figure=figure)
+        ax_table = figure.add_subplot(gs[0, :])
+        ax_table.axis('off')  # This axis will hold only the table
+        ax = figure.add_subplot(gs[1:3, :])  # Main plot
+        ax1 = figure.add_subplot(gs[3, 0])
+        ax2 = figure.add_subplot(gs[3, 1])
+        ax3 = figure.add_subplot(gs[3, 2])
+
         plot_3D_projections(data,ax=[ax1,ax2,ax3],fig=figure,log_scale=True,cmap=my_cmap,vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False)
         ax1.axis('tight')
         ax2.axis('tight')
         ax3.axis('tight')
-        ax1.set_xlabel('$Q_Z$ (pixel)')
-        ax2.set_xlabel('$Q_Z$ (pixel)')
-        ax3.set_xlabel('$Q_Y$ (pixel)')
-        ax1.set_ylabel('$Q_Y$ (pixel)')
-        ax2.set_ylabel('$Q_X$ (pixel)')
-        ax3.set_ylabel('$Q_X$ (pixel)')
+        ax1.set_xlabel('$Q_Z$ $_{(pixels)}$', fontweight='bold')
+        ax2.set_xlabel('$Q_Z$ $_{(pixels)}$', fontweight='bold')
+        ax3.set_xlabel('$Q_Y$ $_{(pixels)}$', fontweight='bold')
+        ax1.set_ylabel('$Q_Y$ $_{(pixels)}$', fontweight='bold')
+        ax2.set_ylabel('$Q_X$ $_{(pixels)}$', fontweight='bold')
+        ax3.set_ylabel('$Q_X$ $_{(pixels)}$', fontweight='bold')
         
-        ax.set_title(plot_title)
-        ax.set_ylabel("Integrated Intensity [a.u.]", fontsize=f_s)
-        ax.set_xlabel("($Q_x,Q_y,Q_z$) (pixel)", fontsize=f_s)
+        ax.set_title(plot_title, pad=20)
+        ax.set_ylabel("Integrated Intensity $_{(a.u.)}$", fontsize=f_s, fontweight='bold')
+        ax.set_xlabel("($Q_x,Q_y,Q_z$) $_{(pixels)}$", fontsize=f_s, fontweight='bold')
         ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
         ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
         # Unify exponent (offset text) font
@@ -1106,9 +1108,9 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity in eac
         # Round numerical values before constructing the table
         rounded_values = np.round(            np.column_stack((fwhm_xyz, fwhm_integral_xyz, skewness_xyz, kurtosis_xyz, rsquared_xyz)), 4        )
         # Create a list of lists to represent the table data
-        table_data = np.vstack((            ['Direction', 'FWHM', 'Integral FWHM', 'Skewness', 'Kurtosis', 'R-squared'],np.column_stack((directions, rounded_values))        )).tolist()
+        table_data = np.vstack((            ['Direction', "FWHM\n$_{(pixels)}$", 'Integral FWHM\n $_{(pixels)}$', 'Skewness', 'Kurtosis', 'R-squared'],np.column_stack((directions, rounded_values))        )).tolist()
         # Create table
-        table = Table(ax, loc='upper left')
+        table = Table(ax_table, loc='upper left')
         table.auto_set_font_size(False)
         table.set_fontsize(f_s_table)
         table.scale(scale_table[0], scale_table[1])  # Adjust scale as needed
@@ -1117,39 +1119,50 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity in eac
             for j, cell in enumerate(row):
                 if isinstance(cell, float):
                     cell = round(cell, 4)
-                table.add_cell(i, j, width=1, height=0.05, text=str(cell),
+                table.add_cell(i, j, width=1/len(table_data[0]), height=0.3, text=str(cell),
                                facecolor='darkblue', loc='center', edgecolor='darkblue')
+
+                #table.add_cell(i, j, width=1, height=0.05, text=str(cell),
+                #               facecolor='darkblue', loc='center', edgecolor='darkblue')
                 text = table[i, j].get_text()
                 text.set_fontsize(f_s_table)                # << set font size here
                 text.set_color('w')
                 text.set_weight('bold')
         # Adjust column widths
-        for col in range(len(table_data[0])):
-            table.auto_set_column_width(col)
-        ax.add_table(table)
-        ax.axis('tight')
+        #for col in range(len(table_data[0])):
+        #    table.auto_set_column_width(col)
+        ax_table.add_table(table)
+        ax_table.axis('tight')
+        
     # Prepare table data
     table_data = [
         ["Metric", "X", "Y", "Z"],
-        ["FWHM", fwhm_xyz[0], fwhm_xyz[1], fwhm_xyz[2]],
-        ["FWHM Integral", fwhm_integral_xyz[0], fwhm_integral_xyz[1], fwhm_integral_xyz[2]],
+        ["FWHM$_{(pixels)}$", fwhm_xyz[0], fwhm_xyz[1], fwhm_xyz[2]],
+        ["FWHM Integral$_{(pixels)}$", fwhm_integral_xyz[0], fwhm_integral_xyz[1], fwhm_integral_xyz[2]],
         ["Skewness", skewness_xyz[0], skewness_xyz[1], skewness_xyz[2]],
         ["Kurtosis", kurtosis_xyz[0], kurtosis_xyz[1], kurtosis_xyz[2]],
     ]
-
+    # Round all numeric values to 4 decimal places
+    rounded_table_data = [
+        [row[0]] + [f"{float(x):.4f}" if isinstance(x, (float, int)) else x for x in row[1:]]
+        for row in table_data
+    ]
+    
+    print(tabulate(rounded_table_data, headers="firstrow", tablefmt="grid"))
 
     if plot:
-        # Apply font size to all axes
         for ax_obj in figure.get_axes():
-            ax_obj.tick_params(labelsize=f_s)  # Tick labels
+            ax_obj.tick_params(labelsize=f_s)  # only label size allowed
+            for label in ax_obj.get_xticklabels() + ax_obj.get_yticklabels():
+                label.set_fontweight('bold')
             ax_obj.title.set_fontsize(f_s)
             ax_obj.xaxis.label.set_size(f_s)
             ax_obj.yaxis.label.set_size(f_s)
             legend = ax_obj.get_legend()
             if legend:
                 for text in legend.get_texts():
+                    text.set_weight('bold')
                     text.set_fontsize(f_s)
-
     if plot:
         y_max = max([max(fit) for fit in fitted_data])
         ax.set_ylim(0, y_padding_factor * y_max)  # Set bottom to 0, top with headroom
@@ -1164,4 +1177,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity in eac
         else:
             plt.close()
     return fwhm_xyz,fwhm_integral_xyz,skewness_xyz,kurtosis_xyz
+
+
+
 

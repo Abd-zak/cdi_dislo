@@ -216,10 +216,12 @@ def initialize():
     chain_centring = cdiutils.CroppingHandler.chain_centring
 
 initialize()
-
-from cdiutils.utils import *
-from cdiutils.plot.volume import plot_3d_object , plot_3d_vector_field , plot_3d_voxels
-from cdiutils.plot.slice import plot_3d_volume_slices , plot_contour ,  plot_slices
+try:
+    from cdiutils.utils import *
+    from cdiutils.plot.volume import plot_3d_object , plot_3d_vector_field , plot_3d_voxels
+    from cdiutils.plot.slice import plot_multiple_volume_slices , plot_contour ,  plot_slices
+except ImportError:
+    print("Failed to import cdiutlis subpackages please check the version or the existance of the package.")    
 
 from scipy.optimize import OptimizeWarning
 warnings.simplefilter("ignore", category=OptimizeWarning)

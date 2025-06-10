@@ -73,7 +73,7 @@ def plot_temperature_and_lattice(nov_2022_best_T_exp, nov_2022_best_T_theo, nov_
 
 def extract_coefficient_and_exponent(number):
     # Extract the exponent
-    exponent = int(math.log10(abs(number)))
+    exponent = int(math.log10(np.abs(number)))
     # Calculate the coefficient
     coefficient = number / (10 ** exponent)
     return coefficient, exponent
@@ -122,7 +122,7 @@ def get_prediction_from_theo_sapphire_lattice(T_celsius, plot=False):
 
     for _ in range(max_iterations):
         calculated_param = calculate_lattice_param(base_param, T_target)
-        if abs(calculated_param - target_param) < tolerance:
+        if np.abs(calculated_param - target_param) < tolerance:
             break
         base_param += (target_param - calculated_param) / 2
 
