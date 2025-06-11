@@ -61,6 +61,7 @@ def optimize_voxel_reciproque_space(
             break
         gridder(a, b, c, density)
         x = gridder.xaxis
+        y = gridder.yaxis
         z = gridder.zaxis
         voxel_size = np.array(
             [(x[-1] - x[0]) / len(x), (y[-1] - y[0]) / len(y), (z[-1] - z[0]) / len(z)]

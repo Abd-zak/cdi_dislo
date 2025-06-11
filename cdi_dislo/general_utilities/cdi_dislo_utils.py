@@ -119,9 +119,13 @@ from scipy.ndimage import map_coordinates
 #####################################################################################################################
 #####################################################################################################################
 def extract_coefficient_and_exponent(number):
-    # Extract the exponent
-    exponent = int(math.log10(np.abs(number)))
-    # Calculate the coefficient
+    """Return (coefficient, exponent) for scientific notation of ``number``.
+
+    Handles ``number`` equal to zero to avoid ``log10`` errors.
+    """
+    if number == 0:
+        return 0.0, 0
+    exponent = int(math.floor(math.log10(abs(number))))
     coefficient = number / (10 ** exponent)
     return coefficient, exponent
 def transform_miller_indices(miller_list):
