@@ -246,7 +246,6 @@ def calculate_epsilon_and_prediction(T_data_exp, results_sapphire_d_spacing, fit
 
     if plot:
         plt.figure(figsize=(20, 21))
-        #plt.style.use('grayscale')
         # First subplot: Temperature Deviation between Experimental and Theoretical Values
         plt.subplot(3, 1, 1)
         plt.plot(T_exp_predict, T_exp_predict - T_theo_predict, 'o')
@@ -560,9 +559,9 @@ def process_scan_data_COM_CRISTAL_2022(
     path_results_code: str,
     path_results_saveplots: str,
     f_s: int = 20,
-    vmin: int = 0,
-    vmax: int = 10,
-    check_a_scan: Optional[str] = None,check_a_particle: Optional[str] = None
+    vmin: int = 1,
+    vmax: int = 12,
+    check_a_scan: Optional[str] = None,check_a_particle: Optional[str] = None ,output_shape=  (200, 200, 200)
 ) -> List[List[Union[str, float, int]]]:
     """
     Process scan data for Center of Mass (COM) analysis from CRISTAL beamline, collected in 2022.
@@ -699,7 +698,7 @@ def process_scan_data_COM_CRISTAL_2022(
 
             com_ = [round(i) for i in C_O_M(data_original_copy)]
             max_coords = get_max_coords(data_original_copy)
-            data_cropped = crop_3darray_pos(data_original_copy, com_, (200, 200, 200))
+            data_cropped = crop_3darray_pos(data_original,output_shape=  output_shape)
             max_crop = get_max_coords(data_cropped)
             com_crop = [round(i) for i in C_O_M(data_cropped)]
 
@@ -708,7 +707,7 @@ def process_scan_data_COM_CRISTAL_2022(
                                     fig_title=fig_title, fig_save_=f"{fig_title}_original.png", f_s=f_s, vmin=vmin, vmax=vmax)
             # Plot cropped data
             plot_summary_difraction(zero_to_nan(data_cropped),com_crop,max_crop,path_save=path_results_saveplots+"cropped/",
-                                    fig_title=fig_title, fig_save_=f"{fig_title}_crop.png", f_s=20, vmin=0, vmax=10)
+                                    fig_title=fig_title, fig_save_=f"{fig_title}_crop.png", f_s=20, vmin=vmin, vmax=vmax)
 
             ressss = [part_name, scan_list_det[i], temp_scan, gamma.mean(), delta.mean(),
                       omega[int(com_[0])], omega.mean(), com_[0], com_[1], com_[2], data_original.max(), data_original.sum(),
@@ -723,11 +722,11 @@ def process_scan_data_COM_id1_avril_2023(
     path_results_code: str,
     path_results_saveplots: str,
     f_s: int = 20,
-    vmin: int = 0,
-    vmax: int = 10,
+    vmin: int = 1,
+    vmax: int = 13,
     len__: int = 30,
     check_a_scan: Optional[str] = None,
-    check_a_particle: Optional[str] = None
+    check_a_particle: Optional[str] = None,output_shape=  (200, 200, 200)
 ) -> list:
     """
     Process scan data for COM (Center of Mass) analysis from ID1 beamline, collected in April 2023.
@@ -879,7 +878,7 @@ def process_scan_data_COM_id1_avril_2023(
                 com_ = [round(i) for i in C_O_M(data_original_copy)]
 
                 # Crop data
-                data_cropped = crop_3darray_pos(data_original_copy, com_, (200, 200, 200))
+                data_cropped = crop_3darray_pos(data_original,output_shape=  output_shape)
                 max_crop = get_max_coords(data_cropped)
                 com_crop = [round(i) for i in C_O_M(data_cropped)]
 
@@ -890,10 +889,8 @@ def process_scan_data_COM_id1_avril_2023(
                                         f_s=f_s, vmin=vmin, vmax=vmax)
 
                 # Plot cropped data
-                plot_summary_difraction(zero_to_nan(data_cropped), com_crop, max_crop,
-                                        path_save=path_results_saveplots+"cropped/",
-                                        fig_title=fig_title, fig_save_=f"{fig_title}_crop.png",
-                                        f_s=f_s, vmin=vmin, vmax=vmax)
+                plot_summary_difraction(zero_to_nan(data_cropped), com_crop, max_crop,path_save=path_results_saveplots+"cropped/",
+                                        fig_title=fig_title, fig_save_=f"{fig_title}_crop.png",f_s=f_s, vmin=vmin, vmax=vmax)
 
                 ressss = [part_name, filename, temp_scan, nu.mean(), delta.mean(), eta[int(com_[0])], eta.mean(),
                           com_[0], com_[1], com_[2], data_original.max(), data_original.sum(), cch[0], cch[1], fact]
@@ -909,11 +906,11 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
     path_results_code: str,
     path_results_saveplots: str,
     f_s: int = 20,
-    vmin: int = 0,
-    vmax: int = 10,
+    vmin: int = 1,
+    vmax: int = 13,
     len__: int = 30,
     check_a_scan: Optional[str] = None,
-    check_a_particle: Optional[str] = None
+    check_a_particle: Optional[str] = None,output_shape=  (200, 200, 200)
 ) -> list:
     """
     Process BCDI data for B12-S1P1 samples collected in January 2024.
@@ -1020,7 +1017,7 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
             com_ = [round(i) for i in C_O_M(data_original_copy)]
 
             # Crop data
-            data_cropped = crop_3darray_pos(data_original_copy, com_, (200, 200, 200))
+            data_cropped = crop_3darray_pos(data_original, output_shape=  output_shape)
             max_crop = get_max_coords(data_cropped)
             com_crop = [round(i) for i in C_O_M(data_cropped)]
 
@@ -1031,13 +1028,10 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
                                     f_s=f_s, vmin=vmin, vmax=vmax)
 
             # Plot cropped data
-            plot_summary_difraction(zero_to_nan(data_cropped), com_crop, max_crop,
-                                    path_save=path_results_saveplots+"cropped/",
-                                    fig_title=fig_title, fig_save_=f"{fig_title}_crop.png",
-                                    f_s=f_s, vmin=vmin, vmax=vmax)
+            plot_summary_difraction(zero_to_nan(data_cropped), com_crop, max_crop,path_save=path_results_saveplots+"cropped/",
+                                    fig_title=fig_title, fig_save_=f"{fig_title}_crop.png",f_s=f_s, vmin=vmin, vmax=vmax)
 
-            ressss = [part_name, filename, temp_scan, nu.mean(), delta.mean(),
-                      eta[int(com_[0])], eta.mean(), com_[0], com_[1], com_[2],
+            ressss = [part_name, filename, temp_scan, nu.mean(), delta.mean(),eta[int(com_[0])], eta.mean(), com_[0], com_[1], com_[2],
                       data_original.max(), data_original.sum(), 363.908464, 144.5]
 
             print(ressss)
@@ -1051,11 +1045,11 @@ def process_scan_data_COM_id1_june_2024(
     path_results_code: str,
     path_results_saveplots: str,
     f_s: int = 20,
-    vmin: int = 0,
-    vmax: int = 10,
+    vmin: int = 1,
+    vmax: int = 13,
     len__: int = 100,
     check_a_scan: Optional[str] = None,
-    check_a_particle: Optional[str] = None
+    check_a_particle: Optional[str] = None,output_shape=  (200, 200, 200)
 ) -> Tuple[List[List[Union[str, int, float]]], List[Tuple[str, str, str, str]]]:
     """
     Process scan data for Center of Mass (COM) analysis from ID1 beamline, collected in June 2024.
@@ -1094,18 +1088,16 @@ def process_scan_data_COM_id1_june_2024(
     
         max_coords = get_max_coords(data_copy)
         com = [int(round(i)) for i in C_O_M(data_copy)]
-        data_cropped = crop_3darray_pos(data_copy, com, (200,200,200))
+        data_cropped = crop_3darray_pos(data_original, output_shape=  output_shape)
         max_crop = get_max_coords(data_cropped)
         com_crop = [round(i) for i in C_O_M(data_cropped)]
         
         fig_title = f"{part_name} | {temp} °C | S{scan}"
         fig_save_ = f"{part_name}_{temp}_S{scan}.png"
         
-        plot_summary_difraction(data_original, com, max_coords, 
-                                path_save=path_results_saveplots+"original/",
+        plot_summary_difraction(data_original, com, max_coords, path_save=path_results_saveplots+"original/",
                                 fig_title=fig_title, fig_save_=fig_save_, f_s=f_s, vmin=vmin, vmax=vmax)
-        plot_summary_difraction(data_cropped, com_crop, max_crop, 
-                                path_save=path_results_saveplots+"cropped/",
+        plot_summary_difraction(data_cropped, com_crop, max_crop, path_save=path_results_saveplots+"cropped/",
                                 fig_title=fig_title, fig_save_=fig_save_, f_s=f_s, vmin=vmin, vmax=vmax)
     
         return [part_name, scan, temp, nu.mean(), delta.mean(), eta[int(com[0])], eta.mean(), *com, 

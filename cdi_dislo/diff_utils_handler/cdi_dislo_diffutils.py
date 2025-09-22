@@ -770,14 +770,15 @@ def get_abc_direct_space_sixs2019(
     return a, b, c
 
 
-def orth_sixs2019_gridder_def(dim, delta, gamma, mu, cch=[193, 201], wanted_shape=None):
+def orth_sixs2019_gridder_def(dim, delta, gamma, mu, cch=[193, 201], wanted_shape=None,
+                             nrj = 8.5 # energie du faisceau de rayons X
+                             ):
     # %%
     degree = np.pi / 180.0
     beta = 2 * degree
     dd = 1.215e6  # distance detecteur-echantillon en micron
     tp = 55  # taille pixel detecteur en micron
     cch = cch  # position du faisceau direct pour delta et gamma nuls
-    nrj = 8.5  # energie du faisceau de rayons X
     lamb = 12.398 / nrj  # longueur d'onde correspondante en angstrom
 
     ############ application du masque

@@ -24,7 +24,7 @@ from . import StrainTiltCalculation
 from . import Orthogonalization_real_space     
 from . import Support_transfert
 from . import Orthogonalization_reciprocal_space
-
+from . import plot_utilities_alien
 __all__=["alien_removal_3D_utilities",
          "plot_utilities",
          "CreateVTI",
@@ -49,10 +49,8 @@ __all__=["alien_removal_3D_utilities",
          "StrainTiltCalculation",
          "Orthogonalization_real_space",
          "Support_transfert",
-         "Orthogonalization_reciprocal_space"
+         "Orthogonalization_reciprocal_space",
+        'plot_utilities_alien'
         ]
-
-
-
 
 

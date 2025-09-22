@@ -118,6 +118,93 @@ from scipy.ndimage import map_coordinates
 
 #####################################################################################################################
 #####################################################################################################################
+#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+def save_vti_from_dictdata(dict_data,filename_save,voxel_sizes,amplitude_threshold=0.01):
+    list_keys= [i_key for i_key,item in dict_data.items() ]
+    list_item= [item for i_key,item in dict_data.items() ]
+    gu.save_to_vti(filename=filename_save,voxel_size=tuple(voxel_sizes),tuple_array=list_item,tuple_fieldnames=list_keys,    amplitude_threshold=0.01,)
+    return 
+def center_angles(angles):
+    """
+    Centers a list of angles between -max_angle and max_angle.
+
+    Parameters:
+        angles (list or np.ndarray): List of angles in degrees or radians.
+        max_angle (float): Maximum angle for centering.
+
+    Returns:
+        np.ndarray: Angles centered between -max_angle and max_angle.
+    """
+    min_angle=np.nanmin(angles)
+    # Convert angles to a numpy array for vectorized operations
+    angles = np.array(angles)
+    shift_tozero=(angles - min_angle)
+    # Normalize angles to [-max_angle, max_angle]
+    max_angle_new=(np.nanmax(shift_tozero))/2
+    centered_angles = shift_tozero - max_angle_new
+    
+    return centered_angles
+# Normalize vector
+def normalize_vector(v):
+    norm = np.linalg.norm(v)
+    return v / norm if norm > 1e-12 else v
+
+# Project vector onto plane perpendicular to another vector
+def project_vector(v, t):
+    v = np.array(v, dtype=np.float64)  # Ensure `v` is a NumPy array
+    t = np.array(t, dtype=np.float64)  # Ensure `t` is a NumPy array
+    return v - (np.dot(v, t) / np.linalg.norm(t)**2) * t
+
+
+
+def fill_up_support(support, plot=False):
+    '''
+    Modify the support by filling any hole inside.
+    '''
+    
+    def process_axis(support, axis):
+        support_cum = np.cumsum(support, axis=axis)
+        support_cum_inv = np.flip(np.cumsum(np.flip(support, axis=axis), axis=axis), axis=axis)
+        support_combine = support_cum * support_cum_inv
+        return support_combine
+
+    def fill_up_support_parallel(support):
+        support_convex = np.zeros(support.shape)
+        
+        # Create remote tasks for each axis
+        futures = [process_axis(support, axis) for axis in range(support.ndim)]
+        
+        # Get results
+        results = futures
+        
+        # Combine results
+        for result in results:
+            support_convex[result != 0] = 1
+        
+        return support_convex
+
+    support_convex = fill_up_support_parallel(support)
+
+    if plot:
+        plot_2D_slices_middle_one_array3D(support, cmap='gray_r', fig_title='original support')
+        plot_2D_slices_middle_one_array3D(support_convex, cmap='gray_r', fig_title='filled support')
+
+    return support_convex
+
+
+
+
+def nan_to_zero(phase):
+    return np.nan_to_num(phase, nan=0)
+
+#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+
+
+    
 def extract_coefficient_and_exponent(number):
     # Extract the exponent
     exponent = int(math.log10(np.abs(number)))
@@ -209,40 +296,7 @@ def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=
 
     return valid_directions
 
-# Normalize vector
-def normalize_vector(v):
-    norm = np.linalg.norm(v)
-    return v / norm if norm > 1e-12 else v
 
-# Project vector onto plane perpendicular to another vector
-def project_vector(v, t):
-    v = np.array(v, dtype=np.float64)  # Ensure `v` is a NumPy array
-    t = np.array(t, dtype=np.float64)  # Ensure `t` is a NumPy array
-    return v - (np.dot(v, t) / np.linalg.norm(t)**2) * t
-
-
-
-
-def center_angles(angles):
-    """
-    Centers a list of angles between -max_angle and max_angle.
-
-    Parameters:
-        angles (list or np.ndarray): List of angles in degrees or radians.
-        max_angle (float): Maximum angle for centering.
-
-    Returns:
-        np.ndarray: Angles centered between -max_angle and max_angle.
-    """
-    min_angle=np.nanmin(angles)
-    # Convert angles to a numpy array for vectorized operations
-    angles = np.array(angles)
-    shift_tozero=(angles - min_angle)
-    # Normalize angles to [-max_angle, max_angle]
-    max_angle_new=(np.nanmax(shift_tozero))/2
-    centered_angles = shift_tozero - max_angle_new
-    
-    return centered_angles
 
 
 def find_max_and_com_3d(data, window_size=10):
@@ -286,45 +340,7 @@ def find_max_and_com_3d(data, window_size=10):
 
     return max_pos, com_pos
 
-def fill_up_support(support, plot=False):
-    '''
-    Modify the support by filling any hole inside.
-    '''
-    
-    def process_axis(support, axis):
-        support_cum = np.cumsum(support, axis=axis)
-        support_cum_inv = np.flip(np.cumsum(np.flip(support, axis=axis), axis=axis), axis=axis)
-        support_combine = support_cum * support_cum_inv
-        return support_combine
 
-    def fill_up_support_parallel(support):
-        support_convex = np.zeros(support.shape)
-        
-        # Create remote tasks for each axis
-        futures = [process_axis(support, axis) for axis in range(support.ndim)]
-        
-        # Get results
-        results = futures
-        
-        # Combine results
-        for result in results:
-            support_convex[result != 0] = 1
-        
-        return support_convex
-
-    support_convex = fill_up_support_parallel(support)
-
-    if plot:
-        plot_2D_slices_middle_one_array3D(support, cmap='gray_r', fig_title='original support')
-        plot_2D_slices_middle_one_array3D(support_convex, cmap='gray_r', fig_title='filled support')
-
-    return support_convex
-
-
-
-
-def nan_to_zero(phase):
-    return np.nan_to_num(phase, nan=0)
 def format_as_4digit_string(number):
     return f"{number:04d}"
 
@@ -937,8 +953,8 @@ def crop_3darray_pos(data, output_shape=[100,100,100], methods=["max", "com"],ve
     # Calculate padding
     pad_before = output_shape // 2 - pos 
     pad_after = np.maximum((pos + output_shape // 2 + output_shape % 2) - orig_shape, 0) + k_add
-    print(pad_before)
-    print(pad_after)
+    #print(pad_before)
+    #print(pad_after)
     pad_after=[i if i>0 else 0 for i in pad_after]
     pad_before=[i if i>0 else 0 for i in pad_before]
     # Pad the array
@@ -1521,7 +1537,7 @@ def pad_to_shape(arr, target_shape, pad_value=0):
 
     return padded_arr
 
-def optimize_cropping(data):
+def optimize_cropping(data,min_sym_crop=True):
     """
     Optimize cropping around the center of mass (COM) while avoiding zero cropping.
 
@@ -1551,7 +1567,10 @@ def optimize_cropping(data):
     crop_width_x = max(last_nonzero_x - first_nonzero_x + 1, 0)
 
     # Return the maximum crop width among the three directions
-    return max(crop_width_z, crop_width_y, crop_width_x)
+    if min_sym_crop:
+        return max(crop_width_z, crop_width_y, crop_width_x)
+    else:
+        return (crop_width_z, crop_width_y, crop_width_x)
 def get_size_3D_pixel(data):
     """
     Calculate the maximum width for cropping in any direction based on the non-zero elements along each axis.

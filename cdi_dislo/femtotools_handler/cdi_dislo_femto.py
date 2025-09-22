@@ -5,11 +5,11 @@
 
 # 1. Missing Imports:
 #    - The script relies on wildcard imports from `cdi_dislo.common_imports`, which can obscure dependencies.
-#    - Ensure that all required functions and modules (e.g., numpy, matplotlib, pandas, seaborn, scipy, warnings, h5py) 
+#    - Ensure that all required functions and modules (e.g, numpy, matplotlib, pandas, seaborn, scipy, warnings, h5py) 
 #      are explicitly imported if needed.
 
 # 2. Outlier Handling:
-#    - Some filtering conditions use hardcoded thresholds (e.g., `if np.min(Force_drops_max[i]) > 1e6`).
+#    - Some filtering conditions use hardcoded thresholds (e.g, `if np.min(Force_drops_max[i]) > 1e6`).
 #    - Consider making these thresholds configurable or dynamically adjusting based on the data distribution.
 
 # 3. Function Argument Validation:
@@ -143,7 +143,7 @@ def calculate_burgers_modulus(a0, direction):
 
     Parameters:
     - a0 (float): Lattice constant in meters.
-    - direction (tuple): Direction vector (e.g., (1, 1, 1)).
+    - direction (tuple): Direction vector (e.g, (1, 1, 1)).
 
     Returns:
     - b (float): The magnitude of the Burgers vector in meters.
@@ -937,12 +937,11 @@ def analyze_results(data, path_pwd,Area_particles,S=(500*10**-9)**2,indenter_typ
         
     plot_mechanical_properties(slopes_elastic, f_max_elastic_x, f_max_elastic_y, test_part, include_sapphire=False, plot_fit=True,save_plot=path_pwd + "plot_mechanical_properties_without_sapphire.png")
     plot_mechanical_properties(slopes_elastic, f_max_elastic_x, f_max_elastic_y, test_part, include_sapphire=True, plot_fit=True,save_plot=path_pwd + "plot_mechanical_properties_with_sapphire.png")
-
-
-
     return test_part,velocity
+    
 #------------------------------------------------------------------------------------------------------------
-def analyze_force_displacement(Displacement_cal, ForceA, test_part, test, phase, path_pwd,indenter_type="cube_corner",font_size=24):
+def analyze_force_displacement(Displacement_cal, ForceA, test_part, test, phase, path_pwd,indenter_type="cube_corner",font_size=24,
+                               markersize_Approach =4  ,markersize_Compression=3,markersize_Holding=2    ,markersize_Release =1  ,markersize=5 ):
     """
     Analyze force vs. displacement data for multiple tests, identifying elastic and plastic phases, 
     and performing linear regressions to determine slopes.
@@ -1033,10 +1032,10 @@ def analyze_force_displacement(Displacement_cal, ForceA, test_part, test, phase,
         y_phase_4 = np.where(phase[i_real] == 4)[0]  # release phase
 
         plt.xlim(get_xmin_nonzero_fromnoiseddata_femtotools(x, y)-1, x.max() + 1)
-        plt.plot(x[y_phase_1], y[y_phase_1], ".", markersize=5, label="Approach"   )
-        plt.plot(x[y_phase_2], y[y_phase_2], ".", markersize=2, label="Compression")
-        plt.plot(x[y_phase_3], y[y_phase_3], ".", markersize=2, label="Holding"    )
-        plt.plot(x[y_phase_4], y[y_phase_4], ".", markersize=1, label="Release"    )
+        plt.plot(x[y_phase_1], y[y_phase_1], ".",alpha=0.75, markersize=markersize_Approach   , label="Approach"   )
+        plt.plot(x[y_phase_2], y[y_phase_2], ".",alpha=0.75, markersize=markersize_Compression, label="Compression")
+        plt.plot(x[y_phase_3], y[y_phase_3], ".",alpha=0.75, markersize=markersize_Holding    , label="Holding"    )
+        plt.plot(x[y_phase_4], y[y_phase_4], ".",alpha=0.75, markersize=markersize_Release    , label="Release"    )
 
         x_values_fit = np.linspace(min(x), max(x), 100)
 
@@ -1141,7 +1140,7 @@ def analyze_force_displacement(Displacement_cal, ForceA, test_part, test, phase,
 
                 # Plot the fitted lines
                 plt.plot(x_values_fit, y_values_phase1_plasticurve_fit,color="red" ,linewidth=2)
-                plt.plot(x_phase1_for_fit_plastic_comb, y_phase1_for_fit_plastic_comb,'.',markersize=1,color="red" ,linewidth=2)
+                plt.plot(x_phase1_for_fit_plastic_comb, y_phase1_for_fit_plastic_comb,'.',markersize=markersize,color="red" ,linewidth=2)
                 # Add the fit equations as text annotations
                 equation_phase1_elastic = f'F = {coefficients_phase1_elastic[0]:.2f} 	ΔL + {coefficients_phase1_elastic[1]:.2f}'
                 equation_phase1_plastic = f'F = {coefficients_phase1_plastic[0]:.2f} 	ΔL + {coefficients_phase1_plastic[1]:.2f}'
@@ -1357,7 +1356,7 @@ def get_reordering_indices(original_list, target_order):
     return reordering_indices
 # Function to fit and plot data
 #------------------------------------------------------------------------------------------------------------
-def fit_and_plot_data(x_data, y_data, x_fit, target_slope, slope_tolerance, color):
+def fit_and_plot_data(x_data, y_data, x_fit, target_slope, slope_tolerance, color,markersize=5):
     """
     Fits the data with constrained slope and plots the results.
 
@@ -1397,7 +1396,7 @@ def fit_and_plot_data(x_data, y_data, x_fit, target_slope, slope_tolerance, colo
 
     # Plot the fitted line
     plt.plot(x_values_fit, y_values_fit, linewidth=1, color=color)
-    plt.plot(x_data, y_data, ".", markersize=1, color=color)
+    plt.plot(x_data, y_data, ".", markersize=markersize, color=color)
     return slope, intercept, x_values_fit, y_values_fit
 #------------------------------------------------------------------------------------------------------------
 def get_alldrops_fits_coeficients_and_functions(x_phase1_for_fit_plastic_comb,  
@@ -1460,7 +1459,7 @@ def get_alldrops_fits_coeficients_and_functions(x_phase1_for_fit_plastic_comb,
     
     return coefficients_phase1_plastic_all, poly_function_phase1_plastic_all, x_phase1_plastic_all, y_phase1_plastic_all
 #------------------------------------------------------------------------------------------------------------
-def get_x_y_of_drops_plastic(x, y, plot_debug=False, checker_retour=True, threshold=-3):
+def get_x_y_of_drops_plastic(x, y, plot_debug=False, checker_retour=True, threshold=-3,markersize=5):
     """
     Get the x and y values of drops in plastic based on the given data.
     
@@ -1477,10 +1476,8 @@ def get_x_y_of_drops_plastic(x, y, plot_debug=False, checker_retour=True, thresh
     """
     # Find minimum and maximum x values
     x_min, xmax = x.min(), x.max()
-    
     # Find the index of the minimum x value
     trig_min = np.where(x == x_min)[0][0]
-    
     try:
         list_slope_local, mean_slope_all = [], []
         
@@ -1509,11 +1506,9 @@ def get_x_y_of_drops_plastic(x, y, plot_debug=False, checker_retour=True, thresh
         
         # Calculate the new y values based on the mean slope
         new_y_phase1 = (y - x * mean_slope_all[0])
-        
     except:
         # If an exception occurs, set new_y_phase1 to y - 5 * x
         new_y_phase1 = (y - x * 5.)
-    
     # Find rising and falling edges
     threshold = threshold
     rising_edges = list(np.where(np.gradient((new_y_phase1).astype(int)) < threshold)[0])
@@ -1529,13 +1524,12 @@ def get_x_y_of_drops_plastic(x, y, plot_debug=False, checker_retour=True, thresh
         for i in range(len(rising_edges) - 1):
             start_index = rising_edges[i] + 1
             end_index = rising_edges[i + 1] - 2
-            plt.plot(x[start_index:end_index], new_y_phase1[start_index:end_index], ".", markersize=1., label=i)
+            plt.plot(x[start_index:end_index], new_y_phase1[start_index:end_index], ".", markersize=markersize, label=i)
             plt.title("Debug plot ")
             plt.xlabel("Disp ")
             plt.ylabel(f"F- {np.round(mean_slope_all[0], 1)}Disp ")
         plt.legend(ncols=4)
         plt.show()
-    
     # Extract x and y values of drops based on rising edges
     drops_results_x, drops_results_y = [], []
     for i in range(len(rising_edges) - 1):
@@ -1549,8 +1543,9 @@ def get_x_y_of_drops_plastic(x, y, plot_debug=False, checker_retour=True, thresh
             continue
         drops_results_x.append(x_local)
         drops_results_y.append(y_local)
-    
     return drops_results_x, drops_results_y
+#------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------
 def constrained_polyfit(x, y, target_slope, slope_tolerance, method="poly"):
     """
@@ -1596,6 +1591,8 @@ def constrained_polyfit(x, y, target_slope, slope_tolerance, method="poly"):
         residuals =( (y - (slope * x + intercept))**2).sum()
         return slope, intercept, residuals
 #------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
 def fit_with_min_residual(x, y, target_slope, slope_tolerance):
     """
     Fit the given data with the minimum residual method, using both "poly" and "scipy" methods.
@@ -1624,9 +1621,371 @@ def fit_with_min_residual(x, y, target_slope, slope_tolerance):
     else:
         return "scipy.minimize", slope_scipy, intercept_scipy, residuals_scipy
 #------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
 def process_femtotools_data(datadir,stifnessmachine=21400,force_max_platine=200,plot_alltest=True,plot_selected_test=True,noise_level=0.75,
-                            save_figure=None,wanted_test_part=None,wanted_test=None,title=''
-                           ):
+                            save_figure=None,wanted_test_part=None,wanted_test=None,title='',font_size=80,markersize=20,xlabel_pad=40,ylabel_pad=40,unit_figsize=[16,16],unit_figsize_ind=(24,24), shift_xtick=True,                           ):
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import ScalarFormatter
+    import numpy as np
+    import math
+    from matplotlib import rcParams
+    from matplotlib.ticker import MaxNLocator
+    import matplotlib.lines as mlines
+    from matplotlib.ticker import ScalarFormatter
+    class CustomSciFormatter(ScalarFormatter):
+        def _set_format(self):
+            self.format = "%1.1f"  # Prevents 1e+X display
+    
+        def get_offset(self):
+            exp = self.orderOfMagnitude
+            if exp == 0:
+                return ''
+            return r"$\times\ 10^{{{}}}$".format(exp)
+    rcParams['font.size'] = font_size
+    scientific_formatter = CustomSciFormatter()
+    scientific_formatter.set_scientific(True)
+    scientific_formatter.set_powerlimits((-0, 0))   
+
+    import os
+    from pathlib import Path
+    
+    def _sanitize_filename(name: str) -> str:
+        import re
+        if name is None:
+            return "unknown"
+        name = str(name).strip()
+        if name == "":
+            return "unknown"
+        # keep letters, digits, dash, underscore and dot
+        return re.sub(r"[^A-Za-z0-9._-]+", "_", name)
+    
+    def func_plot_single_test(scan_index,part_label,                      # "" if unknown
+        Displacement, Displacement_cal,ForceA, F_denoised,font_size, markersize,xlabel, ylabel,unit_figsize=(24, 24),xlabel_pad=40,
+        ylabel_pad=40,shift_xtick=True,just_calibration=False,title_prefix="",save_dir="",):
+        """
+        Make ONE figure for ONE test (raw+calibrated or just calibrated), apply your axis/formatting,
+        and save it into the provided save_dir. Returns the saved filepath.
+        """
+        from matplotlib.ticker import MaxNLocator
+        import matplotlib.pyplot as plt
+        import numpy as np
+    
+        Path(save_dir).mkdir(parents=True, exist_ok=True)
+    
+        # Figure + axis
+        fig, ax = plt.subplots(figsize=unit_figsize)
+    
+        X1_val = Displacement[scan_index].copy()
+        X2_val = Displacement_cal[scan_index].copy()
+        Y_val  = ForceA[scan_index].copy()
+    
+        # same auto-window + shift logic you use elsewhere
+        left, right = None, None
+        shift_applied = 0.0
+        if Y_val.max() > 1:
+            idx_start = np.where(F_denoised[scan_index] > 1)[0]
+            if len(idx_start) > 0:
+                left  = X1_val[idx_start[0]] - 0.005
+                right = X1_val.max() + 0.005
+                if shift_xtick:
+                    shift_applied = float(left)
+                    X1_val -= shift_applied
+                    X2_val -= shift_applied
+                    right  -= shift_applied
+                    left    = -0.0
+    
+        # plot series
+        if not just_calibration:
+            ax.plot(X1_val, Y_val, ".", markersize=markersize, label="raw")
+        ax.plot(X2_val, Y_val, ".", markersize=markersize, label="calibrated")
+    
+        if (left is not None) and (right is not None):
+            ax.set_xlim(left, right)
+    
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=3, prune='both'))
+        # Reuse your formatter/styling
+        apply_scientific_format(
+            ax,
+            shift_applied=shift_applied,
+            shift_xtick=shift_xtick,
+            font_size=font_size,
+            show_xlabel=True,
+            show_ylabel=True,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            xlabel_pad=xlabel_pad,
+            ylabel_pad=ylabel_pad,
+            rotate_xticks=True,
+            xtick_angle=45
+        )
+    
+        # Title & legend
+        nice_part = part_label if part_label else "unknown"
+        ax.set_title(f"{title_prefix} Test {scan_index} — {nice_part}", fontsize=font_size*0.8,y=1.1)
+        #ax.legend(loc="best", fontsize=font_size*0.7)
+    
+        # Save path
+        kind = "calibrated" if just_calibration else "raw_and_calibrated"
+        part_safe = _sanitize_filename(part_label)
+        fname = f"test_{int(scan_index):03d}__{part_safe}__{kind}.png"
+        out_path = os.path.join(save_dir, fname)
+    
+        plt.tight_layout()
+        plt.savefig(out_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+    
+        return out_path
+    
+    def save_selected_tests_individual(
+        selected_indices, selected_labels,
+        Displacement, Displacement_cal, ForceA, F_denoised,
+        base_save_dir,                    # e.g., save_figure
+        font_size, markersize,
+        title="",
+        unit_figsize=(24,24),
+        xlabel='Disp $_{(µm)}$',
+        ylabel='Force $_{(µN)}$',
+        shift_xtick=True,
+        make_both_kinds=True              # raw+cal AND just-cal
+    ):
+        """
+        Create per-test figures for the chosen tests.
+    
+        Directory structure:
+            base_save_dir/
+                calibrate/
+                    known_particlename/
+                    unknown_particlename/
+                both/
+                    known_particlename/
+                    unknown_particlename/
+        """
+        saved = []
+    
+        # Make sure root subfolders exist
+        for top in ["calibrate", "both"]:
+            for sub in ["known_particlename", "unknown_particlename"]:
+                Path(os.path.join(base_save_dir, top, sub)).mkdir(parents=True, exist_ok=True)
+    
+        for idx, lbl in zip(selected_indices, selected_labels):
+            has_name = isinstance(lbl, str) and (lbl.strip() != "")
+            subdir = "known_particlename" if has_name else "unknown_particlename"
+    
+            # 1) both = raw+calibrated
+            if make_both_kinds:
+                target_dir = os.path.join(base_save_dir, "both", subdir)
+                p1 = func_plot_single_test(
+                    scan_index=idx,
+                    part_label=lbl,
+                    Displacement=Displacement,
+                    Displacement_cal=Displacement_cal,
+                    ForceA=ForceA,
+                    F_denoised=F_denoised,
+                    font_size=font_size,
+                    markersize=markersize,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    unit_figsize=unit_figsize,
+                    xlabel_pad=40, ylabel_pad=40,
+                    shift_xtick=shift_xtick,
+                    just_calibration=False,
+                    title_prefix=title,
+                    save_dir=target_dir,
+                )
+                saved.append(p1)
+    
+            # 2) calibrate = just calibrated
+            target_dir = os.path.join(base_save_dir, "calibrate", subdir)
+            p2 = func_plot_single_test(
+                scan_index=idx,
+                part_label=lbl,
+                Displacement=Displacement,
+                Displacement_cal=Displacement_cal,
+                ForceA=ForceA,
+                F_denoised=F_denoised,
+                font_size=font_size,
+                markersize=markersize,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                unit_figsize=unit_figsize,
+                xlabel_pad=40, ylabel_pad=40,
+                shift_xtick=shift_xtick,
+                just_calibration=True,
+                title_prefix=title,
+                save_dir=target_dir,
+            )
+            saved.append(p2)
+    
+        return saved
+
+
+    def func_plot_alltest(Displacement, ForceA, F_denoised,font_size, markersize, title, save_figure_file, xlabel, ylabel,unit_figsize=[12,16],
+                          n_cols=5, save_figure=True ,   xlabel_pad=40, ylabel_pad=40,shift_xtick=shift_xtick):
+        n_tests = len(Displacement)
+        n_rows = math.ceil(n_tests / n_cols)
+    
+        plt.figure(figsize=(unit_figsize[0]*n_cols, unit_figsize[1]*n_rows))
+    
+        for i, scan in enumerate(range(n_tests)):
+            ax = plt.subplot(n_rows, n_cols, i+1)
+            row_id = i // n_cols
+            col_id = i % n_cols
+            show_xlabel = row_id == n_rows - 1
+            show_ylabel = col_id == 0
+            ax.set_title("Test "+str(scan), fontsize=font_size*0.8)
+            X1_val =Displacement[scan]
+            Y_val =ForceA[scan]
+            
+            shift_applied= 0.0
+            if Y_val.max() > 2:
+                idx_start = np.where(F_denoised[scan] > 1)[0]
+                if len(idx_start) > 0:
+                    left = X1_val[idx_start[0]] - 0.005
+                    right = X1_val.max() + 0.005
+                    if  shift_xtick:
+                        shift_applied = float(left)
+                        X1_val = X1_val - shift_applied
+                        right = right  - shift_applied
+                        left  = - 0.0
+                else:
+                    left,right =None,None
+            else:
+                left,right =None,None
+            ax.plot(X1_val, Y_val, 'bo', markersize=markersize)
+            if ((left is not None) and (right is not None)):
+                ax.set_xlim(left, right)  
+                
+    
+            ax.xaxis.set_major_locator(MaxNLocator(nbins=3, prune='both'))
+            apply_scientific_format(ax,shift_applied=shift_applied,shift_xtick=shift_xtick,font_size=font_size,show_xlabel=show_xlabel,show_ylabel=show_ylabel,xlabel=xlabel,ylabel=ylabel,xlabel_pad=xlabel_pad,ylabel_pad=ylabel_pad,rotate_xticks=True,xtick_angle=45)
+        
+        plt.suptitle(title, y=1.01, fontsize=font_size)
+        plt.tight_layout()
+        if save_figure:
+            plt.savefig(save_figure_file, dpi=150, bbox_inches='tight')
+        plt.show()
+    def apply_scientific_format(ax,shift_applied=0.0,shift_xtick=shift_xtick,xlabel='Disp $_{(µm)}$',ylabel="Force $_{(µN)}$",font_size=14,
+                                show_xlabel=False,show_ylabel=False,show_grid=True,xlabel_pad=40,ylabel_pad=40,tick_direction='out',
+                                rotate_xticks=True,xtick_angle=-45     ):
+        from matplotlib.ticker import ScalarFormatter
+        ax.xaxis.set_major_formatter(scientific_formatter)
+        ax.yaxis.set_major_formatter(scientific_formatter)
+    
+        if show_grid:
+            ax.grid(True, which='major', linestyle='--', linewidth=0.5, alpha=0.3)
+            ax.minorticks_on()
+            ax.grid(True, which='minor', linestyle=':', linewidth=0.3, alpha=0.1)
+        
+        if show_xlabel:
+            xlabel_final = xlabel
+        else:
+            xlabel_final = ''
+        if shift_xtick:
+            rounded_shift = np.round(shift_applied, 3)
+            if rounded_shift != 0:
+                sign = '+' if rounded_shift > 0 else ''
+                xlabel_final = f"{sign}{rounded_shift}\n{xlabel_final}"
+
+        ax.set_xlabel(xlabel_final, fontsize=font_size, labelpad=xlabel_pad)
+        if show_ylabel:
+            ax.set_ylabel(ylabel, fontsize=font_size, labelpad=ylabel_pad)
+    
+        ax.tick_params(axis='both',labelsize=font_size ,direction=tick_direction,length=3,width=0.6,)
+    
+        ax.xaxis.get_offset_text().set_fontsize(font_size )
+        ax.yaxis.get_offset_text().set_fontsize(font_size )
+        # Offset formatting (scientific notation like 1e2)
+        offset_text = ax.xaxis.get_offset_text()
+        offset_text.set_fontsize(font_size )
+        offset_text.set_x(1.0)     # moves to right edge
+        offset_text.set_y(0)       # aligns with tick labels
+        offset_text.set_ha('left')
+        offset_text.set_va('bottom')    
+        # ✅ Rotate x-ticks
+        if rotate_xticks:
+            ax.tick_params(axis='x', labelrotation=xtick_angle)
+    def func_plot_selected_test(wanted_test,wanted_test_part,Displacement, Displacement_cal,ForceA,F_denoised,font_size, markersize, 
+                                title, save_figure_file,xlabel, ylabel, unit_figsize=[12,16], n_cols=5, save_figure=True,    xlabel_pad=40, ylabel_pad=40,just_calibration=False,shift_xtick=shift_xtick):
+        data_l = len(ForceA)
+        n_tests = len(wanted_test_part)
+        n_rows = math.ceil(n_tests / n_cols)
+        fig, axs = plt.subplots(n_rows, n_cols, figsize=(unit_figsize[0]*n_cols, unit_figsize[1]*n_rows))
+        axs = axs.flatten()
+        
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        for i, scan in enumerate(wanted_test):
+            row_id = i // n_cols
+            col_id = i % n_cols
+            show_xlabel = row_id == n_rows - 1
+            show_ylabel = col_id == 0
+            if scan >= data_l:
+                true_scan = scan - data_l
+            else:
+                true_scan = scan
+            ax = axs[i]
+            test_label = f"Test {true_scan} {wanted_test_part[i]}"
+            ax.set_title(test_label, fontsize=font_size * 0.8)
+            X1_val =Displacement[scan]
+            X2_val =Displacement_cal[scan]
+            Y_val =ForceA[scan]
+            shift_applied= 0.0
+            if Y_val.max() > 1:
+                idx_start = np.where(F_denoised[scan] > 1)[0]
+                if len(idx_start) > 0:
+                    left = X1_val[idx_start[0]] - 0.005
+                    right = X1_val.max() + 0.005
+                    if  shift_xtick:
+                        shift_applied = float(left)
+                        X1_val = X1_val - shift_applied
+                        X2_val = X2_val - shift_applied
+                        right = right  - shift_applied
+                        left  = - 0.0
+                else:
+                    left,right =None,None
+            else:
+                left,right =None,None
+            if not just_calibration:
+                ax.plot(X1_val,Y_val,".",markersize=markersize,label='raw');
+            ax.plot(X2_val,Y_val,".",markersize=markersize,label='calibrated')
+            if ((left is not None) and (right is not None)):
+                ax.set_xlim(left, right)         
+            ax.xaxis.set_major_locator(MaxNLocator(nbins=3, prune='both'))
+            apply_scientific_format(ax,shift_applied=shift_applied,shift_xtick=shift_xtick,font_size=font_size,show_xlabel=show_xlabel,show_ylabel=show_ylabel,xlabel=xlabel,ylabel=ylabel,xlabel_pad=xlabel_pad,ylabel_pad=ylabel_pad,rotate_xticks=True,xtick_angle=45)
+        
+        
+        # Remove extra unused axes
+        for j in range(i + 1, len(axs)):
+            fig.delaxes(axs[j])
+        
+        # Add unified legend above all plots
+        # Extract true plot colors from the first subplot (without changing them)
+        raw_color = axs[0].lines[0].get_color() if not just_calibration else 'C0'
+        cal_color = axs[0].lines[-1].get_color()
+        
+        # Create dummy handles with the real colors and larger marker sizes
+        import matplotlib.lines as mlines
+        handles = []
+        if not just_calibration:
+            raw_handle = mlines.Line2D([], [], color=raw_color, marker='.', linestyle='None',
+                                       markersize=markersize * 5, label='raw')
+            handles.append(raw_handle)
+        
+        cal_handle = mlines.Line2D([], [], color=cal_color, marker='.', linestyle='None',
+                                   markersize=markersize * 5, label='calibrated')
+        handles.append(cal_handle)
+        
+        # Add unified figure legend
+        fig.legend(handles=handles, loc='upper center', ncol=2, fontsize=font_size * 0.8, frameon=False)
+
+        # Add title above legend
+        fig.suptitle(title, fontsize=font_size, y=0.95)
+        
+        # Adjust layout to leave space at the top
+        plt.tight_layout(rect=[0, 0, 1, 0.88])
+        if save_figure:
+            plt.savefig(save_figure_file, dpi=150, bbox_inches='tight')
+        plt.show()  
     def process_data(del_test_line, data):
         scan_old,ForceA, Displacement,Phase,Time= 0,[],[],[],[]
         for scan in range(1,len(del_test_line)):
@@ -1660,10 +2019,12 @@ def process_femtotools_data(datadir,stifnessmachine=21400,force_max_platine=200,
         if ii_file==0:
             del_test_line=np.where(data["ForceA"]=="[uN]")[0]
             ForceA_source1, Displacement_source1 ,Phase_source1 ,Time_source1 = process_data(del_test_line, data)
+            Time_source1 = [i/60 for i in Time_source1]
             ForceA, Displacement ,Phase ,Time =  ForceA_source1.copy(), Displacement_source1.copy(),Phase_source1.copy(),Time_source1.copy()
         else:
             del_test_line=np.where(data["ForceA"]=="[uN]")[0]
-            ForceA_source1, Displacement_source1 ,Phase_source1 ,Time_source1 = process_data(del_test_line, data)            
+            ForceA_source1, Displacement_source1 ,Phase_source1 ,Time_source1 = process_data(del_test_line, data)       
+            Time_source1 = [i/60 for i in Time_source1]
             ForceA.extend(ForceA_source1)
             Displacement.extend(Displacement_source1)
             Phase.extend(Phase_source1)
@@ -1689,7 +2050,6 @@ def process_femtotools_data(datadir,stifnessmachine=21400,force_max_platine=200,
     
     # Calibration of the displcement based on the yound modulus of the Tip
     Displacement_cal=[ np.array(Displacement[i])-(1/stifnessmachine)*np.array(ForceA[i]) for i in range(len(ForceA))]
-    
     # The test to be plotted 
     if isinstance(wanted_test_part, (list, tuple, np.ndarray)) and isinstance(wanted_test, (list, tuple, np.ndarray)) :
         print("The selection of tests is skiped as they are provided by user")
@@ -1700,92 +2060,93 @@ def process_femtotools_data(datadir,stifnessmachine=21400,force_max_platine=200,
             if ( ForceA[scan].max()>2 and  ForceA[scan].max()<force_max_platine):
                 trigger_good_test.append(scan)
         trigger_good_test=np.array(trigger_good_test)        
-        
     if plot_alltest:
-        plt.figure(figsize=(25,(len(Displacement_cal)//5)*3));        i=1
-        for scan in range(len(Displacement_cal)):
-            plt.subplot(len(Displacement_cal)//5,6,i);            plt.title("Test "+str(scan),fontsize=20);            plt.plot(Displacement[scan],ForceA[scan],'bo',markersize=1)
-            if ForceA[scan].max()>2:
-                plt.xlim(Displacement[scan][np.where(F_denoised[scan]>1)[0][0]]-0.005)
-            plt.xlabel('Disp (µm)');plt.ylabel('Force (µN)');     i+=1
-        plt.suptitle(title, y=1.01,fontsize=20)
-        plt.tight_layout()
-        if save_figure:
-            plt.savefig(save_figure+'Test_all.png')
-        plt.show()  
-        
-        
-        plt.figure(figsize=(25,(len(Time)//5)*3));        i=1
-        for scan in range(len(Time)):
-            plt.subplot(len(Time)//5,6,i);            plt.title("Test "+str(scan),fontsize=20);            plt.plot(Time[scan],ForceA[scan],'bo',markersize=1)
-            if ForceA[scan].max()>2:
-                plt.xlim(Time[scan][np.where(F_denoised[scan]>1)[0][0]]-0.005)
-            plt.xlabel('Disp (µm)');plt.ylabel('Force (µN)');     i+=1
-        plt.suptitle(title, y=1.01,fontsize=20)
-        plt.tight_layout()
-        if save_figure:
-            plt.savefig(save_figure+'Test_all_force_vs_Time.png')
-        plt.show()      
+        func_plot_alltest(Displacement,ForceA,F_denoised ,font_size,markersize,title,save_figure+'Test_all_force_vs_Disp.png','Disp $_{(µm)}$',"Force $_{(µN)}$",unit_figsize=unit_figsize,n_cols=5)
+        func_plot_alltest(Time        ,ForceA,F_denoised ,font_size,markersize,title,save_figure+'Test_all_force_vs_Time.png',"Time $_{(min)}$" ,"Force $_{(µN)}$",unit_figsize=unit_figsize,n_cols=5)
+   
     if plot_selected_test:
-        
-        if isinstance(wanted_test_part, (list, tuple, np.ndarray)) and isinstance(wanted_test, (list, tuple, np.ndarray)) :
-            len_raw        =int(len(wanted_test_part)//4)
-            plt.figure(figsize=(20,len_raw*5));            plt.subplots_adjust(wspace=0.4, hspace=0.4); i,ii_lab=0,0
-            for scan in (wanted_test):
-                true_scan=scan
-                if scan>data_l:
-                    true_scan=scan-data_l
-                plt.subplot(len_raw,5,i+1);
-                plt.plot(Displacement[scan],ForceA[scan],".",markersize=1,label='raw'); plt.plot(Displacement_cal[scan],ForceA[scan],".",markersize=1,label='calibrated')
-                if ForceA[scan].max()>1:
-                    plt.xlim(Displacement[scan][np.where(F_denoised[scan]>1)[0][0]]-0.005,Displacement[scan].max()+0.005)
-                plt.xlabel('Disp (µm)');plt.ylabel('Force (µN)');plt.grid(alpha=0.1);plt.legend();plt.title("Test "+str(true_scan)+" "+wanted_test_part[ii_lab] ,fontsize=20) ; i+=1;ii_lab+=1
-            plt.suptitle(title, y=1.01,fontsize=20)
-            plt.tight_layout()
-            if save_figure:
-                plt.savefig(save_figure+'Test_seluser_raw_and_calibration.png')
-            plt.show()  
-            
-            plt.figure(figsize=(20,len_raw*5));plt.subplots_adjust(wspace=0.4, hspace=0.4); i,ii_lab=0,0
-            for scan in (wanted_test):
-                true_scan=scan
-                if scan>data_l:                    true_scan=scan-data_l
-                plt.subplot(len_raw,5,i+1);  plt.plot(Displacement_cal[scan],ForceA[scan],".",markersize=1)
-                if ForceA[scan].max()>1:
-                    plt.xlim(Displacement[scan][np.where(F_denoised[scan]>1)[0][0]]-0.005,Displacement[scan].max()+0.005)
-                plt.xlabel('Disp (µm)');plt.ylabel('Force (µN)');plt.grid(alpha=0.1);plt.title("Test "+str(true_scan)+" "+wanted_test_part[ii_lab] ,fontsize=20) ;  i+=1 ;ii_lab+=1;
-            plt.suptitle(title, y=1.01,fontsize=20)
-            plt.tight_layout()
-            if save_figure:                plt.savefig(save_figure+'Test_seluser_calibration.png')
-            plt.show()  
+        if isinstance(wanted_test_part, (list, tuple, np.ndarray)) and isinstance(wanted_test, (list, tuple, np.ndarray)):
+            # existing combined grids
+            func_plot_selected_test(
+                wanted_test, wanted_test_part,
+                Displacement, Displacement_cal, ForceA, F_denoised,
+                font_size, markersize, title,
+                save_figure+'Test_seluser_raw_and_calibration.png',
+                'Disp $_{(µm)}$', "Force $_{(µN)}$",
+                unit_figsize=unit_figsize, n_cols=5, save_figure=True,
+                xlabel_pad=40, ylabel_pad=40, shift_xtick=shift_xtick
+            )
+            func_plot_selected_test(
+                wanted_test, wanted_test_part,
+                Displacement, Displacement_cal, ForceA, F_denoised,
+                font_size, markersize, title,
+                save_figure+'Test_seluser_calibration.png',
+                'Disp $_{(µm)}$', "Force $_{(µN)}$",
+                unit_figsize=unit_figsize, n_cols=5, save_figure=True,
+                xlabel_pad=40, ylabel_pad=40, just_calibration=True, shift_xtick=shift_xtick
+            )
+    
+            # NEW: per-test figures (known particle names)
+            _ = save_selected_tests_individual(
+                selected_indices=list(wanted_test),
+                selected_labels=list(wanted_test_part),
+                Displacement=Displacement,
+                Displacement_cal=Displacement_cal,
+                ForceA=ForceA,
+                F_denoised=F_denoised,
+                base_save_dir=save_figure,          # will create save_figure/per_test/known_particlename/
+                font_size=font_size*1.2,
+                markersize=markersize,
+                title=title,
+                unit_figsize=unit_figsize_ind,
+                xlabel='Disp $_{(µm)}$',
+                ylabel='Force $_{(µN)}$',
+                shift_xtick=shift_xtick,
+                make_both_kinds=True
+            )
+    
         else:
-            len_raw        =int(len(trigger_good_test)//4)            
-            plt.figure(figsize=(20,len_raw*5))
-            i=1
-            for scan in trigger_good_test:
-                plt.subplot(len_raw,5,i);   plt.title("Test "+str(scan),fontsize=20)
-                plt.plot(Displacement[scan],ForceA[scan],".",markersize=1,label='raw');   plt.plot(Displacement_cal[scan],ForceA[scan],".",markersize=1,label='calibrated')   
-                if ForceA[scan].max()>1:
-                    plt.xlim(Displacement[scan][np.where(F_denoised[scan]>1)[0][0]]-0.005,Displacement[scan].max()+0.005)
-                plt.xlabel('Disp (µm)');  plt.ylabel('Force (µN)');  plt.legend();    i+=1
-            plt.suptitle(title, y=1.01,fontsize=20)
-            plt.tight_layout()
-            if save_figure:
-                plt.savefig(save_figure+'Test_selthresholdF_raw_and_calibration.png')
-            plt.show()  
-            plt.figure(figsize=(20,len_raw*5))
-            i=1
-            for scan in trigger_good_test:
-                plt.subplot(len_raw,5,i);     plt.title("Test "+str(scan),fontsize=20)
-                plt.plot(Displacement_cal[scan],ForceA[scan],".",markersize=1)   
-                if ForceA[scan].max()>1:
-                    plt.xlim(Displacement[scan][np.where(F_denoised[scan]>1)[0][0]]-0.005,Displacement[scan].max()+0.005)
-                plt.xlabel('Disp (µm)'); plt.ylabel('Force (µN)');  i+=1
-            plt.suptitle(title, y=1.01,fontsize=20)
-            plt.tight_layout()
-            if save_figure:
-                plt.savefig(save_figure+'Test_selthresholdF__calibration.png')
-            plt.show()  
+            dummy_labels = ["" for _ in trigger_good_test]
+    
+            # existing combined grids
+            func_plot_selected_test(
+                trigger_good_test, dummy_labels,
+                Displacement, Displacement_cal, ForceA, F_denoised,
+                font_size, markersize, title,
+                save_figure + 'Test_selthresholdF_raw_and_calibration.png',
+                'Disp $_{(µm)}$', "Force $_{(µN)}$",
+                unit_figsize=unit_figsize, n_cols=5, save_figure=True,
+                xlabel_pad=40, ylabel_pad=40, shift_xtick=shift_xtick
+            )
+            func_plot_selected_test(
+                trigger_good_test, dummy_labels,
+                Displacement, Displacement_cal, ForceA, F_denoised,
+                font_size, markersize, title,
+                save_figure + 'Test_selthresholdF__calibration.png',
+                'Disp $_{(µm)}$', "Force $_{(µN)}$",
+                unit_figsize=unit_figsize, n_cols=5, save_figure=True,
+                xlabel_pad=40, ylabel_pad=40, just_calibration=True, shift_xtick=shift_xtick
+            )
+    
+            # NEW: per-test figures (unknown particle names)
+            _ = save_selected_tests_individual(
+                selected_indices=list(trigger_good_test),
+                selected_labels=dummy_labels,
+                Displacement=Displacement,
+                Displacement_cal=Displacement_cal,
+                ForceA=ForceA,
+                F_denoised=F_denoised,
+                base_save_dir=save_figure,          # will create save_figure/per_test/unknown_particlename/
+                font_size=font_size*1.2,
+                markersize=markersize,
+                title=title,
+                unit_figsize=unit_figsize_ind,
+                xlabel='Disp $_{(µm)}$',
+                ylabel='Force $_{(µN)}$',
+                shift_xtick=shift_xtick,
+                make_both_kinds=True
+            )
+
     for i in range(len(ForceA)):
         i_real=i#wanted_test[i]    
         print(ForceA[i_real].shape,Displacement[i_real].shape,Phase[i_real].shape,Time[i_real].shape)
@@ -1797,9 +2158,11 @@ def process_femtotools_data(datadir,stifnessmachine=21400,force_max_platine=200,
         'Phase':Phase,
         'Time':Time
     }
+
+    
     return data_summary
 #------------------------------------------------------------------------------------------------------------
-def denoise_data_femtotools(x,y,method='Moving Average',noise_level=1,debug_plot=False,times_denoise=1):
+def denoise_data_femtotools(x,y,method='Moving Average',noise_level=1,debug_plot=False,times_denoise=1,markersize=5):
     # Define denoising methods
     window=5
     y_noisy= y+ np.random.normal(0, noise_level, len(y))
@@ -1824,8 +2187,8 @@ def denoise_data_femtotools(x,y,method='Moving Average',noise_level=1,debug_plot
                 print(f"{method_name} - MSE: {mse:.4f}")
                 # Plot the results
                 plt.figure(figsize=(10, 6))
-                plt.plot(x, y,".",markersize=1, label='True Signal')
-                plt.plot(x, y_denoised,".",markersize=1, label='Denoised Signal')
+                plt.plot(x, y,".",markersize=markersize, label='True Signal')
+                plt.plot(x, y_denoised,".",markersize=markersize, label='Denoised Signal')
                 plt.title(f"{method_name} Denoising")
                 plt.xlabel("x");                    plt.ylabel("y");                    plt.legend()
                 plt.xlim(x[np.where(y_denoised>1)[0][0]]-0.005)
@@ -1834,12 +2197,16 @@ def denoise_data_femtotools(x,y,method='Moving Average',noise_level=1,debug_plot
             y=array(y_denoised) 
     return y_denoised
 #------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
 def get_xmin_nonzero_fromnoiseddata_femtotools(x,y):
     y_denoised=denoise_data_femtotools(x,y,noise_level=0.05,method='Moving Average',debug_plot=False,times_denoise=2)
     indice_first_contact=np.where(y_denoised>1)[0]
     x_min=x[indice_first_contact][0]-0.005
     return x_min
 
+#------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------
 def save_data_hdf5(data, filename):
     with h5py.File(filename, 'w') as f:

@@ -242,14 +242,10 @@ def doniach_sunjic(x, I0, gamma, beta, alpha):
     term1 = I0 * (1 + (x / gamma)**2)**(-beta)
     term2 = alpha * I0 * np.exp(-(x / gamma))
     return term1 + term2
-
-
 # Skewed Lorentzian profile
 def skewed_lorentzian(x, A, x0, gamma, delta):
     term1 = (1 / (np.pi * gamma)) * (gamma**2 / ((x - x0 - delta)**2 + gamma**2))
     return A * term1
-
-
 def pseudo_voigt_fwhm(sigma, gamma,eta ):
     """Calculates the FWHM of a pseudo-Voigt distribution.
 
@@ -426,24 +422,33 @@ def find_fwhm_all(x_data_fit, y_fit):
                 fwhm = 0
     return fwhm 
 #-------------------------------------------------------------------------------------------------------------
-def integral_fwhm(x, y):
+def integral_fwhm(x, y, method='trapz'):
     """
     Compute the Integral Full-Width at Half Maximum (Integral FWHM).
 
-    Parameters:
+    Parameters
+    ----------
     x : numpy.ndarray
         The x-axis values (e.g., pixel positions or spatial coordinates).
     y : numpy.ndarray
         The corresponding y-axis values (intensity or function values).
+    method : str, optional
+        Integration method: 'trapz' (default) or 'simps'.
 
-    Returns:
+    Returns
+    -------
     float
         The Integral FWHM value.
     """
-    integral_intensity = np.trapz(y, x)  # Numerical integration
+    if method == 'trapz':
+        integral_intensity = np.trapz(y, x)  # Trapezoidal integration
+    elif method == 'simps':
+        integral_intensity = scipy.integrate.simps(y, x)  # Simpson's rule
+    else:
+        raise ValueError("method must be 'trapz' or 'simps'")
+
     peak_max = np.max(y)
-    
-    return integral_intensity / peak_max if peak_max != 0 else 0
+    return integral_intensity / peak_max if peak_max != 0 else 0.0
 
 def fwhm_integral_1(x, y):
     """
@@ -551,6 +556,7 @@ def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
                 continue  
 
     return best_profile
+    
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
@@ -571,8 +577,8 @@ def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
 def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along each direction",center_peak=False,save_fig=None,plot=True,eliminate_linear_background=False,
-                                        log_distribution=False,plot_show=True,f_s=28,
-                                        f_s_table=28,scale_table=[4, 6],vmin=1e0,vmax=1e6,tight_layout=False,hspace_gridspec=0.05,wspace_gridspec=0.1,y_padding_factor=1.05,subplots=(4,3)):
+                                        log_distribution=False,plot_show=True,f_s=24,marker_size=60,linewidth=6,alpha_fit=0.5,
+                                        f_s_table=20,scale_table=[4, 6],vmin=1e0,vmax=1e6,tight_layout=False,hspace_gridspec=0.05,wspace_gridspec=0.1,y_padding_factor=1.05,subplots=(4,3),step_qxqyqz=None):
     """
     Analyze the intensity distribution in a 3D dataset along X, Y, and Z directions, 
     computing statistical and shape metrics (FWHM, skewness, etc.) with visual output.
@@ -671,6 +677,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
     from scipy.signal import find_peaks
     from scipy.optimize import curve_fit
     from matplotlib.colors import LogNorm
+    import scipy.integrate
 
     import matplotlib
     def MIR_Colormap():
@@ -811,24 +818,34 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         return (fig_width_in, fig_height_in)
 
     #-------------------------------------------------------------------------------------------------------------
-    def integral_fwhm(x, y):
+    def integral_fwhm(x, y, method='trapz'):
         """
         Compute the Integral Full-Width at Half Maximum (Integral FWHM).
     
-        Parameters:
+        Parameters
+        ----------
         x : numpy.ndarray
             The x-axis values (e.g., pixel positions or spatial coordinates).
         y : numpy.ndarray
             The corresponding y-axis values (intensity or function values).
+        method : str, optional
+            Integration method: 'trapz' (default) or 'simps'.
     
-        Returns:
+        Returns
+        -------
         float
             The Integral FWHM value.
         """
-        integral_intensity = np.trapz(y, x)  # Numerical integration
+        if method == 'trapz':
+            integral_intensity = np.trapz(y, x)  # Trapezoidal integration
+        elif method == 'simps':
+            integral_intensity = scipy.integrate.simps(y, x)  # Simpson's rule
+        else:
+            raise ValueError("method must be 'trapz' or 'simps'")
+    
         peak_max = np.max(y)
-        
-        return integral_intensity / peak_max if peak_max != 0 else 0
+        return integral_intensity / peak_max if peak_max != 0 else 0.0
+
     #-------------------------------------------------------------------------------------------------------------
     def find_fwhm_all(x_data_fit, y_fit):
         """
@@ -918,97 +935,195 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         
         fwhm = x_data[right_peak] - x_data[left_peak]
         return fwhm
-    def plot_3D_projections(data,mask=None, alpha_mask=.3,ax=None, fig=None, fw=4,fig_title=None, axes_labels=False, colorbar=False,log_scale=True,
-                            log_threshold=False,max_projection=False,vmin=None,vmax=None,fontsize=15,cmap=None,tight_layout=True):
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        import xrayutilities as xu
-        def add_colorbar_subplot(fig, axes, imgs,
-                                 size='5%',
-                                 tick_fontsize=12,
-                                 return_cbar=False):
-            
-            
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    from matplotlib.colors import LogNorm
+    from matplotlib.ticker import MaxNLocator
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import xrayutilities as xu
+    
+
+    def plot_3D_projections(data, mask=None, alpha_mask=0.3, ax=None, fig=None, fw=4, fig_title=None,
+                            axes_labels=True, colorbar=False, log_scale=True, log_threshold=False,
+                            max_projection=False, vmin=None, vmax=None, fontsize=15, cmap=None,
+                            tight_layout=True, step_qxqyqz=None):
+        def format_unit_label(axis_label, exponent):
+            if exponent is None or exponent == 0:
+                return rf"{axis_label} (Å$^{{-1}}$)"
+            return rf"{axis_label} (10$^{{{exponent}}}$×Å$^{{-1}}$)"
+
+        def add_colorbar_subplot(fig, axes, imgs, size='5%', tick_fontsize=12, return_cbar=False):
             if not isinstance(imgs, list):
                 imgs = [imgs]
                 axes = [axes]
-            
             cbar_list = []
             for im, ax in zip(imgs, np.array(axes).flatten()):
                 divider = make_axes_locatable(ax)
                 cax = divider.append_axes('right', size=size, pad=0.05)
                 cbar = fig.colorbar(im, cax=cax, orientation='vertical')
-                cax.tick_params(labelsize=tick_fontsize)  # Set tick fontsize here
+                cax.tick_params(labelsize=tick_fontsize)
                 cbar_list.append(cbar)
+            return cbar_list if return_cbar else None
+    
+        def apply_sci_format_imshow(ax, axis="both", fontsize=10):
+            exponents = {"x": None, "y": None}
         
-            if return_cbar:
-                return cbar_list
-            else:
-                return
+            if axis in ("x", "both"):
+                ax.ticklabel_format(style='sci', axis='x', scilimits=(-1, 1))
+                ax.xaxis.get_offset_text().set_fontsize(fontsize)
+                ax.xaxis.get_offset_text().set_weight("normal")
+                ax.figure.canvas.draw()
+                offset_x = ax.xaxis.get_offset_text().get_text().replace("−", "-")
+                if "e" in offset_x:
+                    exponent = int(offset_x.split("e")[-1])
+                    exponents["x"] = exponent
+                    # REMOVE this line:
+                    # ax.ticklabel_format(style='plain', axis='x')
+                    ax.xaxis.get_offset_text().set_visible(False)
+        
+            if axis in ("y", "both"):
+                ax.ticklabel_format(style='sci', axis='y', scilimits=(-1, 1))
+                ax.yaxis.get_offset_text().set_fontsize(fontsize)
+                ax.yaxis.get_offset_text().set_weight("normal")
+                ax.figure.canvas.draw()
+                offset_y = ax.yaxis.get_offset_text().get_text().replace("−", "-")
+                if "e" in offset_y:
+                    exponent = int(offset_y.split("e")[-1])
+                    exponents["y"] = exponent
+                    # REMOVE this line:
+                    # ax.ticklabel_format(style='plain', axis='y')
+                    ax.yaxis.get_offset_text().set_visible(False)
+        
+            return exponents
+
+
         if cmap is None:
-            cmap=my_cmap
-        
+            cmap = my_cmap
+    
         if fig is None:
-            if colorbar:
-                fig, ax = plt.subplots(1,3, figsize=(3.5*fw,fw))
-            else:
-                fig, ax = plt.subplots(1,3, figsize=(3*fw,fw))
-            
+            fig, ax = plt.subplots(1, 3, figsize=(3.5 * fw, fw) if colorbar else (3 * fw, fw))
+    
         plots = []
-            
+        axis_titles =  [
+                        ("$Q_y$", "$Q_z$"),
+                        ("$Q_x$", "$Q_z$"),
+                        ("$Q_x$", "$Q_y$")
+                        ]if step_qxqyqz else [
+                        ("detector horizontal", "detector vertical"),
+                        ("detector horizontal", "rocking curve"),
+                        ("detector vertical", "rocking curve")
+                        ]
+
+    
         for n in range(3):
-            if max_projection:
-                img = np.nanmax(data,axis=n)
+            img = np.nanmax(data, axis=n) if max_projection else np.nansum(data, axis=n)
+    
+            if step_qxqyqz is not None:
+                shape = img.shape
+                if n == 0:
+                    extent = [
+                        (-shape[1]/2) * step_qxqyqz[1], (shape[1]/2) * step_qxqyqz[1],
+                        (-shape[0]/2) * step_qxqyqz[2], (shape[0]/2) * step_qxqyqz[2],
+                    ]
+                elif n == 1:
+                    extent = [
+                        (-shape[1]/2) * step_qxqyqz[0], (shape[1]/2) * step_qxqyqz[0],
+                        (-shape[0]/2) * step_qxqyqz[2], (shape[0]/2) * step_qxqyqz[2],
+                    ]
+                elif n == 2:
+                    extent = [
+                        (-shape[1]/2) * step_qxqyqz[0], (shape[1]/2) * step_qxqyqz[0],
+                        (-shape[0]/2) * step_qxqyqz[1], (shape[0]/2) * step_qxqyqz[1],
+                    ]
             else:
-                img = np.nansum(data, axis=n)
+                extent = None
+    
             if log_scale:
                 if log_threshold:
-                    
-                    plots.append(ax[n].matshow(xu.maplog(img,5,0),cmap=cmap, aspect='auto', vmin=vmin,vmax=vmax))
+                    img = np.log10(np.clip(img, 1e-5, None))
+                    plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', vmin=vmin, vmax=vmax, extent=extent, origin='lower'))
                 else:
-                    plots.append(ax[n].matshow(img,cmap=cmap, aspect='auto', norm=LogNorm(vmin=vmin,vmax=vmax)))
+                    norm = LogNorm(vmin=vmin, vmax=vmax)
+                    plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', norm=norm, extent=extent, origin='lower'))
             else:
-                plots.append(ax[n].matshow(img,cmap=cmap, aspect='auto', vmin=vmin,vmax=vmax))
-                
-            if mask is not None :
+                plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', vmin=vmin, vmax=vmax, extent=extent, origin='lower'))
+    
+            if mask is not None:
                 mask_plot = np.nanmean(mask, axis=n)
                 mask_plot[mask_plot != 0.] = 1.
-                ax[n].imshow( np.dstack([mask_plot, np.zeros(mask_plot.shape),
-                                         np.zeros(mask_plot.shape), alpha_mask*mask_plot]), aspect='auto')
+                overlay = np.dstack([mask_plot, np.zeros_like(mask_plot),
+                                     np.zeros_like(mask_plot), alpha_mask * mask_plot])
+                ax[n].imshow(overlay, aspect='auto', extent=extent, origin='lower')
+    
+            ax[n].tick_params(axis='both', labelsize=fontsize)
+            ax[n].xaxis.set_major_locator(MaxNLocator(nbins=3))
+            ax[n].yaxis.set_major_locator(MaxNLocator(nbins=3))
+    
+            if step_qxqyqz is not None:
+                exp_dict = apply_sci_format_imshow(ax[n], axis="both", fontsize=fontsize)
+                x_exp = exp_dict["x"]
+                y_exp = exp_dict["y"]
                 
-        if axes_labels:
-            ax[0].set_xlabel('detector horizontal', fontsize=fontsize*fw/4)
-            ax[0].set_ylabel('detector vertical', fontsize=fontsize*fw/4)
-            
-            ax[1].set_xlabel('detector horizontal', fontsize=fontsize*fw/4)
-            ax[1].set_ylabel('rocking curve', fontsize=fontsize*fw/4)
-            
-            ax[2].set_xlabel('detector vertical', fontsize=fontsize*fw/4)
-            ax[2].set_ylabel('rocking curve', fontsize=fontsize*fw/4)
-        ax[0].tick_params(axis='y', labelsize=fontsize)
-        ax[0].tick_params(axis='x', labelsize=fontsize)
-        ax[1].tick_params(axis='y', labelsize=fontsize)
-        ax[1].tick_params(axis='x', labelsize=fontsize)
-        ax[2].tick_params(axis='y', labelsize=fontsize)
-        ax[2].tick_params(axis='x', labelsize=fontsize)
-            
+            if axes_labels and step_qxqyqz is not None:
+                xlabel = format_unit_label(axis_titles[n][0], x_exp)
+                ylabel = format_unit_label(axis_titles[n][1], y_exp)
+                ax[n].set_xlabel(xlabel, fontsize=fontsize * fw / 4, fontweight='bold')
+                ax[n].set_ylabel(ylabel, fontsize=fontsize * fw / 4, fontweight='bold')
+
+    
         if colorbar:
-            add_colorbar_subplot(fig, ax, plots,tick_fontsize=fontsize)
-            
+            add_colorbar_subplot(fig, ax, plots, tick_fontsize=fontsize)
+    
         if fig_title is not None:
-            fig.suptitle(fig_title, fontsize=fontsize*fw/4)
+            fig.suptitle(fig_title, fontsize=fontsize * fw / 4)
+    
         if tight_layout:
             fig.tight_layout()
+    
         return fig
+
+    def apply_sci_format(ax, fontsize=10):
+        # Y-axis
+        y_formatter = mticker.ScalarFormatter(useMathText=True)
+        y_formatter.set_scientific(True)
+        y_formatter.set_powerlimits((-2, 1))
+        y_formatter.set_useOffset(False)
+        ax.yaxis.set_major_formatter(y_formatter)
+    
+        # X-axis
+        x_formatter = mticker.ScalarFormatter(useMathText=True)
+        x_formatter.set_scientific(True)
+        x_formatter.set_powerlimits((0, 0))  # Always sci-notation
+        x_formatter.set_useOffset(False)
+        ax.xaxis.set_major_formatter(x_formatter)
+    
+        # Styling offset text (if any)
+        ax.xaxis.get_offset_text().set_fontsize(fontsize)
+        ax.yaxis.get_offset_text().set_fontsize(fontsize)
+        ax.xaxis.get_offset_text().set_weight("normal")
+        ax.yaxis.get_offset_text().set_weight("normal")
     ##########################################################################################################################
     # === Main Function ===
     plt.style.use('grayscale')
     plt.rcParams['font.weight'] = 'bold'
     plt.rcParams['axes.labelweight'] = 'bold'
     plt.rcParams['axes.titleweight'] = 'bold'
+    plt.rcParams.update({
+        'lines.linewidth'      : linewidth,       # Global line width
+        'lines.markersize'     : marker_size,     # Global marker size
+        'axes.labelsize'       : f_s,       # Label font size
+        'axes.titlesize'       : f_s,       # Title font size
+        'xtick.labelsize'      : f_s,      # Tick label size
+        'ytick.labelsize'      : f_s,
+        'legend.fontsize'      : f_s,
+        'font.weight'          : 'bold',
+        'axes.labelweight'     : 'bold',
+        'axes.titleweight'     : 'bold',
+        'figure.dpi': 150 ,          # Save quality
+    })
     step_x_fit=0.25
     color_list=('#1f77b4','#2ca02c','#ff7f0e')
     directions=["X","Y","Z"]
-    
     background_degree = 1  # Adjust the degree of the polynomial as needed
     first_and_last_pixel=[0,-1]
     if plot:
@@ -1024,52 +1139,45 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         ax2 = figure.add_subplot(gs[3, 1])
         ax3 = figure.add_subplot(gs[3, 2])
 
-        plot_3D_projections(data,ax=[ax1,ax2,ax3],fig=figure,log_scale=True,cmap=my_cmap,vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False)
+        plot_3D_projections(data,ax=[ax1,ax2,ax3],fig=figure,log_scale=True,cmap=my_cmap,vmin=vmin,vmax=vmax,colorbar=True,tight_layout=False,step_qxqyqz=step_qxqyqz,fontsize=f_s)
         ax1.axis('tight')
         ax2.axis('tight')
         ax3.axis('tight')
-        ax1.set_xlabel('$Q_Z$ $_{(pixels)}$', fontweight='bold')
-        ax2.set_xlabel('$Q_Z$ $_{(pixels)}$', fontweight='bold')
-        ax3.set_xlabel('$Q_Y$ $_{(pixels)}$', fontweight='bold')
-        ax1.set_ylabel('$Q_Y$ $_{(pixels)}$', fontweight='bold')
-        ax2.set_ylabel('$Q_X$ $_{(pixels)}$', fontweight='bold')
-        ax3.set_ylabel('$Q_X$ $_{(pixels)}$', fontweight='bold')
-        
+
+        unit_label = '$(\mathrm{\AA}^{-1})$' if step_qxqyqz else '$_{(pixels)}$'
+
         ax.set_title(plot_title, pad=20)
         ax.set_ylabel("Integrated Intensity $_{(a.u.)}$", fontsize=f_s, fontweight='bold')
-        ax.set_xlabel("($Q_x,Q_y,Q_z$) $_{(pixels)}$", fontsize=f_s, fontweight='bold')
-        ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
-        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
-        # Unify exponent (offset text) font
-        offset_text = ax.yaxis.get_offset_text()
-        offset_text.set_fontsize(f_s)
-        offset_text.set_weight("normal")  # or "bold"
-        ax.yaxis.set_offset_position('left')
-        #figure.tight_layout()
+        ax.set_xlabel(f"($Q_x,Q_y,Q_z$) {unit_label}", fontsize=f_s, fontweight='bold')
+        apply_sci_format(ax, fontsize=f_s)
+    #figure.tight_layout()
     axes = [(1,2), (0,2), (0,1)]
     data_sum_all                    = [data.sum(axis=axis)                                                     for axis in axes]  # Vectorized summation
     X_data_all                      = [np.arange(len(d))                                                       for d in data_sum_all]  # Avoid recomputation
     X_fit_all                       = [np.linspace(0, len(d), int(len(d) / step_x_fit))                        for d in data_sum_all]  # More robust
     peak_positions = [np.argmax(d) for d in data_sum_all]
     h_len = min(min(peak_positions), min(len(d) - p for d, p in zip(data_sum_all, peak_positions))) - 1
-    
     if center_peak:
         data_sum_all = [d[max(0, peak-h_len):peak+h_len] for d, peak in zip(data_sum_all, peak_positions)]
         X_data_all = [np.arange(len(d)) for d in data_sum_all]
         X_fit_all = [np.linspace(0, len(d), int(len(d) / step_x_fit)) for d in data_sum_all]
-
     if eliminate_linear_background:
         background_coefficients_all = [np.polyfit(X_data_all[d][first_and_last_pixel], data_sum_all[d][first_and_last_pixel], background_degree)        for d in range(len(data_sum_all))]
         background_fit_all          = [np.polyval(background_coefficients_all[d], X_data_all[d] )                                                        for d in range(len(data_sum_all))]
         data_sum_all                = [data_sum_all[d] - background_fit_all[d]      for d in range(len(data_sum_all))]
-        
     skewness_xyz                    = np.array([skew(d)                                 for d in data_sum_all])
     kurtosis_xyz                    = np.array([kurtosis(d)                             for d in data_sum_all])
     fits                            = [fit_best_profile_with_noise(X_data_all[i], data_sum_all[i], X_fit_all[i]) for i in range(len(data_sum_all))]
     names, popt_xyz, rsquared_xyz, fitted_data, fwhm_xyz, fwhm_integral_xyz = zip(*fits)
+    # Apply unit scaling if step_qxqyqz is provided
+    if step_qxqyqz is not None:
+        for i in range(3):
+            X_data_all[i] = X_data_all[i].astype(float) * step_qxqyqz[i]
+            X_fit_all[i] = X_fit_all[i].astype(float) * step_qxqyqz[i]
+        fwhm_xyz = [f * step for f, step in zip(fwhm_xyz, step_qxqyqz)]
+        fwhm_integral_xyz = [f * step for f, step in zip(fwhm_integral_xyz, step_qxqyqz)]
     if plot and log_distribution:
         ax.set_yscale('log')
-
     for i in range(len(data_sum_all)):
         if i==0:            axis,direction=(1,2),"X"
         if (i==1):          axis,direction=(0,2),"Y"
@@ -1083,10 +1191,8 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         if plot:
             fit_safe = np.clip(fitted_data[i], 1e-12, None)
             scatter_safe = np.clip(data_sum_all[i], 1e-12, None)
-            ax.scatter(X_data_all[i], scatter_safe, s=10, color=color_list[i])
-            ax.plot(X_fit_all[i], fit_safe, color=color_list[i], label=f"Fit {direction} {names[i]}")
-
-
+            ax.scatter(X_data_all[i], scatter_safe, s=marker_size, color=color_list[i])
+            ax.plot(X_fit_all[i], fit_safe, color=color_list[i], alpha=alpha_fit,label=f"Fit {direction} {names[i]}")
     if plot:
         data_sum_fit_max = np.array([max(fit) for fit in fitted_data])  # Get max values for each fitted dataset
         data_sum_fit_max_max = data_sum_fit_max.max()  # Overall max value for normalization
@@ -1096,60 +1202,89 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
                 half_max_norm = 0.51 * data_sum_fit_max[i] / data_sum_fit_max_max
             except ZeroDivisionError:
                 half_max_norm = 0.5  # Fallback to mid-range if fit is flat
-                
-            ax.axvline(x=popt[1] - fwhm_xyz[i] / 2, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
-            ax.axvline(x=popt[1] + fwhm_xyz[i] / 2, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
+            step = step_qxqyqz[i] if step_qxqyqz is not None else 1.0
+            
+            center_scaled = popt_xyz[i][1] * step       # popt[1] is in pixels → convert if needed
+            fwhm_scaled   = fwhm_xyz[i]                 # already scaled if you applied step_qxqyqz
+            
+            fwhm_line_m = center_scaled - fwhm_scaled / 2
+            fwhm_line_p = center_scaled + fwhm_scaled / 2
+
+            ax.axvline(x=fwhm_line_m, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
+            ax.axvline(x=fwhm_line_p, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
 
         ax.tick_params(labelsize=f_s)
         ax.grid(alpha=0.01)
         ax.legend(loc="best")
-
     if plot:
-        # Round numerical values before constructing the table
-        rounded_values = np.round(            np.column_stack((fwhm_xyz, fwhm_integral_xyz, skewness_xyz, kurtosis_xyz, rsquared_xyz)), 4        )
-        # Create a list of lists to represent the table data
-        table_data = np.vstack((            ['Direction', "FWHM\n$_{(pixels)}$", 'Integral FWHM\n $_{(pixels)}$', 'Skewness', 'Kurtosis', 'R-squared'],np.column_stack((directions, rounded_values))        )).tolist()
-        # Create table
+        # Stack FWHM and Integral FWHM values
+        fwhm_xyz = np.array(fwhm_xyz)
+        fwhm_integral_xyz = np.array(fwhm_integral_xyz)
+        
+        fwhm_values = np.concatenate([fwhm_xyz, fwhm_integral_xyz])
+        exponents = np.floor(np.log10(np.abs(fwhm_values[np.nonzero(fwhm_values)]))).astype(int)
+        
+        # Choose exponent closest to zero
+        chosen_exp = exponents[np.abs(exponents).argmin()]
+        scale_factor = 10 ** (-chosen_exp)
+        
+        # Format values scaled by this exponent
+        scaled_fwhm = fwhm_xyz * scale_factor
+        scaled_fwhm_integral = fwhm_integral_xyz * scale_factor
+
+        # Replace original values in table row construction
+        rounded_values = np.column_stack((
+            np.round(scaled_fwhm         ,2),
+            np.round(scaled_fwhm_integral,2),
+            np.round(skewness_xyz, 1),
+            np.round(kurtosis_xyz, 1),
+            np.round(rsquared_xyz, 1)
+        ))
+        
+        # Now format unit string with common exponent
+        unit_str = f"$\\times 10^{{{chosen_exp}}}\\;\\mathrm{{\\AA}}^{{-1}}$" if step_qxqyqz else '$_{(pixels)}$'
+        # Determine units
+        directions = ['X', 'Y', 'Z']
+        # Build table data for plot
+        table_data = [['Direction',
+                       f"FWHM\n{unit_str}",
+                       f"Integral FWHM\n{unit_str}",
+                       'Skewness', 'Kurtosis', 'R-squared']] + \
+                     [[directions[i]] + list(map(str, rounded_values[i])) for i in range(3)]
+    
+        # Create matplotlib table on ax_table
         table = Table(ax_table, loc='upper left')
         table.auto_set_font_size(False)
         table.set_fontsize(f_s_table)
-        table.scale(scale_table[0], scale_table[1])  # Adjust scale as needed
-        # Add table data
+        table.scale(scale_table[0], scale_table[1])
+    
         for i, row in enumerate(table_data):
             for j, cell in enumerate(row):
-                if isinstance(cell, float):
-                    cell = round(cell, 4)
-                table.add_cell(i, j, width=1/len(table_data[0]), height=0.3, text=str(cell),
-                               facecolor='darkblue', loc='center', edgecolor='darkblue')
-
-                #table.add_cell(i, j, width=1, height=0.05, text=str(cell),
-                #               facecolor='darkblue', loc='center', edgecolor='darkblue')
+                table.add_cell(i, j,
+                               width=1/len(row),
+                               height=0.3,
+                               text=str(cell),
+                               facecolor='darkblue',
+                               loc='center',
+                               edgecolor='darkblue')
                 text = table[i, j].get_text()
-                text.set_fontsize(f_s_table)                # << set font size here
-                text.set_color('w')
+                text.set_fontsize(f_s_table)
+                text.set_color('white')
                 text.set_weight('bold')
-        # Adjust column widths
-        #for col in range(len(table_data[0])):
-        #    table.auto_set_column_width(col)
-        ax_table.add_table(table)
-        ax_table.axis('tight')
-        
-    # Prepare table data
-    table_data = [
-        ["Metric", "X", "Y", "Z"],
-        ["FWHM$_{(pixels)}$", fwhm_xyz[0], fwhm_xyz[1], fwhm_xyz[2]],
-        ["FWHM Integral$_{(pixels)}$", fwhm_integral_xyz[0], fwhm_integral_xyz[1], fwhm_integral_xyz[2]],
-        ["Skewness", skewness_xyz[0], skewness_xyz[1], skewness_xyz[2]],
-        ["Kurtosis", kurtosis_xyz[0], kurtosis_xyz[1], kurtosis_xyz[2]],
-    ]
-    # Round all numeric values to 4 decimal places
-    rounded_table_data = [
-        [row[0]] + [f"{float(x):.4f}" if isinstance(x, (float, int)) else x for x in row[1:]]
-        for row in table_data
-    ]
     
-    print(tabulate(rounded_table_data, headers="firstrow", tablefmt="grid"))
-
+        # Add table to axis
+        ax_table.add_table(table)
+        ax_table.axis('off')
+    # Print summary table in console
+    console_table = [
+        ["Metric", "X", "Y", "Z"],
+        [f"FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_xyz],
+        [f"Integral FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_integral_xyz],
+        ["Skewness"] + [f"{x:.4f}" for x in skewness_xyz],
+        ["Kurtosis"] + [f"{x:.4f}" for x in kurtosis_xyz],
+        ["R-squared"] + [f"{x:.4f}" for x in rsquared_xyz],
+    ]
+    print(tabulate(console_table, headers="firstrow", tablefmt="grid"))
     if plot:
         for ax_obj in figure.get_axes():
             ax_obj.tick_params(labelsize=f_s)  # only label size allowed
@@ -1165,12 +1300,15 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
                     text.set_fontsize(f_s)
     if plot:
         y_max = max([max(fit) for fit in fitted_data])
+        x_max = max([max(fit) for fit in X_data_all])
         ax.set_ylim(0, y_padding_factor * y_max)  # Set bottom to 0, top with headroom
-
+        ax.set_xlim(0, y_padding_factor * x_max)  # Set bottom to 0, top with headroom
     if tight_layout:
         figure.tight_layout()
     if save_fig:
-        plt.savefig(save_fig)            
+        figure.savefig(save_fig)
+        #plt.savefig(save_fig)     
+        print(f"saving figure to : {save_fig}")
     if plot:
         if plot_show:
             plt.show()

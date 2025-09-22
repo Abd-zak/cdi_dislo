@@ -96,7 +96,7 @@ warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 
 # Plotting configurations
 rcParams.update({
-    "font.family": "Liberation Serif",  # Use for titles, labels, and body text
+    #"font.family": "Liberation Serif",  # Use for titles, labels, and body text
     "font.size": 12,         # General font size
     "axes.labelsize": 14,    # X and Y labels font size
     "xtick.labelsize": 12,   # X-axis tick labels
@@ -105,7 +105,11 @@ rcParams.update({
     "axes.titlesize": 16,    # Title font size
     "savefig.bbox": "tight",
 })
-
+rcParams.update({
+    'font.weight': 'bold',
+    'axes.titleweight': 'bold',
+    'axes.labelweight': 'bold',
+})
 # ANSI colors for terminal output
 RED_COLOR = "\033[91m"
 RESET_COLOR = "\033[0m"
@@ -226,5 +230,15 @@ except ImportError:
 from scipy.optimize import OptimizeWarning
 warnings.simplefilter("ignore", category=OptimizeWarning)
 
+import matplotlib as mpl
+
+mpl.rcParams['grid.linewidth'] = 2.0
+mpl.rcParams['axes.linewidth'] = 2.0  # axis box (spines)
+mpl.rcParams['grid.linestyle'] = 'dotted'
+mpl.rcParams['grid.alpha'] = 0.5
+mpl.rcParams['xtick.major.width'] = 2       # Tick bar thickness
+mpl.rcParams['ytick.major.width'] = 2
+mpl.rcParams['xtick.major.size'] = 8          # Tick bar length
+mpl.rcParams['ytick.major.size'] = 8
 
 

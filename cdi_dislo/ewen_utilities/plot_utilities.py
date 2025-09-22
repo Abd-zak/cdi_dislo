@@ -3,12 +3,9 @@ from cdi_dislo.common_imports import *
 
 import matplotlib
 import pylab as plt
-# import xrayutilities as xu
 import os
 import numpy as np
-
 from numpy.fft import ifftn, fftn, fftshift, ifftshift
-
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import warnings
@@ -16,10 +13,12 @@ import warnings
 from matplotlib.colors import LogNorm
 
 from cdi_dislo.common_imports import *
-from cdi_dislo.ewen_utilities.Object_utilities                    import *
+from cdi_dislo.ewen_utilities.Object_utilities                    import get_cropped_module_phase
+#from cdi_dislo.ewen_utilities.Object_utilities                    import *
+from cdi_dislo.ewen_utilities.Global_utilities                    import add_colorbar_subplot
 from cdi_dislo.ewen_utilities.Global_utilities                    import *
 from ipywidgets import interact
-
+import xrayutilities as xu
 
 #####################################################################################################################
 #####################################################################################################################
@@ -27,8 +26,6 @@ from ipywidgets import interact
 from numpy.fft import ifftn, fftn, fftshift, ifftshift
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-#from Object_utilities import *
 
 from matplotlib.colors import LogNorm
 

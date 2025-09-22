@@ -1,12 +1,14 @@
-from cdi_dislo.common_imports import *
-from cdi_dislo.ewen_utilities.plot_utilities                      import *
-from cdi_dislo.ewen_utilities.PostProcessing                      import *
-from cdi_dislo.ewen_utilities.Reconstruction                      import *
-from cdi_dislo.ewen_utilities.Single_peak_gaussian_fit            import *
-from cdi_dislo.ewen_utilities.Global_utilities                    import *
-from cdi_dislo.ewen_utilities.Object_utilities                    import *
+from cdi_dislo.ewen_utilities.plot_utilities_alien                      import *
 #####################################################################################################################
 #####################################################################################################################
+import numpy as np
+import pylab as plt
+
+import ipywidgets as widgets
+import os
+
+from scipy.ndimage import median_filter, maximum_filter
+from sklearn.cluster import DBSCAN
 
 
 #from plot_utilities import *
@@ -77,6 +79,7 @@ def log_scale_matteotype_renormalization(data,
 #####################################                   Select intensity threshold                   ######################################
 ###########################################################################################################################################
 
+
 def create_intensity_threshold_mask(data_log, threshold, 
                                     plot=False, data=None):
     '''
@@ -84,7 +87,7 @@ def create_intensity_threshold_mask(data_log, threshold,
     
     Parameters
     ----------
-    :data_log: rescalfromed data (from "log_scale_matteotype_renormalization" function)
+    :data_log: rescaled data (from "log_scale_matteotype_renormalization" function)
     :threshold: intensity threshold for the mask (0 < threshold <1)
     :plot: plot the resulting mask
     :data: original non-rescaled data. Only used for the plot
@@ -157,6 +160,7 @@ def intensity_threshold_pixels(mask):
 ###########################################################################################################################################
 #####################################                           Clustering                           ######################################
 ###########################################################################################################################################
+
 
 
 def pixels_clustering(pixels, 
@@ -246,7 +250,6 @@ def remove_central_peak_cluster(data, pixels, pixels_labels):
     pixels, pixels_labels = filter_out_labels(pixels, pixels_labels, label_central_peak)
     
     return pixels, pixels_labels
-
 
 ###########################################################################################################################################
 #################################                    Keep only the largest clusters                      ##################################
@@ -385,7 +388,7 @@ def compute_clusters_max(data, pixels, pixels_labels):
 def plot_2d_projection_cluster(data, pixels, pixels_labels, label, 
                                fig=None, ax=None):
     '''
-    Plot 2D projectiofromn of the cluster "label"
+    Plot 2D projection of the cluster "label"
     
     Parameters
     ----------
@@ -437,7 +440,7 @@ def plot_clusters_select_2d_projections(data, pixels, pixels_labels,
     elif sorting=='max':
         labels, labels_max_intensity = compute_clusters_max(data, pixels, pixels_labels)
         labels = labels[np.argsort(labels_max_intensity)[::-1]]
-    elif sorting=='sifromze':
+    elif sorting=='size':
         cluster_size, labels = get_clusters_size(pixels_labels)
         labels = labels[np.argsort(cluster_size)[::-1]]
     elif sorting=='None':
@@ -506,7 +509,6 @@ def create_mask_from_selected_clusters(data, check_list, pixels, pixels_labels, 
 ###########################################################################################################################################
 ############################                          "Press button" functions                              ###############################
 ###########################################################################################################################################
-
 def preprocessing(data, 
                   remove_hot_pixels=True, 
                   filter_small_values=True):
@@ -536,6 +538,7 @@ def preprocessing(data,
     
     data_log = log_scale_matteotype_renormalization(data)
     return data, data_log
+
 
 
 
@@ -591,7 +594,6 @@ def clustering_and_filtering(mask, data,
                                                              sorting=sorting)
     
     return pixels, pixels_labels, check_list, labels
-
 
 
 def get_clean_data(data_original, mask_alien, 

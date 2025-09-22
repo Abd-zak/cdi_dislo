@@ -117,7 +117,27 @@ def mean_data(data):
     data=data[data!=0]
     mean_d= np.sum(data)/len(data)
     return mean_d
-
+def MIR_Colormap():
+    cdict = {'red':  ((0.0, 1.0, 1.0),
+                      (0.11, 0.0, 0.0),
+                      (0.36, 0.0, 0.0),
+                      (0.62, 1.0, 1.0),
+                      (0.87, 1.0, 1.0),
+                      (1.0, 0.0, 0.0)),
+              'green': ((0.0, 1.0, 1.0),
+                      (0.11, 0.0, 0.0),
+                      (0.36, 1.0, 1.0),
+                      (0.62, 1.0, 1.0),
+                      (0.87, 0.0, 0.0),
+                      (1.0, 0.0, 0.0)),
+              'blue': ((0.0, 1.0, 1.0),
+                      (0.11, 1.0, 1.0),
+                      (0.36, 1.0, 1.0),
+                      (0.62, 0.0, 0.0),
+                      (0.87, 0.0, 0.0),
+                      (1.0, 0.0, 0.0))}
+    my_cmap = matplotlib.colors.LinearSegmentedColormap('my_colormap',cdict,256)
+    return my_cmap
 #####################################################################################################################
 
 
@@ -282,12 +302,34 @@ def format_vector(vector, decimal_places=4):
             str_num = f"{rounded:.{decimal_places}f}".rstrip('0').rstrip('.')
         formatted.append(str_num)
     return f"{', '.join(formatted)}"
-def plot_summary_difraction(data_original,com_,max_,path_save=None,fig_title="",fig_save_="",f_s=20,vmin=None,vmax=None):
-    box_comment_cord=[1.3,1.3]
+def plot_summary_difraction(data_original,com_,max_,path_save=None,fig_title="",fig_save_="",f_s=20,vmin_sub=None,vmax_sub=None,vmin=None,vmax=None,box_comment_cord=[1.,1.3],eps = 0):
+    """
+    Plot three orthogonal log-mean projections with per-subplot colorbars,
+    annotate COM and MAX, and optionally save separate 2D projection images.
+
+    Parameters
+    ----------
+    data_original : np.ndarray
+        3D array (Z, Y, X) or similar. Projections use np.nanmean along axes 0,1,2.
+    com_, max_ : iterable of 3 floats/ints
+        (X, Y, Z) or (indexing-consistent) coordinates. Used for scatter markers.
+    path_save : str or None
+        Base path (without extension). If provided, figures are saved.
+    fig_title : str
+        Suptitle for the main 3-panel figure and titles for 2D projections.
+    fig_save_ : str
+        Suffix added to saved filenames.
+    f_s : int/float
+        Font size for labels and ticks.
+    vmin, vmax : float or None
+        Color scaling passed to imshow for all three subplots (shared scaling).
+    """
+    from mpl_toolkits.axes_grid1 import make_axes_locatable  # needed by add_colorbar_subplot
+
     fig, ax = plt.subplots(1,3, figsize=(16,4)) 
-    plot_3D_projections(data_original,cmap='jet', fig=fig,ax=ax,log_scale=True,fig_title=fig_title,vmin=vmin,vmax=vmax)
-    ax[0].scatter(com_[2],com_[1],marker="X",linewidth=1,s=50,alpha=0.5,color="red",label=f" {com_[0]},{com_[1]},{com_[2]}")
-    ax[0].scatter(max_[2],max_[1],marker="X",linewidth=1,s=50,alpha=0.5,color="black",label=f" {max_[0]},{max_[1]},{max_[2]}")
+    plot_3D_projections(data_original,cmap='jet', fig=fig,ax=ax,log_scale=True,log_threshold=True,fig_title=fig_title,vmin=vmin_sub,vmax=vmax_sub,colorbar=True)
+    ax[0].scatter(com_[2],com_[1],marker="X",linewidth=1,s=50,alpha=0.5,color="red",label=f" COM: {com_[0]},{com_[1]},{com_[2]}")
+    ax[0].scatter(max_[2],max_[1],marker="X",linewidth=1,s=50,alpha=0.5,color="black",label=f" MAX: {max_[0]},{max_[1]},{max_[2]}")
     ax[0].legend(bbox_to_anchor=box_comment_cord,fontsize=f_s/1.5)
     ax[0].set_xlabel('Z', fontsize=f_s)             # X-axis label font size
     ax[0].set_ylabel('Y', fontsize=f_s)             # Y-axis label font size
@@ -301,45 +343,75 @@ def plot_summary_difraction(data_original,com_,max_,path_save=None,fig_title="",
     ax[1].set_ylabel('X', fontsize=f_s)             # Y-axis label font size
     ax[1].tick_params(axis='x', labelsize=f_s)  # X-tick labels font size
     ax[1].tick_params(axis='y', labelsize=f_s)  # Y-tick labels font size
-    box_comment_cord=[0.2,1.3]
-    
-    ax[2].scatter(com_[1],com_[0],marker="X",s=50,color="red",label="COM")
-    ax[2].scatter(max_[1],max_[0],marker="X",s=50,color="black",label="MAX")
-    ax[2].legend(bbox_to_anchor=box_comment_cord,fontsize=f_s/1.5)
+    ax[2].scatter(com_[1],com_[0],marker="X",s=50,color="red")
+    ax[2].scatter(max_[1],max_[0],marker="X",s=50,color="black")
     ax[2].set_xlabel('Y', fontsize=f_s)             # X-axis label font size
     ax[2].set_ylabel('X', fontsize=f_s)             # Y-axis label font size
     ax[2].tick_params(axis='x', labelsize=f_s)  # X-tick labels font size
     ax[2].tick_params(axis='y', labelsize=f_s)  # Y-tick labels font size
 
+    ax[0].axis('off')
+    ax[1].axis('off')
+    ax[2].axis('off')
+
     [ax[i].set_axis_off() for i in range(3)]
     fig.suptitle(fig_title, fontsize=f_s,y=0.95)
     plt.tight_layout()
     if path_save:
-        plt.savefig(path_save+"_3D_"+fig_save_,dpi=150)
+        plt.savefig(path_save+"_3D_"+fig_save_,dpi=300)
     plt.show()
 
 
-    plt.figure()
-    im=plt.imshow(np.log(np.nanmean(data_original, axis=0)),vmin=vmin,vmax=vmax,cmap='jet', aspect='auto')
-    plt.title(fig_title)
-    plt.axis('off')
-    plt.tight_layout()
-    plt.savefig(path_save+"_xproj_"+fig_save_,dpi=150)
-    plt.close()
-    plt.figure()
-    im=plt.imshow(np.log(np.nanmean(data_original, axis=1)),vmin=vmin,vmax=vmax,cmap='jet', aspect='auto')
-    plt.title(fig_title)
-    plt.tight_layout()
-    plt.savefig(path_save+"_yproj_"+fig_save_,dpi=150)
-    plt.close()
-    plt.figure()
-    im=plt.imshow(np.log(np.nanmean(data_original, axis=2)),vmin=vmin,vmax=vmax,cmap='jet', aspect='auto')
-    plt.title(fig_title)
-    plt.axis('off')
-    plt.tight_layout()
-    plt.savefig(path_save+"_zproj_"+fig_save_,dpi=150)
-    plt.close()
+    # --- compute projections (log of mean along each axis) ---
+    # Add a tiny epsilon to avoid log(0)
+    proj_xy = np.log(np.nanmax(data_original, axis=0) + eps)  # (Y, X), label Z on x in your convention
+    proj_xz = np.log(np.nanmax(data_original, axis=1) + eps)  # (Z, X)
+    proj_yz = np.log(np.nanmax(data_original, axis=2) + eps)  # (Z, Y)
+
+    
+    # --- X projection ---
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(proj_xy, vmin=vmin, vmax=vmax, cmap='jet', aspect='auto')
+    ax.set_title(fig_title, fontsize=f_s)
+    ax.axis('off')
+    
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.ax.tick_params(labelsize=f_s*0.8)
+    cbar.set_label("Intensity (a.u.)", fontsize=f_s)
+    
+    fig.tight_layout()
+    plt.savefig(path_save + "_xproj_" + fig_save_, dpi=300, bbox_inches="tight")
+    plt.show()
+
+    # --- Y projection ---
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(proj_xz, vmin=vmin, vmax=vmax, cmap='jet', aspect='auto')
+    ax.set_title(fig_title, fontsize=f_s)
+    ax.axis('off')
+
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.ax.tick_params(labelsize=f_s*0.8)
+    cbar.set_label("Intensity (a.u.)", fontsize=f_s)
+    
+    fig.tight_layout()
+    plt.savefig(path_save + "_yproj_" + fig_save_, dpi=300)
+    plt.show()
+    
+    # --- Z projection ---
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(proj_yz, vmin=vmin, vmax=vmax, cmap='jet', aspect='auto')
+    ax.set_title(fig_title, fontsize=f_s)
+    ax.axis('off')
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.ax.tick_params(labelsize=f_s*0.8)
+    cbar.set_label("Intensity (a.u.)", fontsize=f_s)
+    fig.tight_layout()
+    plt.savefig(path_save + "_zproj_" + fig_save_, dpi=300)
+    plt.show()
+
+
     return
+
 def plot_mechanical_properties(slopes_elastic, f_max_elastic_x, f_max_elastic_y, test_part, 
                                include_sapphire=False, plot_fit=False, r_squared_threshold=0.85,
                                save_plot=False):
@@ -440,58 +512,7 @@ def plot_mechanical_properties(slopes_elastic, f_max_elastic_x, f_max_elastic_y,
                 print(f"R-squared below threshold. Fit not plotted.")
 
 
-def plot_summary_difraction(data_original,com_,max_,path_save=None,fig_title="",fig_save_="",f_s=20,vmin=None,vmax=None):
-    fig, ax = plt.subplots(1,3, figsize=(16,6)) 
-    plot_3D_projections(data_original,cmap='jet', fig=fig,ax=ax,log_scale=True,fig_title=fig_title,vmin=vmin,vmax=vmax)
-    ax[0].scatter(com_[2],com_[1],marker="X",linewidth=1,s=50,alpha=0.5,color="red",label=f" {com_[0]},{com_[1]},{com_[2]}")
-    ax[0].scatter(max_[2],max_[1],marker="X",linewidth=1,s=50,alpha=0.5,color="black",label=f" {max_[0]},{max_[1]},{max_[2]}")
-    ax[0].legend(bbox_to_anchor=(1.3, 1.25),fontsize=f_s/1.5)
-    ax[0].set_xlabel('Z', fontsize=f_s)             # X-axis label font size
-    ax[0].set_ylabel('Y', fontsize=f_s)             # Y-axis label font size
-    # Set tick labels and their font sizes
-    ax[0].tick_params(axis='x', labelsize=f_s)  # X-tick labels font size
-    ax[0].tick_params(axis='y', labelsize=f_s)  # Y-tick labels font size
-    
-    ax[1].scatter(com_[2],com_[0],marker="X",s=50,color="red")
-    ax[1].scatter(max_[2],max_[0],marker="X",s=50,color="black")
-    ax[1].set_xlabel('Z', fontsize=f_s)             # X-axis label font size
-    ax[1].set_ylabel('X', fontsize=f_s)             # Y-axis label font size
-    ax[1].tick_params(axis='x', labelsize=f_s)  # X-tick labels font size
-    ax[1].tick_params(axis='y', labelsize=f_s)  # Y-tick labels font size
-    
-    ax[2].scatter(com_[1],com_[0],marker="X",s=50,color="red",label="COM")
-    ax[2].scatter(max_[1],max_[0],marker="X",s=50,color="black",label="MAX")
-    ax[2].legend(bbox_to_anchor=(.2, 1.25),fontsize=f_s/1.5)
-    ax[2].set_xlabel('Y', fontsize=f_s)             # X-axis label font size
-    ax[2].set_ylabel('X', fontsize=f_s)             # Y-axis label font size
-    ax[2].tick_params(axis='x', labelsize=f_s)  # X-tick labels font size
-    ax[2].tick_params(axis='y', labelsize=f_s)  # Y-tick labels font size
-    fig.suptitle(fig_title, fontsize=f_s,y=0.825)
-    plt.tight_layout()
-    if path_save:
-        plt.savefig(path_save+"_3D_"+fig_save_,dpi=150)
-    plt.show()
 
-
-    plt.figure()
-    im=plt.imshow(np.log(np.nanmean(data_original, axis=0)),vmin=vmin,vmax=vmax,cmap='jet', aspect='auto')
-    plt.title(fig_title)
-    plt.tight_layout()
-    plt.savefig(path_save+"_xproj_"+fig_save_,dpi=150)
-    plt.close()
-    plt.figure()
-    im=plt.imshow(np.log(np.nanmean(data_original, axis=1)),vmin=vmin,vmax=vmax,cmap='jet', aspect='auto')
-    plt.title(fig_title)
-    plt.tight_layout()
-    plt.savefig(path_save+"_yproj_"+fig_save_,dpi=150)
-    plt.close()
-    plt.figure()
-    im=plt.imshow(np.log(np.nanmean(data_original, axis=2)),vmin=vmin,vmax=vmax,cmap='jet', aspect='auto')
-    plt.title(fig_title)
-    plt.tight_layout()
-    plt.savefig(path_save+"_zproj_"+fig_save_,dpi=150)
-    plt.close()
-    return
 def get_color_list(nb):
     from itertools import combinations
        
@@ -1680,7 +1701,7 @@ def conf_plot__(x_label,y_label,fig_tilte,a_min,a_max
     plt.ylim(a_min, a_max)
 def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=None, a_max=None, data_sets=[], desired_order=None, marker_size=10,
               marker='+', show_plt=True, save_dir_plot=None, all_in_one=True,xyz_plot=False,norm=False,linestyle="--",linewidth=4,rotation_xtick=-45,
-              f_s=16, f_s_legend=12):
+              f_s=16, f_s_legend=12,figsize_UNIT=(9,9)):
     
     """
     Plot data for comparison.
@@ -1720,12 +1741,27 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         'axes.labelweight': 'bold',
         'xtick.labelsize': f_s,
         'ytick.labelsize': f_s,
-        'xtick.major.width': 1.5,
-        'ytick.major.width': 1.5,
+        'xtick.major.width': 4.5,
+        'ytick.major.width': 4.5,
         'legend.fontsize': f_s_legend,
         'legend.title_fontsize': f_s_legend,
         'figure.titlesize': f_s
     })
+
+    from matplotlib.ticker import ScalarFormatter
+    
+    def format_ticks_scientific(ax, axis='y', font_size=16):
+        formatter = ScalarFormatter(useMathText=True)
+        formatter.set_scientific(True)
+        formatter.set_powerlimits((-2, 2))  # Use scientific notation for numbers outside these limits
+    
+        if axis == 'y':
+            ax.yaxis.set_major_formatter(formatter)
+            ax.tick_params(axis='y', labelsize=font_size)
+        elif axis == 'x':
+            ax.xaxis.set_major_formatter(formatter)
+            ax.tick_params(axis='x', labelsize=font_size)
+
     # Ensure subtitles list matches the number of plots
     if xyz_plot:
         num_plots = len(data_sets[0])
@@ -1829,8 +1865,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
     # Plotting
     if all_in_one:
         if xyz_plot:
-            plt.figure(figsize=(6*3, 5*3))
-            #plt.style.use('grayscale')
+            plt.figure(figsize=(figsize_UNIT[0]*3, figsize_UNIT[1]*3))
             for i_datasets_pos in range(3):
                 for i, data_set in enumerate(data_sets[i_datasets_pos]):
                     ax = plt.subplot(3, num_plots, num_plots*(i_datasets_pos)+1+i)
@@ -1865,7 +1900,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                     plt.legend(loc='best', ncols=3  )
                     if (a_min and a_max):
                         plt.ylim(a_min, a_max)
-            
+                    format_ticks_scientific(ax, axis='y', font_size=f_s)            
                     if subtitles:
                         plt.title(subtitles[i])
                     else:
@@ -1873,13 +1908,12 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.suptitle(fig_title)
                 plt.tight_layout()
                 if save_dir_plot:
-                    plt.savefig(save_dir_plot +( y_label_for_saving )  + "XYZ_vs_" + x_label    + "_all_part.png",facecolor='gray', edgecolor='gray',)
+                    plt.savefig(save_dir_plot +( y_label_for_saving )  + "XYZ_vs_" + x_label    + "_all_part.png",)
             if show_plt:
                 plt.show()
         else:
             
-            plt.figure(figsize=(6*num_plots, 5))
-            #plt.style.use('grayscale')
+            plt.figure(figsize=(figsize_UNIT[0]*num_plots, figsize_UNIT[1]))
             for i, data_set in enumerate(data_sets):
                 ax = plt.subplot(1, num_plots, i+1)
                 X, Y, part_name_list = data_set
@@ -1909,6 +1943,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.legend(loc='best', ncols=3)
                 if (a_min and a_max):
                     plt.ylim(a_min, a_max)
+                format_ticks_scientific(ax, axis='y', font_size=f_s)
         
                 if subtitles:
                     plt.title(subtitles[i])
@@ -1917,7 +1952,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
             plt.suptitle(fig_title)
             plt.tight_layout()
             if save_dir_plot:
-                plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" + x_label.replace(" ", "") + "_all_part.png",facecolor='gray', edgecolor='gray',)
+                plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" + x_label.replace(" ", "") + "_all_part.png",)
             if show_plt:
                 plt.show()
     else:
@@ -1933,7 +1968,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 trigger_subplots=array(trigger_subplots)
                 num_plots_loc=(trigger_subplots.sum()).astype(int)
                 print(trigger_subplots,num_plots_loc)
-                fig, axes = plt.subplots(nrows=1, ncols=num_plots_loc, figsize=(6*num_plots_loc, 5))
+                fig, axes = plt.subplots(nrows=1, ncols=num_plots_loc, figsize=(figsize_UNIT[0]*num_plots_loc, figsize_UNIT[1]))
                 for i_datasets_pos in range(3):
                     i_subplots=0
                     for i, data_set in enumerate(data_sets[i_datasets_pos]):   
@@ -1971,6 +2006,8 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                                 ax_loc.set_ylabel(y_label_+ ' ' +f"$_{{(\mathrm{{{unit_y}}})}}$")
                             else:
                                 ax_loc.set_ylabel(y_label_)
+                        format_ticks_scientific(ax_loc, axis='y', font_size=f_s)
+
                         ax_loc.legend(loc='best', ncols=3)
                         if (a_min and a_max):
                             ax_loc.set_ylim(a_min, a_max)
@@ -1988,12 +2025,11 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.tight_layout()
                 
                 if save_dir_plot:
-                        plt.savefig(save_dir_plot + y_label_for_saving  + "_vs_" +( x_label )  + "_"+particle+".png",facecolor='gray', edgecolor='gray',)
+                        plt.savefig(save_dir_plot + y_label_for_saving  + "_vs_" +( x_label )  + "_"+particle+".png",)
                 plt.show()            
         else:
             for particle in np.unique(unique_particles):
-                fig=plt.figure(figsize=(6*num_plots, 5))
-                #plt.style.use('grayscale')
+                fig=plt.figure(figsize=(figsize_UNIT[0]*num_plots, figsize_UNIT[1]))
                 i_subplots=0
                 for i, data_set in enumerate(data_sets):   
                     ax = plt.subplot(1, num_plots, i_subplots+1)
@@ -2023,13 +2059,13 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                         plt.plot(x_plot, y_plot, marker, ms=marker_size, label=particle, color=color_map[particle],linestyle=linestyle,linewidth=linewidth)
                         plt.xticks(rotation=rotation_xtick, fontsize=f_s, fontweight='bold')
 
-                    
+                        
                         plt.xlabel(x_label)
                         plt.ylabel(y_label)
                         plt.legend(loc='best', ncols=3)
                         if (a_min and a_max):
                             plt.ylim(a_min, a_max)
-                
+                        format_ticks_scientific(ax, axis='y', font_size=f_s)
                         if subtitles:
                             plt.title(subtitles[i])
                         else:
@@ -2038,13 +2074,13 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.suptitle(fig_title + " "+particle, x=i_subplots*0.5/(i+1))
                 plt.tight_layout()
                 if save_dir_plot:
-                    plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" +( x_label )   + "_"+particle+".png",facecolor='gray', edgecolor='gray',)
+                    plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" +( x_label )   + "_"+particle+".png",)
             
                 plt.show()
 
 
 def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allscan_list, y_label="", y_label_unit="", label_rot=-70, fontsize_ticks=60, figsize=(20, 42), n=4, m=1, line_width=8,marker_size=15,linestyle="-",marker="^",
-                              save_path=None,f_s_labels=50,labelpad=50
+                              save_path=None,f_s_labels=50,labelpad=50,prime_ref=''
                              ):
     import matplotlib.ticker as mticker
     from matplotlib.ticker import ScalarFormatter
@@ -2116,7 +2152,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     ax1 = fig.add_subplot(gs[0, 0])
     add_colored_bands(ax1)
     ax1.plot(range(len(x_absis)), stats_x, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
-    ax1.set_ylabel(y_label + " $_{QX}$ " + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax1.set_ylabel(    f"{y_label}\n$Q_X{{{prime_ref}}}$ {y_label_unit}",    fontsize=f_s_labels,    labelpad=labelpad)
     ax1.set_title("Evolution of " + str(y_label),fontsize=f_s_labels)
     figure_axes_desidn(ax1, label_rot)  # Assuming this is your custom function
     ax1.get_xaxis().set_visible(False)  # Hide x-axis for the first subplot
@@ -2125,7 +2161,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     ax2 = fig.add_subplot(gs[1, 0])
     add_colored_bands(ax2)
     ax2.plot(range(len(x_absis)), stats_y, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
-    ax2.set_ylabel(y_label + " $_{QY}$ " + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax2.set_ylabel(    f"{y_label}\n$Q_Y{{{prime_ref}}}$ {y_label_unit}",    fontsize=f_s_labels,    labelpad=labelpad)
     figure_axes_desidn(ax2, label_rot)
     ax2.get_xaxis().set_visible(False)  # Hide x-axis for the second subplot
 
@@ -2133,10 +2169,10 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     ax3 = fig.add_subplot(gs[2, 0])
     add_colored_bands(ax3)
     ax3.plot(range(len(x_absis)), stats_z, linestyle=linestyle,marker=marker, ms=marker_size,linewidth=line_width, markerfacecolor='red', markeredgecolor='black',)
-    ax3.set_ylabel(y_label + " $_{QZ}$ " + y_label_unit,fontsize=f_s_labels,labelpad=labelpad)
+    ax3.set_ylabel(f"{y_label}\n$Q_Z{{{prime_ref}}}$ {y_label_unit}",    fontsize=f_s_labels,    labelpad=labelpad)
     ax3.set_xlabel("")  # remove default
     ax3.annotate('Pressure (GPa)', 
-                 xy=(0, -0.2), xycoords='axes fraction', 
+                 xy=(0.25, -0.45), xycoords='axes fraction', 
                  fontsize=f_s_labels, ha='left', va='center', fontweight='bold')
 
     #ax3.set_xlabel('Pressure (GPa)',fontsize=f_s_labels,labelpad=labelpad)
@@ -2188,7 +2224,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
 
     
     # Adjust the layout
-    #plt.tight_layout()
+    plt.tight_layout()
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -2282,7 +2318,7 @@ def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names
     marker_list = ['o', 's', '^', 'd', 'v', '<', '>', 'P', 'X', '*']
     particle_to_marker = {particle: marker_list[i % len(marker_list)] for i, particle in enumerate(unique_particles)}
     
-    fig, axes = plt.subplots(nrows=n_groups, ncols=n_coords, figsize=(18, 6*n_groups), sharex=True, sharey='row')
+    fig, axes = plt.subplots(nrows=n_groups, ncols=n_coords, figsize=(18, 10*n_groups), sharex=True, sharey='row')
     if n_groups == 1:
         axes = np.array([axes])
     
@@ -2322,6 +2358,8 @@ def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names
             
             ax.tick_params(axis='y', labelsize=font_size)
             ax.tick_params(axis='x', labelsize=xtick_fontsize)
+            ax.xaxis.get_offset_text().set_fontsize(xtick_fontsize)
+            ax.yaxis.get_offset_text().set_fontsize(font_size)
     
     fig.legend(legend_dict.values(), legend_dict.keys(),
                loc='upper center', ncol=n_particles,

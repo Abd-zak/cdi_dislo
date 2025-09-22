@@ -1,9 +1,9 @@
 import os
 import numpy as np
 import pylab as plt
-
-from cdi_dislo.common_imports import *
-from cdi_dislo.ewen_utilities.plot_utilities                      import *
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+#from cdi_dislo.common_imports import *
+#from cdi_dislo.ewen_utilities.plot_utilities                      import *
 
 
 def check_path_create(path):
@@ -180,13 +180,10 @@ def hot_pixel_filter(data, threshold=1e2):
     data_clean = data*mask
     return data_clean
 
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 def add_colorbar_subplot(fig, axes, imgs,
                          size='5%',
                          tick_fontsize=12,
                          return_cbar=False):
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    
     if not isinstance(imgs, list):
         imgs = [imgs]
         axes = [axes]
