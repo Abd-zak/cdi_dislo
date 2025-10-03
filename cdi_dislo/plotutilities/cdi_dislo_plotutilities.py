@@ -1700,7 +1700,7 @@ def conf_plot__(x_label,y_label,fig_tilte,a_min,a_max
     plt.legend(loc='best', ncols=3)
     plt.ylim(a_min, a_max)
 def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=None, a_max=None, data_sets=[], desired_order=None, marker_size=10,
-              marker='+', show_plt=True, save_dir_plot=None, all_in_one=True,xyz_plot=False,norm=False,linestyle="--",linewidth=4,rotation_xtick=-45,
+              marker='+', show_plt=True, save_dir_plot=None, all_in_one=True,xyz_plot=False,norm=False,linestyle="--",linewidth=4,rotation_xtick=-45,file_type='pdf',
               f_s=16, f_s_legend=12,figsize_UNIT=(9,9)):
     
     """
@@ -1747,9 +1747,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         'legend.title_fontsize': f_s_legend,
         'figure.titlesize': f_s
     })
-
     from matplotlib.ticker import ScalarFormatter
-    
     def format_ticks_scientific(ax, axis='y', font_size=16):
         formatter = ScalarFormatter(useMathText=True)
         formatter.set_scientific(True)
@@ -1761,7 +1759,6 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         elif axis == 'x':
             ax.xaxis.set_major_formatter(formatter)
             ax.tick_params(axis='x', labelsize=font_size)
-
     # Ensure subtitles list matches the number of plots
     if xyz_plot:
         num_plots = len(data_sets[0])
@@ -1769,38 +1766,27 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         num_plots = len(data_sets)
     if (len(subtitles) != num_plots ) :
         raise ValueError("Number of subtitles must match the number of plots.")
-    
     if norm:
         max_for_norm=(array([ data_sets[i_dataset][i_exp][1].max() for i_dataset in range(len(data_sets)) for i_exp in range(len(data_sets[i_dataset]))]).max())
         print()
         max_for_norm=np.round(extract_coefficient_and_exponent(max_for_norm)[0],2)*10**extract_coefficient_and_exponent(max_for_norm)[1]
     # Define color map for particles
-
-
     from itertools import combinations
-    
     # Get colors from tab10 and Paired colormaps
     tab10_colors = plt.cm.tab10(np.linspace(0, 0.8, 8))  # Use only 80% of the colormap
     paired_colors = plt.cm.Paired(np.linspace(0, 1, 6))
-    
     # Get XKCD color names
     xkcd_colors = list(mcolors.XKCD_COLORS.keys())
-    
     # Custom muted colors in hex format
     custom_colors = ['#8B7D6B', '#556B2F', '#8B8386']  
-    
     # Combine colors from different sources
     colors_comb = list(tab10_colors) + list(paired_colors) + xkcd_colors + custom_colors
-    
     # Filter out light colors based on brightness threshold
     brightness_threshold = 0.6  # Adjust as needed
-    dark_colors = [color for color in colors_comb if mcolors.to_rgba(color)[0] * 0.299 +
-                                                   mcolors.to_rgba(color)[1] * 0.587 +
+    dark_colors = [color for color in colors_comb if mcolors.to_rgba(color)[0] * 0.299 +mcolors.to_rgba(color)[1] * 0.587 +
                                                    mcolors.to_rgba(color)[2] * 0.114 < brightness_threshold]
-    
     # Convert hex colors to RGB tuples
     rgb_colors = [mcolors.to_rgb(color) for color in dark_colors]
-    
     # Calculate the pairwise color differences
     color_diffs = np.zeros((len(rgb_colors), len(rgb_colors)))
     for i, j in combinations(range(len(rgb_colors)), 2):
@@ -1860,7 +1846,6 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
             y_label_for_saving= y_label_+f'_over_{max_for_norm}'
         else:
             y_label_for_saving= y_label_
-                
     
     # Plotting
     if all_in_one:
@@ -1908,11 +1893,12 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.suptitle(fig_title)
                 plt.tight_layout()
                 if save_dir_plot:
-                    plt.savefig(save_dir_plot +( y_label_for_saving )  + "XYZ_vs_" + x_label    + "_all_part.png",)
+                    plt.savefig(save_dir_plot +( y_label_for_saving )  + "XYZ_vs_" + x_label    + f"_all_part.{file_type}",) 
             if show_plt:
-                plt.show()
+                plt.show()    
+            else:
+                plt.close()
         else:
-            
             plt.figure(figsize=(figsize_UNIT[0]*num_plots, figsize_UNIT[1]))
             for i, data_set in enumerate(data_sets):
                 ax = plt.subplot(1, num_plots, i+1)
@@ -1952,9 +1938,11 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
             plt.suptitle(fig_title)
             plt.tight_layout()
             if save_dir_plot:
-                plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" + x_label.replace(" ", "") + "_all_part.png",)
+                plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" + x_label.replace(" ", "") + f"_all_part.{file_type}",)
             if show_plt:
-                plt.show()
+                plt.show()    
+            else:
+                plt.close()
     else:
         if xyz_plot:
             colors = plt.cm.tab10(np.linspace(0, 0.5, 3))
@@ -2025,8 +2013,11 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.tight_layout()
                 
                 if save_dir_plot:
-                        plt.savefig(save_dir_plot + y_label_for_saving  + "_vs_" +( x_label )  + "_"+particle+".png",)
-                plt.show()            
+                        plt.savefig(save_dir_plot + y_label_for_saving  + "_vs_" +( x_label )  + "_"+particle+f".{file_type}",)
+                if show_plt:
+                    plt.show()    
+                else:
+                    plt.close()
         else:
             for particle in np.unique(unique_particles):
                 fig=plt.figure(figsize=(figsize_UNIT[0]*num_plots, figsize_UNIT[1]))
@@ -2074,10 +2065,12 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.suptitle(fig_title + " "+particle, x=i_subplots*0.5/(i+1))
                 plt.tight_layout()
                 if save_dir_plot:
-                    plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" +( x_label )   + "_"+particle+".png",)
+                    plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" +( x_label )   + "_"+particle+f".{file_type}",)
             
-                plt.show()
-
+                if show_plt:
+                    plt.show()    
+                else:
+                    plt.close()
 
 def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allscan_list, y_label="", y_label_unit="", label_rot=-70, fontsize_ticks=60, figsize=(20, 42), n=4, m=1, line_width=8,marker_size=15,linestyle="-",marker="^",
                               save_path=None,f_s_labels=50,labelpad=50,prime_ref=''

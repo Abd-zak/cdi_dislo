@@ -2104,6 +2104,24 @@ def process_femtotools_data(datadir,stifnessmachine=21400,force_max_platine=200,
                 shift_xtick=shift_xtick,
                 make_both_kinds=True
             )
+            # NEW: save data arrays individually per particle/test
+            data_save_dir = os.path.join(save_figure, "data")
+            Path(data_save_dir).mkdir(parents=True, exist_ok=True)
+
+            for idx, lbl in zip(wanted_test, wanted_test_part):
+                nice_label = _sanitize_filename(lbl) if lbl else "unknown"
+                fname = f"{nice_label}_test{idx:03d}.npz"
+                fpath = os.path.join(data_save_dir, fname)
+
+                np.savez(
+                    fpath,
+                    ForceA=ForceA[idx],
+                    Displacement=Displacement[idx],
+                    Displacement_cal=Displacement_cal[idx],
+                    Phase=Phase[idx],
+                    Time=Time[idx]
+                )
+                print(f"Saved data: {fpath}")
     
         else:
             dummy_labels = ["" for _ in trigger_good_test]
