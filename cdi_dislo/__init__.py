@@ -1,7 +1,9 @@
 import importlib
 import pkgutil
 import sys
-from cdi_dislo.common_imports import *  # Load common libraries
+# Do not import everything by default. Handlers should import only the
+# specific packages they need, e.g. `from cdi_dislo import common_imports as ci`.
+# This avoids polluting the package namespace and reduces costly startup imports.
 
 # Get the package name dynamically
 package_name = __name__
