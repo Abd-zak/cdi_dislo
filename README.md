@@ -38,8 +38,6 @@ cdi_dislo/
     │   ├── Orthogonalization_reciprocal_space.py
     │   ├── Object_utilities.py
     │   └── (and other utilities...)
-    ├── femtotools_handler
-    │   └── cdi_dislo_femto.py
     ├── general_utilities
     │   └── cdi_dislo_utils.py
     ├── genetic_handler
@@ -84,7 +82,6 @@ Each submodule has a dedicated `README.md` for detailed information:
 - **[`diff_utils_handler`](cdi_dislo/diff_utils_handler/README.md)**: Diffraction utilities.
 - **[`dislo_handler`](cdi_dislo/dislo_handler/README.md)**: Dislocation and deformation analysis.
 - **[`ewen_utilities`](cdi_dislo/ewen_utilities/README.md)**: Reconstruction and post-processing.
-- **[`femtotools_handler`](cdi_dislo/femtotools_handler/README.md)**: Nanoindentation utilities.
 - **[`general_utilities`](cdi_dislo/general_utilities/README.md)**: General-purpose utilities.
 - **[`genetic_handler`](cdi_dislo/genetic_handler/README.md)**: Genetic optimization algorithms.
 - **[`orthogonalisation_handler`](cdi_dislo/orthogonalisation_handler/README.md)**: Data orthogonalization.
