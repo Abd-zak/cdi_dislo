@@ -38,8 +38,13 @@
 
 
 
-from cdi_dislo.common_imports import *
-from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
+import math
+import numpy as np
+from numpy import array
+import matplotlib.pyplot as plt
+from scipy.ndimage import zoom
+import xrayutilities as xu
+from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections, plot_2D_slices_middle_one_array3D
 #####################################################################################################################
 #####################################################################################################################
 
