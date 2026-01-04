@@ -47,7 +47,7 @@
 
 
 
-from cdi_dislo.common_imports import *  # Load standard libraries
+from cdi_dislo.common_imports import *  # type: ignore  # Load standard libraries
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D,plot_2D_slices_middle ,plot_object_module_phase_2d
 from cdi_dislo.diff_utils_handler.cdi_dislo_diffutils             import get_abc_direct_space_sixs2019,orth_sixs2019_gridder_def
 from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import remove_phase_ramp_abd , phase_offset_to_zero_clement , getting_strain_mapvti ,get_displacement_gradient
@@ -109,7 +109,7 @@ def compare_dislocations_v0(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
     trig_plot_z = np.any(Uz_iso_mid) or np.any(Uz_aniso_mid)
     num_rows = sum([trig_plot_x, trig_plot_y, trig_plot_z])
 
-    fig, axs = plt.subplots(num_rows, 1, figsize=(16, 4 * num_rows))
+    fig, axs = plt.subplots(num_rows, 1, figsize=(16, 4 * num_rows)) # type: ignore
     axs = [axs] if num_rows == 1 else axs
     row_idx = 0
     legend_handles = {}
@@ -135,7 +135,7 @@ def compare_dislocations_v0(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
             Ux_iso_sorted = Ux_iso_masked[sorted_idx]
             Ux_aniso_sorted = Ux_aniso_masked[sorted_idx_ani]
             Ux_iso_sorted = remove_large_jumps_alter_unwrap(Ux_iso_sorted)
-            Ux_aniso_sorted = remove_large_jumps_alter_unwrap((Ux_aniso_sorted),threshold=0.1)
+            Ux_aniso_sorted = remove_large_jumps_alter_unwrap((Ux_aniso_sorted),threshold=0.1) # type: ignore
 
             h1, = ax.plot(theta_sorted, center_angles(Ux_iso_sorted), marker1, label=f'Isotropic r={r_val}')
             h2, = ax.plot((theta_sorted_ani), center_angles(Ux_aniso_sorted), marker2, label=f'Anisotropic r={r_val}')
@@ -197,7 +197,7 @@ def compare_dislocations_v0(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
 
     # Unified legend at bottom center
     fig.legend(legend_handles.values(),legend_handles.keys(),loc='lower center',bbox_to_anchor=(0.5, 0.9),ncol=3,fontsize=int(f_s * 0.8),frameon=False)
-    plt.tight_layout(rect=[0, 0.05, 1, 0.9])  # Reserve space for legend
+    plt.tight_layout(rect=[0, 0.05, 1, 0.9])  # type: ignore # Reserve space for legend
     if save_plot:
         plt.savefig(save_plot, dpi=300, bbox_inches='tight')
     plt.show()
@@ -241,7 +241,7 @@ def compare_dislocations_v1(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
     trig_plot_y = np.any(Uy_iso_mid) or np.any(Uy_aniso_mid)
     trig_plot_z = np.any(Uz_iso_mid) or np.any(Uz_aniso_mid)
     num_rows = sum([trig_plot_x, trig_plot_y, trig_plot_z])
-    fig, axs = plt.subplots(num_rows, 2, figsize=(fig_size_unit[0], fig_size_unit[1] * num_rows))
+    fig, axs = plt.subplots(num_rows, 2, figsize=(fig_size_unit[0], fig_size_unit[1] * num_rows)) # type: ignore
     axs = np.atleast_2d(axs)
     row_idx = 0
     legend_handles = {}
@@ -352,7 +352,7 @@ def compare_dislocations_v1(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
     plt.suptitle(suptitle, fontsize=f_s, fontweight='bold')
     # Unified legend at bottom center
     fig.legend(legend_handles.values(),legend_handles.keys(),loc='lower center',bbox_to_anchor=(0.5, 0.9),ncol=3,frameon=False,prop={'size': int(f_s * 0.8), 'weight': 'bold'})
-    plt.tight_layout(rect=[0, 0.05, 0.9, 0.95])  # Reserve space for legend
+    plt.tight_layout(rect=[0, 0.05, 0.9, 0.95])  # type: ignore # Reserve space for legend
     if save_plot:
         plt.savefig(save_plot, dpi=300, bbox_inches='tight')
     plt.show()
@@ -437,9 +437,9 @@ def compare_dislocations_v2(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
 
     if suptitle:
         fig.suptitle(suptitle, fontsize=f_s, fontweight='bold')
-        plt.tight_layout(rect=[0, 0.05, 0.9, 0.95])
+        plt.tight_layout(rect=[0, 0.05, 0.9, 0.95]) # type: ignore
     else:
-        plt.tight_layout(rect=[0, 0.05, 0.9, 0.9])
+        plt.tight_layout(rect=[0, 0.05, 0.9, 0.9]) # type: ignore
 
     fig.legend(legend_handles.values(), legend_handles.keys(),
                loc='lower center', bbox_to_anchor=(0.5, 0.9), ncol=3,
@@ -493,7 +493,7 @@ def compare_metals(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation_ty
     trig_plot_z = np.any(Uz_mid != 0)
     num_rows = sum([trig_plot_x, trig_plot_y, trig_plot_z])
 
-    fig, axs = plt.subplots(num_rows, 2, figsize=(22, 10 * num_rows))
+    fig, axs = plt.subplots(num_rows, 2, figsize=(22, 10 * num_rows)) # type: ignore
     axs = np.atleast_2d(axs)  # always 2D
 
     R_mid, Theta_mid = r[:, :, z_mid], theta[:, :, z_mid]
@@ -503,7 +503,7 @@ def compare_metals(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation_ty
     # Consistent color per metal
     # Use bright, high-contrast colors (e.g., Tableau colors + Set1 fallback)
     # Combine Tableau and Set1 for variety
-    color_cycle = list(mcolors.TABLEAU_COLORS.values()) + list(cm.get_cmap('Set1').colors)
+    color_cycle = list(mcolors.TABLEAU_COLORS.values()) + list(cm.get_cmap('Set1').colors) # type: ignore
     if len(color_cycle) < len(list_metals):
         # If not enough, repeat or interpolate as needed
         color_cycle = list(itertools.islice(itertools.cycle(color_cycle), len(list_metals)))
@@ -605,7 +605,7 @@ def compare_metals(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation_ty
         title_fontsize=int(f_s * 0.8)
     )
 
-    plt.tight_layout(rect=[0, 0.05, 1, 0.95])  # Reserve space for legend
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95])  # type: ignore # Reserve space for legend
 
     if save_plot:
         plt.savefig(save_plot, dpi=300)
@@ -652,7 +652,7 @@ def compare_metals_v1(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation
     trig_plot_z = np.any(Uz_mid != 0)
     num_rows = sum([trig_plot_x, trig_plot_y, trig_plot_z])
 
-    fig, axs = plt.subplots(num_rows, 2, figsize=(fig_size_unit[0], fig_size_unit[1] * num_rows))
+    fig, axs = plt.subplots(num_rows, 2, figsize=(fig_size_unit[0], fig_size_unit[1] * num_rows)) # type: ignore
     axs = np.atleast_2d(axs)
 
     R_mid, Theta_mid = r[:, :, z_mid], theta[:, :, z_mid]
@@ -660,7 +660,7 @@ def compare_metals_v1(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation
         Theta_mid = np.unwrap(Theta_mid + np.pi / 2)
 
     # Color + marker setup
-    color_cycle = list(mcolors.TABLEAU_COLORS.values()) + list(cm.get_cmap('Set1').colors)
+    color_cycle = list(mcolors.TABLEAU_COLORS.values()) + list(cm.get_cmap('Set1').colors) # type: ignore
     if len(color_cycle) < len(list_metals):
         color_cycle = list(itertools.islice(itertools.cycle(color_cycle), len(list_metals)))
     color_map = {metal: color_cycle[i] for i, metal in enumerate(list_metals)}
@@ -773,7 +773,7 @@ def compare_metals_v1(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation
         title_fontsize=int(f_s * 0.8)
     )
 
-    plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95]) # type: ignore
 
     if save_plot:
         plt.savefig(save_plot, dpi=300)
@@ -829,7 +829,7 @@ def plot_displacement_fields(Ux_cyl, Uy_cyl, Uz_cyl, r, theta, z_mid, r_values,
     ylabels = [rf'$U_x$ $_{{({unit})}}$', rf'$U_y$ $_{{({unit})}}$', rf'$U_z$ $_{{({unit})}}$']
     num_rows = sum(plot_flags)
 
-    fig, axs = plt.subplots(num_rows, 2, figsize=(26, 10 * num_rows))
+    fig, axs = plt.subplots(num_rows, 2, figsize=(26, 10 * num_rows)) # type: ignore
     if num_rows == 1:
         axs = [axs]
 
@@ -933,9 +933,10 @@ def screw_dislocation_isotropic(b, theta):
     Returns:
         (U_r, U_theta, U_z): Tuple of radial, tangential, and axial displacements.
     """
-    U_x = np.zeros_like(r)
-    U_y = np.zeros_like(r)
-    U_z = b * (theta+pi) / (2 * np.pi)
+    import numpy as np
+    U_x = np.zeros_like(theta)
+    U_y = np.zeros_like(theta)
+    U_z = b * (theta+np.pi) / (2 * np.pi)
     return U_x, U_y, U_z
 # ------------------ Edge Dislocation in Anisotropic Media ------------------
 def edge_dislocation_anisotropic(bx, by, c11, c12, c44, r, theta):
@@ -1323,7 +1324,7 @@ def center_object_list(obj_list):
     obj_list_centered = np.zeros(obj_list.shape, dtype='complex128')
     for n in range(len(obj_list)):
 #         print(len(obj_list)-n,end=' ')
-        obj_list_centered[n] += center_object(obj_list[n])
+        obj_list_centered[n] += center_object(obj_list[n]) # type: ignore
     return obj_list_centered
 #------------------------------------------------------------------------------------------------------------
 def center_of_mass_calculation_two_steps(data, crop = 50, plot=False):
@@ -1379,9 +1380,9 @@ def automatic_object_roi(obj,threshold = .1, factor = .4,plot=False):
         roi[2*n+1] += end
 
         if plot:
-            ax[n].plot(projection, '.-')
-            ax[n].axvline(x=start, color='r')
-            ax[n].axvline(x=end, color='r')
+            ax[n].plot(projection, '.-') # type: ignore
+            ax[n].axvline(x=start, color='r') # type: ignore
+            ax[n].axvline(x=end, color='r') # type: ignore
             
     return roi
 #------------------------------------------------------------------------------------------------------------
@@ -1472,7 +1473,7 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
     binary_data = (data > threshold).astype(np.uint8)
 
     # Step 2: Label the clusters
-    labeled_data, num_clusters = label(binary_data)
+    labeled_data, num_clusters = label(binary_data) # type: ignore
     print(f"Number of clusters identified: {num_clusters}")
 
     # Step 3: Filter clusters by size
@@ -1523,7 +1524,7 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
     # Step 5: Generate cylindrical mask based on splines or polynomial fits
     cylindrical_mask = np.zeros_like(merged_clusters)
 
-    for cluster_id in range(1, np.max(merged_clusters) + 1):
+    for cluster_id in range(1, np.max(merged_clusters) + 1): # type: ignore
         if cluster_id not in cluster_points:
             continue
 
@@ -1592,7 +1593,7 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
     print("Cylindrical mask constructed.")
 
     # Relabel clusters
-    final_labeled_clusters, num_final_clusters = label(cylindrical_mask > 0)
+    final_labeled_clusters, num_final_clusters = label(cylindrical_mask > 0) # type: ignore
     
     # Calculate cluster sizes
     cluster_sizes = [(label_id, np.sum(final_labeled_clusters == label_id)) 
@@ -1632,7 +1633,7 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
         frames = []
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
-        ax.set_box_aspect([1, 1, 1])
+        ax.set_box_aspect([1, 1, 1]) # type: ignore
 
         # Extract the coordinates of the final labeled clusters
         cluster_indices = np.argwhere(final_labeled_clusters > 0)
@@ -1640,7 +1641,7 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
             cluster_indices[:, 0],
             cluster_indices[:, 1],
             cluster_indices[:, 2],
-            s=1,
+            s=1, # type: ignore
             c=final_labeled_clusters[final_labeled_clusters > 0],
             cmap="jet", 
         )
@@ -1649,12 +1650,12 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
         ax.set_title("Final Clustering")
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_zlabel("Z") # type: ignore
 
         for angle in range(0, 360, 2):  # Create frames for the GIF
             ax.view_init(30, angle)
             plt.draw()
-            frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype="uint8").reshape(
+            frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype="uint8").reshape( # type: ignore
                 fig.canvas.get_width_height()[::-1] + (3,)
             )
             frames.append(frame)
@@ -2051,18 +2052,18 @@ def remove_phase_ramp_dislo(phase, dislo_position,radius_1=6, radius_2=15,functi
 
 
     if plot:
-        ax[0,1].plot(angle_ring, phase_ring_1, '.', label=f'{round(radius_1,1)}')
-        ax[0,1].plot(angle_ring, phase_ring_2, '.', label=f'{round(radius_1,1)}')
+        ax[0,1].plot(angle_ring, phase_ring_1, '.', label=f'{round(radius_1,1)}') # type: ignore
+        ax[0,1].plot(angle_ring, phase_ring_2, '.', label=f'{round(radius_1,1)}') # type: ignore
         
-        ax[0,1].set_xlabel('angle around dislocation (rad)', fontsize=15)
-        ax[0,1].set_ylabel('phase (rad)', fontsize=15)
-        ax[0,1].legend(title='distance from\ndislocation center', fontsize=12)
-        ax[0,1].set_title('dislocation phase\naround center\nafter interpolation', fontsize=20)
+        ax[0,1].set_xlabel('angle around dislocation (rad)', fontsize=15) # type: ignore
+        ax[0,1].set_ylabel('phase (rad)', fontsize=15) # type: ignore
+        ax[0,1].legend(title='distance from\ndislocation center', fontsize=12) # type: ignore
+        ax[0,1].set_title('dislocation phase\naround center\nafter interpolation', fontsize=20) # type: ignore
         
-        ax[0,2].plot(angle_ring, difference, '.', label='difference')
-        ax[0,2].plot(angle_ring, fit, 'r-', label='ramp fit')
-        ax[0,2].legend(fontsize=12)
-        ax[0,2].set_title('phase difference and fit', fontsize=20)
+        ax[0,2].plot(angle_ring, difference, '.', label='difference') # type: ignore
+        ax[0,2].plot(angle_ring, fit, 'r-', label='ramp fit') # type: ignore
+        ax[0,2].legend(fontsize=12) # type: ignore
+        ax[0,2].set_title('phase difference and fit', fontsize=20) # type: ignore
         
         
     # Remove the phase ramp
@@ -2072,24 +2073,24 @@ def remove_phase_ramp_dislo(phase, dislo_position,radius_1=6, radius_2=15,functi
     phase_no_ramp = (zero_to_nan(phase) - ramp_fit)
     
     if plot:
-        ax[1,0].matshow(phase, cmap='jet')
-        ax[1,0].set_title('original phase', fontsize=20)
-        ax[1,1].matshow(phase_no_ramp, cmap='jet')
-        ax[1,1].set_title('phase after ramp removal', fontsize=20)
+        ax[1,0].matshow(phase, cmap='jet') # type: ignore
+        ax[1,0].set_title('original phase', fontsize=20) # type: ignore
+        ax[1,1].matshow(phase_no_ramp, cmap='jet') # type: ignore
+        ax[1,1].set_title('phase after ramp removal', fontsize=20) # type: ignore
         
         angle_ring_1, phase_ring_1 = phase_around_dislo(phase_no_ramp, dislo_position, radius_1)
         angle_ring_2, phase_ring_2 = phase_around_dislo(phase_no_ramp, dislo_position, radius_2)
         
-        ax[1,2].plot(angle_ring_1, phase_ring_1, '.', label=f'{round(radius_1,1)}')
-        ax[1,2].plot(angle_ring_2, phase_ring_2, '.', label=f'{round(radius_2,1)}')
+        ax[1,2].plot(angle_ring_1, phase_ring_1, '.', label=f'{round(radius_1,1)}') # type: ignore
+        ax[1,2].plot(angle_ring_2, phase_ring_2, '.', label=f'{round(radius_2,1)}') # type: ignore
 
-        ax[1,2].set_xlabel('angle around dislocation (rad)', fontsize=15)
-        ax[1,2].set_ylabel('phase (rad)', fontsize=15)
-        ax[1,2].legend(title='distance from\ndislocation center', fontsize=12)
-        ax[1,2].set_title('dislocation phase\naround center\nafter ramp removal', fontsize=20)
+        ax[1,2].set_xlabel('angle around dislocation (rad)', fontsize=15) # type: ignore
+        ax[1,2].set_ylabel('phase (rad)', fontsize=15) # type: ignore
+        ax[1,2].legend(title='distance from\ndislocation center', fontsize=12) # type: ignore
+        ax[1,2].set_title('dislocation phase\naround center\nafter ramp removal', fontsize=20) # type: ignore
         
         
-        fig.tight_layout()
+        fig.tight_layout() # type: ignore
         
     return phase_no_ramp
 #------------------------------------------------------------------------------------------------------------
@@ -2112,7 +2113,8 @@ def plot_compare_phase_radius_around_dislo(scan,amp,phase,selected_dislocation_d
     fig.tight_layout()
     return
 #------------------------------------------------------------------------------------------------------------
-def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selected_point_index=0,save_vti=False,fig_title=None,plot_debug=True,radius_1=2, radius_2=10,dr=1,function_method="trigo"):
+def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selected_point_index=0,
+                                save_vti=False,fig_title=None,plot_debug=True,radius_1=2, radius_2=10,dr=1,function_method="trigo"):
     '''
     Remove the phase ramp in an object slice. 
     This use the approximation that the dislocation displacement field as function of the angle around it 
@@ -2120,16 +2122,16 @@ def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selecte
     :radius_1: first radius at which the dislo phase is taken
     :radius_2: second radius
     '''
-    phase_ring,angle_ring,circular_mask=plot_phase_around_dislo_one_radius_new (scan,amp,phase,selected_dislocation_data,selected_point_index,radius_1,dr,save_vti=False,plot_debug=False);
+    phase_ring,angle_ring,circular_mask=plot_phase_around_dislo_one_radius_new (scan,amp,phase,selected_dislocation_data,selected_point_index,radius_1,dr,save_vti=False,plot_debug=False); # type: ignore
     angle_ring_1=phase_ring[phase_ring!=0].flatten() 
     phase_ring_1=angle_ring[phase_ring!=0].flatten()
 
-    phase_ring,angle_ring,circular_mask=plot_phase_around_dislo_one_radius_new (scan,amp,phase,selected_dislocation_data,selected_point_index,radius_2,dr,save_vti=False,plot_debug=False);
+    phase_ring,angle_ring,circular_mask=plot_phase_around_dislo_one_radius_new (scan,amp,phase,selected_dislocation_data,selected_point_index,radius_2,dr,save_vti=False,plot_debug=False); # type: ignore
     angle_ring_2=phase_ring[phase_ring!=0].flatten() 
     phase_ring_2=angle_ring[phase_ring!=0].flatten()
 
 
-    if plot:
+    if plot_debug:
         fig,ax = plt.subplots(2,3, figsize=(12,8))
         ax[0,0].plot(angle_ring_1, phase_ring_1, '.', label=f'{round(radius_1,1)}')
         ax[0,0].plot(angle_ring_2, phase_ring_2, '.', label=f'{round(radius_2,1)}')
@@ -2163,19 +2165,19 @@ def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selecte
         popt=fit
 
 
-    if plot:
-        ax[0,1].plot(angle_ring, phase_ring_1, '.', label=f'{round(radius_1,1)}')
-        ax[0,1].plot(angle_ring, phase_ring_2, '.', label=f'{round(radius_1,1)}')
+    if plot_debug:
+        ax[0,1].plot(angle_ring, phase_ring_1, '.', label=f'{round(radius_1,1)}') # type: ignore
+        ax[0,1].plot(angle_ring, phase_ring_2, '.', label=f'{round(radius_1,1)}') # type: ignore
         
-        ax[0,1].set_xlabel('angle around dislocation (rad)', fontsize=15)
-        ax[0,1].set_ylabel('phase (rad)', fontsize=15)
-        ax[0,1].legend(title='distance from\ndislocation center', fontsize=12)
-        ax[0,1].set_title('dislocation phase\naround center\nafter interpolation', fontsize=20)
+        ax[0,1].set_xlabel('angle around dislocation (rad)', fontsize=15) # type: ignore
+        ax[0,1].set_ylabel('phase (rad)', fontsize=15) # type: ignore
+        ax[0,1].legend(title='distance from\ndislocation center', fontsize=12) # type: ignore
+        ax[0,1].set_title('dislocation phase\naround center\nafter interpolation', fontsize=20) # type: ignore
         
-        ax[0,2].plot(angle_ring, difference, '.', label='difference')
-        ax[0,2].plot(angle_ring, fit, 'r-', label='ramp fit')
-        ax[0,2].legend(fontsize=12)
-        ax[0,2].set_title('phase difference and fit', fontsize=20)
+        ax[0,2].plot(angle_ring, difference, '.', label='difference') # type: ignore
+        ax[0,2].plot(angle_ring, fit, 'r-', label='ramp fit') # type: ignore
+        ax[0,2].legend(fontsize=12) # type: ignore
+        ax[0,2].set_title('phase difference and fit', fontsize=20) # type: ignore
         
         
     # Remove the phase ramp
@@ -2184,25 +2186,25 @@ def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selecte
     ramp_fit = fit[0] * pos[0] + fit[1] * pos[1]
     phase_no_ramp = (zero_to_nan(phase) - ramp_fit)
     
-    if plot:
-        ax[1,0].matshow(phase, cmap='jet')
-        ax[1,0].set_title('original phase', fontsize=20)
-        ax[1,1].matshow(phase_no_ramp, cmap='jet')
-        ax[1,1].set_title('phase after ramp removal', fontsize=20)
+    if plot_debug:
+        ax[1,0].matshow(phase, cmap='jet') # type: ignore
+        ax[1,0].set_title('original phase', fontsize=20) # type: ignore
+        ax[1,1].matshow(phase_no_ramp, cmap='jet') # type: ignore
+        ax[1,1].set_title('phase after ramp removal', fontsize=20) # type: ignore
         
-        angle_ring_1, phase_ring_1 = phase_around_dislo(phase_no_ramp, dislo_position, radius_1)
-        angle_ring_2, phase_ring_2 = phase_around_dislo(phase_no_ramp, dislo_position, radius_2)
+        angle_ring_1, phase_ring_1 = phase_around_dislo(phase_no_ramp, dislo_position, radius_1) # type: ignore
+        angle_ring_2, phase_ring_2 = phase_around_dislo(phase_no_ramp, dislo_position, radius_2) # type: ignore
         
-        ax[1,2].plot(angle_ring_1, phase_ring_1, '.', label=f'{round(radius_1,1)}')
-        ax[1,2].plot(angle_ring_2, phase_ring_2, '.', label=f'{round(radius_2,1)}')
+        ax[1,2].plot(angle_ring_1, phase_ring_1, '.', label=f'{round(radius_1,1)}') # type: ignore
+        ax[1,2].plot(angle_ring_2, phase_ring_2, '.', label=f'{round(radius_2,1)}') # type: ignore
 
-        ax[1,2].set_xlabel('angle around dislocation (rad)', fontsize=15)
-        ax[1,2].set_ylabel('phase (rad)', fontsize=15)
-        ax[1,2].legend(title='distance from\ndislocation center', fontsize=12)
-        ax[1,2].set_title('dislocation phase\naround center\nafter ramp removal', fontsize=20)
+        ax[1,2].set_xlabel('angle around dislocation (rad)', fontsize=15) # type: ignore
+        ax[1,2].set_ylabel('phase (rad)', fontsize=15) # type: ignore
+        ax[1,2].legend(title='distance from\ndislocation center', fontsize=12) # type: ignore
+        ax[1,2].set_title('dislocation phase\naround center\nafter ramp removal', fontsize=20) # type: ignore
         
         
-        fig.tight_layout()
+        fig.tight_layout() # type: ignore
         
     return phase_no_ramp
 #------------------------------------------------------------------------------------------------------------
@@ -2271,7 +2273,7 @@ def process_dislocation_scan(scan, files_data_ortho, scan_list, save_path,thresh
     plt.show()
 
     # Get cropped module and phase
-    module, phase = nan_to_zero(get_cropped_module_phase(obj_slice, threshold_module=threshold_module, crop=False))
+    module, phase = nan_to_zero(get_cropped_module_phase(obj_slice, threshold_module=threshold_module, crop=False)) # type: ignore
     plt.show()
 
     # Plot phase around dislocation for a given radius
@@ -2613,10 +2615,10 @@ def load_results_from_h5_dislo(file_path):
     with h5py.File(file_path, "r") as h5file:
         for data_type in h5file.keys():
             data[data_type] = {}
-            for scan in h5file[data_type].keys():
+            for scan in h5file[data_type].keys(): # type: ignore
                 data[data_type][scan] = {
-                    key: h5file[data_type][scan][key][:]
-                    for key in h5file[data_type][scan].keys()
+                    key: h5file[data_type][scan][key][:] # type: ignore
+                    for key in h5file[data_type][scan].keys() # type: ignore
                 }
     return data
 #------------------------------------------------------------------------------------------------------------
@@ -3164,9 +3166,6 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
     if save_path:
         plt.savefig(save_path, dpi=300)
     plt.show()
-
-
-
 #------------------------------------------------------------------------------------------------------------
 def smooth_interpolate_common_x(x1, y1, x_common, sigma=2):
     """
@@ -6668,7 +6667,7 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
         if plot_debug:
             plot_3d_dislo_amp_disloline(nan_to_zero(ortho_density),ortho_selected_dislocation_data,iso_value = 0.3,elev=60, azim=-120,save_plot=path_to_save+file_name+"step2_0_ortho_data_3D_plot_dislo_amp.png",
                                         title_fig=" Isosurface plot of the amplitude with the dislocation line ")
-        return simu_phase, obj, strain_amp,selected_dislocation_data, ortho_simu_phase,ortho_obj, ortho_strain_amp,ortho_selected_dislocation_data
+        return simu_phase, obj, strain_amp,selected_dislocation_data, ortho_simu_phase,ortho_obj, ortho_strain_amp,ortho_selected_dislocation_data # type: ignore
     else:
         return simu_phase, obj, strain_amp,selected_dislocation_data
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
@@ -6807,17 +6806,17 @@ def fit_phase_correction_twodataset(grid_points, phase, predicted_phase_3d, radi
         # Plot phase images for selected points
         if save_path:
             save_path_0=save_path+"_Simulated_"
-        plot_phase_for_selected_points(phase, selected_indices,show_plots, "Simulated Phase with Selected Points",save_path_0)
+        plot_phase_for_selected_points(phase, selected_indices,show_plots, "Simulated Phase with Selected Points",save_path_0) # type: ignore # type: ignore
         if save_path:
             save_path_0=save_path+"_Theo_"
         plot_phase_for_selected_points(predicted_phase_3d, selected_indices,show_plots, "Theoretical Phase with Selected Points",save_path_0)
 
     # Compute residuals
-    residuals = Delta_Phi - A @ coeffs
-    sigma_squared = np.sum(residuals**2) / (len(X) - len(coeffs))
+    residuals = Delta_Phi - A @ coeffs # type: ignore
+    sigma_squared = np.sum(residuals**2) / (len(X) - len(coeffs)) # type: ignore
 
     # Compute covariance matrix with regularization
-    cov_matrix = sigma_squared * np.linalg.inv(A.T @ A + np.eye(A.shape[1]) * 1e-6)
+    cov_matrix = sigma_squared * np.linalg.inv(A.T @ A + np.eye(A.shape[1]) * 1e-6) # type: ignore
     errors = np.sqrt(np.diag(cov_matrix))
 
     # Compute phase correction across the entire dataset
@@ -6854,12 +6853,12 @@ def fit_phase_correction_twodataset(grid_points, phase, predicted_phase_3d, radi
         fig, ax = plt.subplots(figsize=(10, 6))
 
         # Extract phase values for the selected points
-        simu_values = np.array([phase[i, j, k] for (i, j, k) in selected_indices])
-        theo_values = np.array([predicted_phase_3d[i, j, k] for (i, j, k) in selected_indices])
-        corrected_values = np.array([phase[i, j, k] - phase_correction[i, j, k] for (i, j, k) in selected_indices])
+        simu_values = np.array([phase[i, j, k] for (i, j, k) in selected_indices]) # type: ignore
+        theo_values = np.array([predicted_phase_3d[i, j, k] for (i, j, k) in selected_indices]) # type: ignore
+        corrected_values = np.array([phase[i, j, k] - phase_correction[i, j, k] for (i, j, k) in selected_indices]) # type: ignore
 
-        x_labels = [str(idx) for idx in selected_indices]
-        x_range = np.arange(len(selected_indices))
+        x_labels = [str(idx) for idx in selected_indices] # type: ignore
+        x_range = np.arange(len(selected_indices)) # type: ignore
 
         # Plot all values in a single subplot
         ax.plot(x_range, simu_values, 'o-', color='blue', label="Simulated Phase")
@@ -6874,7 +6873,7 @@ def fit_phase_correction_twodataset(grid_points, phase, predicted_phase_3d, radi
 
         # Create a table next to the plot
         fig.subplots_adjust(right=1.)
-        table_ax = fig.add_axes([1.05, 0.15, 0.5, 0.1])  # Position of the table
+        table_ax = fig.add_axes([1.05, 0.15, 0.5, 0.1])  # type: ignore # Position of the table
         table_ax.axis("tight")
         table_ax.axis("off")
         table = table_ax.table(cellText=results_table.values,
@@ -6890,7 +6889,7 @@ def fit_phase_correction_twodataset(grid_points, phase, predicted_phase_3d, radi
         table.set_fontsize(20)
 
         
-        plot_ax = fig.add_axes([1.1, 0.45, 0.5, 0.4])  # Position of the table
+        plot_ax = fig.add_axes([1.1, 0.45, 0.5, 0.4])  # type: ignore # Position of the table
 
         metrics = ["MAE", "RMSE"]
         before_values = [mae_before, rmse_before]
@@ -7191,7 +7190,7 @@ def get_phase_simu_gvector_v1(h5_file, G=[1, -1, 1], path_to_save=None, file_nam
     end_time = time.time()
     print(f"Processing took {np.round((end_time - start_time) / 60, 1)} minutes")
     if plot_debug:
-        plot_3d_dislo_amp_disloline(density,selected_dislocation_data,iso_value = 0.3,elev=60, azim=-120,save_plot=path_to_save+file_name+"step2_0_raw_data_3D_plot_dislo_amp.png",
+        plot_3d_dislo_amp_disloline(density,selected_dislocation_data,iso_value = 0.3,elev=60, azim=-120,save_plot=path_to_save+file_name+"step2_0_raw_data_3D_plot_dislo_amp.png", # type: ignore
                                     title_fig=" Isosurface plot of the amplitude with the dislocation line ")
 
     return simu_phase, obj, strain_amp,selected_dislocation_data
@@ -7252,7 +7251,7 @@ def modify_shaperealspace_basedon_reciprocalspace(obj,shape_data_init):
     # Compute the inverse 3D Fourier transform
     real_space_object = np.fft.ifftshift(
         np.fft.ifftn(
-            np.fft.fftshift(reciprocal_space_object)
+            np.fft.fftshift(reciprocal_space_object) # type: ignore
         )
     )
     real_space_object = np.flip(real_space_object)
@@ -7403,30 +7402,4 @@ def step4_process_phase_ring_orthogonal(
         }
 
         plt.show()  # optional — only needed for inline notebook display
-
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-
-#🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-
 
