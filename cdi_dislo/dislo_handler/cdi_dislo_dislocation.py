@@ -47,23 +47,25 @@
 
 
 
-from cdi_dislo.common_imports import *  # type: ignore  # Load standard libraries
-from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D,plot_2D_slices_middle ,plot_object_module_phase_2d
-from cdi_dislo.diff_utils_handler.cdi_dislo_diffutils             import get_abc_direct_space_sixs2019,orth_sixs2019_gridder_def
-from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import remove_phase_ramp_abd , phase_offset_to_zero_clement , getting_strain_mapvti ,get_displacement_gradient
-remove_phase_ramp=remove_phase_ramp_abd
-from cdi_dislo.general_utilities.cdi_dislo_utils                  import  normalize_vector , project_vector, fill_up_support, pad_to_shape, find_max_and_com_3d, center_angles ,crop_3darray_pos ,crop_3d_obj_pos,save_vti_from_dictdata
+# from cdi_dislo.common_imports import *   # Load standard libraries
+from cdi_dislo.ewen_utilities.plot_utilities                      import plot_2D_slices_middle_one_array3D,plot_2D_slices_middle ,plot_object_module_phase_2d
+from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import get_displacement_gradient
+from cdi_dislo.general_utilities.cdi_dislo_utils                  import normalize_vector , project_vector, fill_up_support, pad_to_shape, find_max_and_com_3d, center_angles ,crop_3darray_pos ,crop_3d_obj_pos,save_vti_from_dictdata
 
-from cdi_dislo.rotation_handler.cdi_dislo_rotation                import rotation_matrix_from_vectors,angle_between_vectors
-
-from cdi_dislo.plotutilities.cdi_dislo_plotutilities              import plot_3d_array
-
+from scipy.ndimage import center_of_mass as C_O_M
+from cdi_dislo.general_utilities.cdi_dislo_utils import (  
+    nan_to_zero,
+    zero_to_nan,       
+)
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+from matplotlib.gridspec import GridSpec
 #####################################################################################################################
 #####################################################################################################################
 ############################################Dislo utility############################################################
 #####################################################################################################################
 #####################################################################################################################
-
 #------------------------------------------------------------------------------------------------------------
 def cylindrical_to_cartesian(r, theta, z):
     """
@@ -93,6 +95,22 @@ def compare_dislocations_v0(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
     import matplotlib.pyplot as plt
     import numpy as np
     import matplotlib.ticker as ticker
+    plt.rcParams.update({
+        'font.size': f_s,
+        'font.weight': 'bold',
+        'axes.titlesize': f_s,
+        'axes.titleweight': 'bold',
+        'axes.labelsize': f_s,
+        'axes.labelweight': 'bold',
+        'xtick.labelsize': f_s,
+        'ytick.labelsize': f_s,
+        'xtick.major.width': 3,
+        'ytick.major.width': 3,
+        'legend.fontsize': f_s,
+        'legend.title_fontsize': f_s,
+        'figure.titlesize': f_s
+    })
+    
 
     z_mid = Ux_iso.shape[2] // 2
 
@@ -201,8 +219,6 @@ def compare_dislocations_v0(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
     if save_plot:
         plt.savefig(save_plot, dpi=300, bbox_inches='tight')
     plt.show()
-
-
 def compare_dislocations_v1(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso,theta, R, r_values, suptitle, marker1="<", marker2=">",
                             save_plot=None, mod_theta=False, remove_jump=True, f_s=40,jump_filer_period =.5,unit="nm",fig_size_unit=(27,12),marker_size=10,line_style='-'):
     """
@@ -226,6 +242,7 @@ def compare_dislocations_v1(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
         'legend.title_fontsize': f_s,
         'figure.titlesize': f_s
     })
+    
 
     z_mid = Ux_iso.shape[2] // 2
 
@@ -377,6 +394,7 @@ def compare_dislocations_v2(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
         'axes.unicode_minus': False
     })
 
+    
     def plot_component_comparison(ax_l, ax_r, U_iso, U_aniso, comp, center_angles_func):
         for r_val in r_values:
             mask = np.isclose(R_mid, r_val, atol=1)
@@ -448,7 +466,6 @@ def compare_dislocations_v2(Ux_iso, Uy_iso, Uz_iso, Ux_aniso, Uy_aniso, Uz_aniso
     if save_plot:
         plt.savefig(save_plot, dpi=300, bbox_inches='tight')
     plt.show()
-
 #------------------------------------------------------------------------------------------------------------
 def compare_metals(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation_type,
                    suptitle=False, save_plot=None, mod_theta=False,
@@ -778,7 +795,6 @@ def compare_metals_v1(Ux_dict, Uy_dict, Uz_dict, theta, r, r_values, dislocation
     if save_plot:
         plt.savefig(save_plot, dpi=300)
     plt.show()
-
 #------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------
@@ -878,7 +894,7 @@ def plot_displacement_fields(Ux_cyl, Uy_cyl, Uz_cyl, r, theta, z_mid, r_values,
         row_idx += 1
 
     # Unified top legend
-    handles = [plt.Line2D([], [], marker=marker, color=f'C{i}', label=f"r = {r_val}", linewidth=2)
+    handles = [plt.Line2D([], [], marker=marker, color=f'C{i}', label=f"r = {r_val}", linewidth=2) # type: ignore
                for i, r_val in enumerate(r_values)]
     fig.legend(handles=handles,
                loc='lower center',
@@ -898,10 +914,6 @@ def plot_displacement_fields(Ux_cyl, Uy_cyl, Uz_cyl, r, theta, z_mid, r_values,
         plt.savefig(save_plot, dpi=300)
 
     plt.show()
-
-
-
-
 ######################################### Not used ##################################################################
 # ------------------ Edge Dislocation in Isotropic Media ------------------
 def edge_dislocation_isotropic(b, nu, r, theta):
@@ -1163,6 +1175,19 @@ def mixed_dislocation_isotropic_cart(b_x, b_y, b_z, x, y, nu=0.3):
 
     return Ux_cyl, Uy_cyl, Uz_cyl
 def edge_dislocation_anisotropic_carti_v0(bx, by, c11, c12, c44, x, y):
+    '''
+    Docstring for edge_dislocation_anisotropic_carti_v0
+    
+    :param bx: Description
+    :param by: Description
+    :param c11: Description
+    :param c12: Description
+    :param c44: Description
+    :param x: Description
+    :param y: Description
+    '''
+    import numpy as np
+
     # Calculate c_0
     c0 = c11 - c12 - 2 * c44
     # Calculate h
@@ -1191,13 +1216,13 @@ def edge_dislocation_anisotropic_carti_v0(bx, by, c11, c12, c44, x, y):
     phi = 0.5 * np.arccos((c12_prime**2 + 2 * c12_prime * c66_prime - c11_bar_prime**2) / (2 * c11_bar_prime * c66_prime))
     
     # Calculate q^2 and t^2
-    q_squared =  ( x**2 + ((lambda_**2) * (y**2))+ 2*x*y*lambda_*cos(phi) )
-    t_squared =  ( x**2 + ((lambda_**2) * (y**2))- 2*x*y*lambda_*cos(phi) )
+    q_squared =  ( x**2 + ((lambda_**2) * (y**2))+ 2*x*y*lambda_*np.cos(phi) )
+    t_squared =  ( x**2 + ((lambda_**2) * (y**2))- 2*x*y*lambda_*np.cos(phi) )
     q = np.sqrt(q_squared)
     t = np.sqrt(t_squared)
     
     # Calculate theta_anis1
-    theta_anis1 = np.arctan2(2*(x)*(y)*lambda_*sin(phi),(x)**2-(y)**2*lambda_**2)+np.sign(x)*pi+2*pi
+    theta_anis1 = np.arctan2(2*(x)*(y)*lambda_*np.sin(phi),(x)**2-(y)**2*lambda_**2)+np.sign(x)*np.pi+2*np.pi
     # Calculate theta_anis2
     theta_anis2 = np.arctan2(np.sin(2 * phi)*x**2, lambda_**2 *y**2 - x**2 * np.cos(2 * phi))
     # Calculate theta_anis3
@@ -1249,13 +1274,13 @@ def edge_dislocation_anisotropic_carti(bx, by, c11, c12, c44, x, y):
     phi = 0.5 * np.arccos((c12_prime**2 + 2 * c12_prime * c66_prime - c11_bar_prime**2) / (2 * c11_bar_prime * c66_prime))
     
     # Calculate q^2 and t^2
-    q_squared =  ( x**2 + ((lambda_**2) * (y**2))+ 2*x*y*lambda_*cos(phi) )
-    t_squared =  ( x**2 + ((lambda_**2) * (y**2))- 2*x*y*lambda_*cos(phi) )
+    q_squared =  ( x**2 + ((lambda_**2) * (y**2))+ 2*x*y*lambda_*np.cos(phi) )
+    t_squared =  ( x**2 + ((lambda_**2) * (y**2))- 2*x*y*lambda_*np.cos(phi) )
     q = np.sqrt(q_squared)
     t = np.sqrt(t_squared)
     
     # Calculate theta_anis1
-    theta_anis1 = np.arctan2(2*(x)*(y)*lambda_*sin(phi),(x)**2-(y)**2*lambda_**2)+np.sign(x)*pi
+    theta_anis1 = np.arctan2(2*(x)*(y)*lambda_*np.sin(phi),(x)**2-(y)**2*lambda_**2)+np.sign(x)*np.pi
     # Calculate theta_anis2
     theta_anis2 = np.arctan2(np.sin(2 * phi)*x**2, lambda_**2 *y**2 - x**2 * np.cos(2 * phi))
     # Calculate theta_anis3
@@ -1302,14 +1327,14 @@ def screw_dislocation_anisotropic_carti(b_z, c11, c12, c44, x,y):
     cp16 = -c0 * np.sqrt(2) / 6
     cp22 = c11 - 2 * c0 / 3
     cp45 = -cp16
-    coef= sqrt(cp44*cp55-cp45**2)
+    coef= np.sqrt(cp44*cp55-cp45**2)
     # Displacement components
     U_x = np.zeros_like(np.arctan2(y, x))
     U_y = np.zeros_like(np.arctan2(y, x))
     numerator = coef*y
     denominator = cp44*x - cp45 *y
-    
-    U_z = b_z / (2 * np.pi) *( np.arctan2(numerator, denominator)+pi)
+
+    U_z = b_z / (2 * np.pi) *( np.arctan2(numerator, denominator)+np.pi)
 
     return U_x, U_y, U_z
 #####################################################################################################################
@@ -1337,12 +1362,13 @@ def center_of_mass_calculation_two_steps(data, crop = 50, plot=False):
 
 
     s = [slice( cropping_dim[n][0],  cropping_dim[n][1] ) for n in range(data.ndim)]
-    center2 = center_of_mass(data[tuple(s)])
+    center2 = C_O_M(data[tuple(s)])
 
     center = [int(round(cropping_dim[n][0]+center2[n])) for n in range(data.ndim)]
     
     if plot:
         if data.ndim==3:
+            from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections
             fig, ax = plt.subplots(1,3, figsize=(12,4))
             plot_3D_projections(data, fig=fig, ax=ax)
             ax[0].scatter(center[2], center[2], color='w')
@@ -1392,6 +1418,8 @@ def apply_roi(array, roi):
 #------------------------------------------------------------------------------------------------------------
 def get_cropped_module_phase(obj,threshold_module = None, support = None,crop=False, apply_fftshift=False, unwrap=True):
     
+    from numpy.fft import fftshift
+    from cdi_dislo.ewen_utilities.Object_utilities import crop_array_half_size
     if apply_fftshift:
         obj = fftshift(obj)
         
@@ -1469,6 +1497,17 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
     - num_final_clusters: int
         The number of final clusters after relabeling.
     """
+    import numpy as np
+    from scipy.ndimage import label
+    from scipy.spatial.distance import cdist
+    from scipy.interpolate import splprep, splev
+    from sklearn.decomposition import PCA
+    from bcdi.graph                     import graph_utils          as gu # type: ignore
+
+
+
+    # Copy input data to avoid modifying the original
+    data = np.copy(data)
     # Step 1: Threshold the data to identify potential clusters
     binary_data = (data > threshold).astype(np.uint8)
 
@@ -1630,6 +1669,9 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
 
     # Create a debug plot (if enabled)
     if debug_plot:
+        import imageio
+        import matplotlib.pyplot as plt
+
         frames = []
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
@@ -1653,7 +1695,7 @@ def process_and_merge_clusters_dislo_strain_map(data,amp,phase,save_path,voxel_s
         ax.set_zlabel("Z") # type: ignore
 
         for angle in range(0, 360, 2):  # Create frames for the GIF
-            ax.view_init(30, angle)
+            ax.view_init(30, angle) # type: ignore
             plt.draw()
             frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype="uint8").reshape( # type: ignore
                 fig.canvas.get_width_height()[::-1] + (3,)
@@ -1682,6 +1724,8 @@ def refine_cluster_with_dbscan(cluster_indices, eps=2.0, min_samples=5):
     - dbscan_labels: np.ndarray
         Labels assigned by DBSCAN for each point in the cluster.
     """
+    from sklearn.cluster import DBSCAN
+
     dbscan = DBSCAN(eps=eps, min_samples=min_samples)
     dbscan_labels = dbscan.fit_predict(cluster_indices)
     return dbscan_labels
@@ -1703,6 +1747,9 @@ def fit_splines_to_dbscan_components(cluster_indices, dbscan_labels, smoothing_p
     - splines: list of np.ndarray
         List of spline points for each DBSCAN component.
     """
+    from scipy.interpolate import splprep, splev
+    from sklearn.decomposition import PCA
+
     splines = []
     unique_labels = np.unique(dbscan_labels)
 
@@ -1835,6 +1882,9 @@ def create_cylindrical_mask_with_polar_angles(data_shape, line_points, r, dr):
     - polar_angle_mask: np.ndarray
         3D array with the polar angle values (in radians) for voxels within the mask.
     """
+    from scipy.spatial import cKDTree # type: ignore
+    from sklearn.decomposition import PCA
+
     # Create a KDTree for fast nearest-neighbor search
     tree = cKDTree(line_points)
 
@@ -1903,6 +1953,11 @@ def automatic_obj_slice_dilo_finding(obj_slice,threshold_module=0.005,plot=False
     return dislo_position
 #------------------------------------------------------------------------------------------------------------
 def dislocation_reorientation(obj, normal, dislo_position,plot=False):
+    from cdi_dislo.rotation_handler.cdi_dislo_rotation                import rotation_matrix_from_vectors
+    from scipy.interpolate import RegularGridInterpolator
+    from cdi_dislo.ewen_utilities.plot_utilities                      import plot_2D_slices_middle
+    from cdi_dislo.ewen_utilities.Object_utilities                    import center_object, apply_roi
+
     rotation_matrix = rotation_matrix_from_vectors([1,0,0], normal)
 
     pos = [np.arange(obj.shape[axis]) - dislo_position[axis] for axis in range(obj.ndim)]
@@ -2003,7 +2058,7 @@ def slice_coord_array_along_axis(array,axis,coord):
     return tuple(s)
 #------------------------------------------------------------------------------------------------------------
 def phase_difference_fit_function(theta, alpha, beta):
-    return alpha * sin(theta) + beta * cos(theta)
+    return alpha * np.sin(theta) + beta * np.cos(theta)
 #------------------------------------------------------------------------------------------------------------
 def remove_phase_ramp_dislo(phase, dislo_position,radius_1=6, radius_2=15,function_method="trigo",plot=True):
     '''
@@ -2013,7 +2068,9 @@ def remove_phase_ramp_dislo(phase, dislo_position,radius_1=6, radius_2=15,functi
     :radius_1: first radius at which the dislo phase is taken
     :radius_2: second radius
     '''
-
+    import numpy.fft as fft
+    from scipy.optimize import curve_fit
+    
     angle_ring_1, phase_ring_1 = phase_around_dislo(phase, dislo_position, radius_1, plot=plot)
     angle_ring_2, phase_ring_2 = phase_around_dislo(phase, dislo_position, radius_2, plot=plot)
 
@@ -2027,9 +2084,8 @@ def remove_phase_ramp_dislo(phase, dislo_position,radius_1=6, radius_2=15,functi
         ax[0,0].legend(title='distance from\ndislocation center', fontsize=12)
         ax[0,0].set_title('dislocation phase\naround center', fontsize=20)
         
-
     # Make interpolations to have phase at same angles
-    angle_ring = np.linspace(array([angle_ring_1.min(),angle_ring_2.min()]).max(),array([angle_ring_1.max(),angle_ring_2.max()]).min(),100)
+    angle_ring = np.linspace(np.array([angle_ring_1.min(),angle_ring_2.min()]).max(),np.array([angle_ring_1.max(),angle_ring_2.max()]).min(),100)
     phase_ring_1 = np.interp(angle_ring, angle_ring_1, phase_ring_1)
     phase_ring_2 = np.interp(angle_ring, angle_ring_2, phase_ring_2)
     # Now compute the difference (should be 0 if there's no phase ramp)
@@ -2122,6 +2178,9 @@ def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selecte
     :radius_1: first radius at which the dislo phase is taken
     :radius_2: second radius
     '''
+    import numpy.fft as fft
+    from scipy.optimize import curve_fit
+
     phase_ring,angle_ring,circular_mask=plot_phase_around_dislo_one_radius_new (scan,amp,phase,selected_dislocation_data,selected_point_index,radius_1,dr,save_vti=False,plot_debug=False); # type: ignore
     angle_ring_1=phase_ring[phase_ring!=0].flatten() 
     phase_ring_1=angle_ring[phase_ring!=0].flatten()
@@ -2143,7 +2202,7 @@ def remove_phase_ramp_dislo_new(scan,amp,phase,selected_dislocation_data,selecte
         
 
     # Make interpolations to have phase at same angles
-    angle_ring = np.linspace(array([angle_ring_1.min(),angle_ring_2.min()]).max(),array([angle_ring_1.max(),angle_ring_2.max()]).min(),100)
+    angle_ring = np.linspace(np.array([angle_ring_1.min(),angle_ring_2.min()]).max(),np.array([angle_ring_1.max(),angle_ring_2.max()]).min(),100)
     phase_ring_1 = np.interp(angle_ring, angle_ring_1, phase_ring_1)
     phase_ring_2 = np.interp(angle_ring, angle_ring_2, phase_ring_2)
     # Now compute the difference (should be 0 if there's no phase ramp)
@@ -2489,6 +2548,9 @@ def remove_jumps_dbscan_algo(x, y, eps=1.5, min_samples=5, change_point_n=2, jum
         final_y (np.array): Y-values after jump removal.
         final_indices (np.array): Indices of the selected points in the original dataset.
     """
+    import ruptures as rpt
+    from sklearn.cluster import DBSCAN
+    import numpy as np
 
     # Convert to NumPy if y is a Pandas Series
     if hasattr(y, "to_numpy"):
@@ -2561,6 +2623,8 @@ def save_results_to_h5_dislo(data, file_path):
         data (dict): The hierarchical dictionary to save.
         file_path (str): Path to save the HDF5 file.
     """
+    import h5py
+
     with h5py.File(file_path, "w") as h5file:
         for data_type, scans in data.items():  # data_processed, data_raw, data_smooth
             group = h5file.create_group(data_type)
@@ -2576,6 +2640,9 @@ def save_results_to_h5_dislo_v1(data, file_path):
         data (dict): Nested dict with arrays at leaf nodes.
         file_path (str): Output .h5 file path.
     """
+    import h5py
+    import numpy as np
+
     def recursively_save_dict_to_group(h5group, dictionary):
         for key, item in dictionary.items():
             if isinstance(item, dict):
@@ -2611,6 +2678,8 @@ def load_results_from_h5_dislo(file_path):
     Returns:
         dict: The loaded hierarchical dictionary.
     """
+    import h5py
+
     data = {}
     with h5py.File(file_path, "r") as h5file:
         for data_type in h5file.keys():
@@ -2633,6 +2702,8 @@ def results_to_dataframe(results):
     Returns:
         pd.DataFrame: Flattened DataFrame with columns for type, scan, angle, and phase.
     """
+    import pandas as pd
+
     flattened_data = []
     for data_type, scans in results.items():  # e.g., "data_processed", "data_raw", "data_smooth"
         for scan, arrays in scans.items():
@@ -2668,6 +2739,12 @@ def plot_phase_vs_angle(data=None,title="",ylabel="Phase (rad)",save_filename=No
     Returns:
         None
     """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    import pandas as pd
+    import matplotlib.ticker as ticker
+
     # Validate data input
     if data is None or data.empty:
         raise ValueError("The 'data' parameter must be a non-empty DataFrame.")
@@ -2804,7 +2881,7 @@ def plot_phase_vs_angle(data=None,title="",ylabel="Phase (rad)",save_filename=No
 #------------------------------------------------------------------------------------------------------------
 def filter_phase_2pi_period(phase,angle):
     angle_min=angle.min()
-    angle_threshold=angle_min+2*pi
+    angle_threshold=angle_min+2*np.pi
     return phase[angle<=angle_threshold],angle[angle<=angle_threshold]
 #####################################################################################################################
 def deconvolute_1d(x, y, method="FFT", wavelet="db4", lowpass_filter=False, impulse_response=None):
@@ -2822,6 +2899,12 @@ def deconvolute_1d(x, y, method="FFT", wavelet="db4", lowpass_filter=False, impu
     Returns:
         - deconvoluted_signal: ndarray (Processed y-values)
     """
+    import numpy as np
+    from scipy import signal
+    import scipy.fft as fft
+    import pywt
+    from sklearn.decomposition import FastICA
+    from scipy.signal import savgol_filter
 
     y = np.array(y)
 
@@ -2835,8 +2918,8 @@ def deconvolute_1d(x, y, method="FFT", wavelet="db4", lowpass_filter=False, impu
         freq = fft.fftfreq(len(x), d=(x[1] - x[0]))  # Frequency domain
 
         # Remove unwanted high-frequency components
-        Y[np.abs(freq) > 0.1 * max(freq)] = 0  # Low-pass filtering
-        deconvoluted_signal = fft.ifft(Y).real  # Reconstruct signal
+        Y[np.abs(freq) > 0.1 * max(freq)] = 0  # type: ignore # Low-pass filtering
+        deconvoluted_signal = fft.ifft(Y).real  # type: ignore # Reconstruct signal
 
     elif method == "Wavelet":
         # Apply Discrete Wavelet Transform (DWT)
@@ -2879,11 +2962,15 @@ def filter_outliers(x, y, method="zscore", threshold=3, window=11, polyorder=2,e
         - x_filtered, y_filtered: ndarrays (Cleaned dataset)
     """
 
+    import numpy as np
+    from scipy import stats, signal     
+    from sklearn.cluster import DBSCAN
+    from scipy.signal import savgol_filter
     y = np.array(y)
 
     if method == "zscore":
         # Compute Z-score and filter outliers
-        z_scores = np.abs(stats.zscore(y))
+        z_scores = np.abs(stats.zscore(y)) # type: ignore
         mask = z_scores < threshold  # Keep only inliers
 
     elif method == "iqr":
@@ -2921,7 +3008,8 @@ def filter_outliers(x, y, method="zscore", threshold=3, window=11, polyorder=2,e
     return x_filtered, y_filtered
 #------------------------------------------------------------------------------------------------------------
 def process_phase_ring_ortho_old(angle,phase,factor_phase=1):
-
+    from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import phase_offset_to_zero_clement
+    from scipy.signal import savgol_filter
     # Process and sort phase and angle data
     angle_ring             = factor_phase * phase[phase != 0].flatten()
     phase_ring             =                angle[phase != 0].flatten()
@@ -3070,6 +3158,11 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
     --------
     None (Displays the plot).
     """
+    import numpy as np
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
+
 
     # Set global font properties
     plt.rcParams.update({
@@ -3078,7 +3171,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
     })
 
     num_cases = len(b_cases)
-    colors = matplotlib.cm.viridis(np.linspace(0, 1, num_cases))  # Use Viridis colormap for better contrast
+    colors = matplotlib.cm.viridis(np.linspace(0, 1, num_cases))  # type: ignore # Use Viridis colormap for better contrast
 
     # Compute linear fits for both experimental and theoretical data
     coefficients_theo = [np.polyfit(theta_data, phase_theo_3_cases[i], 1) for i in range(num_cases)]
@@ -3119,7 +3212,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
         ax0.plot(theta_data, phase_theo_3_cases[i_b], "-", label=f'Theory {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
     ax0.set_ylabel(r"$\phi$")
-    ax0.set_title(f"{type_data_to_comp} vs. Theoretical $\phi$ {title_suffix}")
+    ax0.set_title(f"{type_data_to_comp} vs. Theoretical $\phi$ {title_suffix}") # type: ignore
     ax0.legend(fontsize=font_size-2, loc='best', frameon=False, markerscale=1.2)
     ax0.grid(True, linestyle='dotted', alpha=0.5)
 
@@ -3136,7 +3229,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
         label = ''.join(map(str, (b_cases[i_b] /np.nanmin(zero_to_nan(np.abs(b_cases[i_b])))).astype(int)))
         ax1.plot(theta_data, phase_diff[i_b], "--", label=f'Error {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
-    ax1.set_ylabel(r"$\phi$ Difference (Error)");    ax1.set_title(f"$\phi$ Difference: Theory - {type_data_to_comp} {title_suffix}")
+    ax1.set_ylabel(r"$\phi$ Difference (Error)");    ax1.set_title(f"$\phi$ Difference: Theory - {type_data_to_comp} {title_suffix}") # type: ignore
     ax1.axhline(0, color="gray", linestyle="dotted", linewidth=1.2)
     ax1.legend(fontsize=font_size-2, loc='best', frameon=False);    ax1.grid(True, linestyle='dotted', alpha=0.5)
 
@@ -3148,7 +3241,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
         ax2.plot(theta_data, phase_diff_oscillation_exp_based[i_b], "-", label=f'Theory {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
     ax2.set_xlabel(r"$\theta$");    ax2.set_ylabel(r"$\phi - \alpha_{ref}\theta - \beta_{ref}$")
-    ax2.set_title(f"$\phi -$ Linear Part of ref Data {title_suffix}")
+    ax2.set_title(f"$\phi -$ Linear Part of ref Data {title_suffix}") # type: ignore
     ax2.legend(fontsize=font_size-2, loc='best', frameon=False);    ax2.grid(True, linestyle='dotted', alpha=0.5)
 
     # --- Subplot 4: Phase - Linear Trend for Each Theoretical Case ---
@@ -3159,7 +3252,7 @@ def plot_dislocation_phase_analysis(theta_data, phase_data, phase_theo_3_cases, 
         ax3.plot(theta_data, phase_diff_oscillation[i_b], "-", label=f'Theory {label}', linewidth=2*num_cases-i_b*2, color=colors[i_b])
 
     ax3.set_xlabel(r"$\theta$");    ax3.set_ylabel(r"$\phi - \alpha\theta - \beta$")
-    ax3.set_title(f"$\phi -$ Linear Part of Each Case {title_suffix}")
+    ax3.set_title(f"$\phi -$ Linear Part of Each Case {title_suffix}") # type: ignore
     ax3.legend(fontsize=font_size-2, loc='best', frameon=False);    ax3.grid(True, linestyle='dotted', alpha=0.5)
 
     #plt.tight_layout()
@@ -3190,6 +3283,10 @@ def smooth_interpolate_common_x(x1, y1, x_common, sigma=2):
     y_smooth : array
         The smoothed and interpolated y-values.
     """
+    from scipy.ndimage import gaussian_filter
+    from scipy.interpolate import PchipInterpolator
+    from scipy.ndimage import gaussian_filter1d
+    
 
     # Ensure data is sorted
     sorted_indices = np.argsort(x1)
@@ -3238,60 +3335,8 @@ def remove_large_jumps_alter_unwrap(y, threshold=10):
 #------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------
 #####################################################################################################################
-#############################################testing   ##############################################################
-
-# Cost function to minimize
-def cost_function_0(params):
-    # Unpack parameters
-    b_x, b_y, b_z, A, C, B1, B2, k = params
-    
-    # Generate theoretical data
-    x_predict, y_predict = get_predicted_theo_u(b_x=b_x, b_y=b_y, b_z=b_z, A=A, C=C, B1=B1, B2=B2, k=k)
-    
-    # Interpolate theoretical data to experimental x-values
-    interp_theo = interp1d(x_predict, y_predict, kind='linear', bounds_error=False, fill_value="extrapolate")
-    y_theo_interpolated = interp_theo(xexp_noisy)
-    
-    # Compute the difference
-    diff = yexp_noisy - y_theo_interpolated
-    
-    # Return the mean squared error as the cost
-    mse = np.mean(diff**2)
-    return mse
+############################################# testing   ##############################################################
 #------------------------------------------------------------------------------------------------------------
-def cost_function_1(params):
-    # Unpack parameters
-    b_x, b_y, b_z, C, B1, B2, k = params
-    
-    # Generate theoretical data
-    x_predict, y_predict = get_predicted_theo_u(b_x=b_x, b_y=b_y, b_z=b_z, C=C, B1=B1, B2=B2, k=k)
-    
-    # Interpolate theoretical data to experimental x-values
-    interp_theo = interp1d(x_predict, y_predict, kind='linear', bounds_error=False, fill_value="extrapolate")
-    y_theo_interpolated = interp_theo(xexp_noisy)
-    
-    # Compute the difference
-    diff = yexp_noisy - y_theo_interpolated
-    
-    # Return the mean squared error as the cost
-    mse = np.mean(diff**2)
-    return mse
-#------------------------------------------------------------------------------------------------------------
-def progress_callback(xk, convergence):
-    # Elapsed time so far
-    elapsed_time = time.time() - start_time
-    # Number of generations completed
-    generation = len(xk)  # Each call represents a generation
-    # Calculate time per generation (based on elapsed time)
-    time_per_generation = elapsed_time / generation
-    # Estimate total time for optimization
-    max_time_estimate = (time_per_generation * maxiter) / n_cpus
-    # Estimate remaining time
-    remaining_time = max_time_estimate - elapsed_time
-    mse = cost_function(xk)
-    generation_mse.append(mse)
-    # Print progress, updating in the same line
-    print(f"\rGeneration: {generation}, Elapsed Time: {elapsed_time:.2f}s, " f"Estimated Max Time: {max_time_estimate:.2f}s, " f"Estimated Remaining Time: {remaining_time:.2f}s",end="",flush=True,)
 #------------------------------------------------------------------------------------------------------------
 def fun_oscillation_part(B1,B2,k,x):
     periodic_adjustment = B1 * np.sin(k * x) + B2 * np.cos(k * x)
@@ -3305,7 +3350,7 @@ def apply_noisy_sigma_todata(x,y,sigma_perc=0.5,overfactor_x=5,plot=True)  :
     # Generate a dense x_noisy with more points
     x_noisy = np.linspace(x.min(), x.max(), len(x) * overfactor_x)
     # Interpolate the original experimental data onto the dense x_noisy
-    interp_func = interp1d(x, y, kind='linear', bounds_error=False, fill_value="extrapolate")
+    interp_func = interp1d(x, y, kind='linear', bounds_error=False, fill_value="extrapolate") # type: ignore
     y_noisy_interpolated = interp_func(x_noisy)
     
     # Add random noise to the interpolated data
@@ -3346,7 +3391,7 @@ def get_predicted_theo_u(b_x=1.0,b_y=1.0,b_z=1.0, A=1.0, C=0.0, B1=0.0, B2=0.0, 
     
     # Convert Cartesian coordinates to cylindrical coordinates
     r = np.sqrt((x)**2 + (y)**2) + 1e-6  # Add small value to avoid division by zero
-    theta=np.arctan2(y,x)+pi
+    theta=np.arctan2(y,x)+np.pi
     z_grid = z - zc
 
     
@@ -3382,14 +3427,14 @@ def get_predicted_theo_u(b_x=1.0,b_y=1.0,b_z=1.0, A=1.0, C=0.0, B1=0.0, B2=0.0, 
         diff_U___=np.diff(U_sortedx)
         if np.any(diff_U___>0.2):
             jump_upos=np.where(np.diff(U_sortedx)>0.2)[0][0]
-            modified_U=array(U_sortedx)
+            modified_U=np.array(U_sortedx)
             modified_U[jump_upos+1:]=modified_U[jump_upos+1:]-(modified_U[jump_upos+1]-modified_U[jump_upos])
             U_sortedx=modified_U
         return theta_sorted,U_sortedx,U_sortedy,U_sortedz
     
     theta_sorted__mixed_iso,U_sortedx__mixed_iso,U_sortedy__mixed_iso,U_sortedz__mixed_iso=get_ringdata_r(r,theta,Ux_mixed_iso, Uy_mixed_iso, Uz_mixed_iso,z_mid=0)
 
-    x_predict___=theta_sorted__mixed_iso*180/pi
+    x_predict___=theta_sorted__mixed_iso*180/np.pi
     y_predict___1=U_sortedx__mixed_iso    
     y_predict___2=U_sortedy__mixed_iso
     y_predict___3=U_sortedz__mixed_iso
@@ -3417,7 +3462,7 @@ def get_predictiontheo_of_experimental(bx= 1, by=1,bz=1,alpha_screw_edge=1,bragg
     a0=3.924
     bragg   = bragg/np.linalg.norm(bragg)
     #bragg   /=2*pi/a0
-    norm_b  = np.linalg.norm(array([bx,by,bz]))
+    norm_b  = np.linalg.norm(np.array([bx,by,bz]))
     bx/=norm_b
     by/=norm_b
     bz/=norm_b
@@ -3435,7 +3480,7 @@ def get_predictiontheo_of_experimental(bx= 1, by=1,bz=1,alpha_screw_edge=1,bragg
     x, y, z=x-xc, y-yc, z- zc
     # Convert Cartesian coordinates to cylindrical coordinates
     r = np.sqrt((x)**2 + (y)**2) + 1e-6  # Add small value to avoid division by zero
-    theta=np.arctan2(y,x)+pi
+    theta=np.arctan2(y,x)+np.pi
     z_grid = z - zc
     # Set parameters
     b = 1.0        # Burgers vector magnitude
@@ -3446,22 +3491,22 @@ def get_predictiontheo_of_experimental(bx= 1, by=1,bz=1,alpha_screw_edge=1,bragg
     z_mid=r.shape[-1]//2
     R, Theta = r[:, :, z_mid], theta[:, :, z_mid]
     mask = np.isclose(R, r_val, atol=2)
-    Ux_edge_iso, Uy_edge_iso, Uz_edge_iso = edge_dislocation_isotropic(b_z, nu, r, theta)
-    Ux_screw_iso, Uy_screw_iso, Uz_screw_iso = screw_dislocation_isotropic(b_z, theta)
-    Ux_edge_aniso, Uy_edge_aniso, Uz_edge_aniso = edge_dislocation_anisotropic_carti(b_x, b_y, c11, c12, c44, x, y)
-    Ux_screw_aniso, Uy_screw_aniso, Uz_screw_aniso = screw_dislocation_anisotropic_carti(b_z, c11, c12, c44, x,y)
-    Theta_edge=np.unwrap(Theta+pi/2)
+    Ux_edge_iso, Uy_edge_iso, Uz_edge_iso = edge_dislocation_isotropic(bz, nu, r, theta)
+    Ux_screw_iso, Uy_screw_iso, Uz_screw_iso = screw_dislocation_isotropic(bz, theta)
+    Ux_edge_aniso, Uy_edge_aniso, Uz_edge_aniso = edge_dislocation_anisotropic_carti(bx, by, c11, c12, c44, x, y)
+    Ux_screw_aniso, Uy_screw_aniso, Uz_screw_aniso = screw_dislocation_anisotropic_carti(bz, c11, c12, c44, x,y)
+    Theta_edge=np.unwrap(Theta+np.pi/2)
     #Theta_edge=(Theta)
     Ux_edge_aniso_masked_flatted, Uy_edge_aniso_masked_flatted, Uz_edge_aniso_masked_flatted    = Ux_edge_aniso [:, :,z_mid][mask].flatten(), Uy_edge_aniso [:, :,z_mid][mask].flatten(), Uz_edge_aniso [:, :,z_mid][mask].flatten()
     Ux_screw_aniso_masked_flatted, Uy_screw_aniso_masked_flatted, Uz_screw_aniso_masked_flatted = Ux_screw_aniso[:, :,z_mid][mask].flatten(), Uy_screw_aniso[:, :,z_mid][mask].flatten(), Uz_screw_aniso[:, :,z_mid][mask].flatten()
-    theta_flatten           = array(Theta[mask]).flatten()
-    thetaedge_flatten           = array(Theta_edge[mask]).flatten()
+    theta_flatten           = np.array(Theta[mask]).flatten()
+    thetaedge_flatten           = np.array(Theta_edge[mask]).flatten()
     # Sort the theta and U values
     sorted_indices                 = np.argsort(theta_flatten)
     sorted_indices_edge            = np.argsort(thetaedge_flatten)
-    theta_flatten_sorted           = np.rint(theta_flatten    [sorted_indices]*180/pi)
-    thetaedge_flatten_sorted       = np.rint(thetaedge_flatten[sorted_indices_edge]*180/pi)
-    
+    theta_flatten_sorted           = np.rint(theta_flatten    [sorted_indices]*180/np.pi)
+    thetaedge_flatten_sorted       = np.rint(thetaedge_flatten[sorted_indices_edge]*180/np.pi)
+
     Ux_edge_aniso_masked_flatted_sorted  = Ux_edge_aniso_masked_flatted [sorted_indices_edge]
     Uy_edge_aniso_masked_flatted_sorted  = Uy_edge_aniso_masked_flatted [sorted_indices_edge]
     Uz_edge_aniso_masked_flatted_sorted  = Uz_edge_aniso_masked_flatted [sorted_indices_edge]
@@ -3496,7 +3541,10 @@ def plot_displacement_vectors_3D(angle_ring, displacement_vectors_final, save_pa
     Returns:
         None (Plots the 3D visualization)
     """
-
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    import plotly.graph_objects as go
+    
     ### --- 1️⃣ Matplotlib 3D Quiver Plot --- ###
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
@@ -3514,7 +3562,7 @@ def plot_displacement_vectors_3D(angle_ring, displacement_vectors_final, save_pa
 
     ax.set_xlabel("Angle (Degrees)")
     ax.set_ylabel("X Displacement")
-    ax.set_zlabel("Y Displacement")
+    ax.set_zlabel("Y Displacement") # type: ignore
     ax.set_title("3D Displacement Vector Field")
 
     if save_path:
@@ -3537,14 +3585,23 @@ def plot_displacement_vectors_3D(angle_ring, displacement_vectors_final, save_pa
 
     fig.show()
 def get_dataset_simu(file_name,group_name,dataset_name):
+    '''
+    Docstring for get_dataset_simu
+    
+    :param file_name: Description
+    :param group_name: Description
+    :param dataset_name: Description
+    '''
+    import h5py
 
     f = h5py.File(file_name, 'r')
     data_field = f[group_name + '/' + dataset_name]
     
-    return array(data_field)
+    return np.array(data_field)
  #------------------------------------------------------------------------------------------------------------
 
 def get_abc_sixs2019_for_simu(save__orth,scan="S472",wanted_shape=[240,256,256]):
+    from cdi_dislo.diff_utils_handler.cdi_dislo_diffutils             import get_abc_direct_space_sixs2019,orth_sixs2019_gridder_def
     delta_scans=np.load(save__orth+"raw_int_delta_scans.npz" ) 
     gamma_scans=np.load(save__orth+"raw_int_gamma_scans.npz" ) 
     mu_scans=np.load(save__orth+"raw_int_mu_scans.npz" ) 
@@ -3584,7 +3641,8 @@ def transform_and_discretize(non_ortho_data, non_ortho_coords, target_voxel_size
             - (numpy.ndarray) The new orthogonal data array.
             - (numpy.ndarray) Estimated error map per voxel.
     """
-    
+    import xrayutilities as xu
+    ################################################################################
     def compute_voxel_grid(x_coords, y_coords, z_coords, target_voxel_size):
         """
         Computes the voxel grid size based on target voxel size.
@@ -3662,6 +3720,7 @@ def signed_angle_3d(u, v, normal):
         >>> signed_angle_3d(v, u, normal)
         -90.0
     """
+    from cdi_dislo.rotation_handler.cdi_dislo_rotation                import angle_between_vectors
     u = np.array(u)
     v = np.array(v)
     normal = np.array(normal)
@@ -3861,7 +3920,7 @@ def adjust_phase_and_plot(density, simu_phase, save_path=None, figsize=(16, 5), 
 
     handles, labels = axs[-1].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', fontsize=fontsize, ncol=2)
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.tight_layout(rect=[0, 0, 1, 0.95]) # type: ignore
 
     if save_path:
         plot_filepath = save_path
@@ -3902,6 +3961,7 @@ def inverse_diffraction_pattern(reciprocal_space_object, center_diffraction=True
     
     """
     if center_diffraction:
+        from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections
         shape_data_init = np.array(reciprocal_space_object.shape)
         print(f"Initial shape of data: {shape_data_init}")
         
@@ -4024,7 +4084,7 @@ def inverse_diffraction_pattern_old(reciprocal_space_object, center_diffraction=
     # Compute the inverse 3D Fourier transform
     real_space_object = np.fft.ifftshift(
         np.fft.ifftn(
-            np.fft.fftshift(reciprocal_space_object)
+            np.fft.fftshift(reciprocal_space_object) # type: ignore
         )
     )
 
@@ -4094,11 +4154,25 @@ def plot_debug_difraction_from_obj(amplitude, phase, intensity, phase_reciprocal
     plt.show()
 #------------------------------------------------------------------------------------------------------------
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-def plot_3d_dislo_amp_disloline(amp,dislo,iso_value = 0.3,elev=60, azim=-120,save_plot=None,title_fig=""):    
+def plot_3d_dislo_amp_disloline(amp,dislo,iso_value = 0.3,elev=60, azim=-120,save_plot=None,title_fig=""):   
+    '''
+    Docstring for plot_3d_dislo_amp_disloline
+    
+    :param amp: Description
+    :param dislo: Description
+    :param iso_value: Description
+    :param elev: Description
+    :param azim: Description
+    :param save_plot: Description
+    :param title_fig: Description
+    '''
+    import skimage.measure as skm
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+     
     density,selected_dislocation_data=amp,dislo
     # Define isosurface level
-    data_shape=array(amp.shape)
-    
+    data_shape=np.array(amp.shape)
+
     # Compute isosurface using Marching Cubes
     verts1, faces1, _, _ = skm.marching_cubes(density, level=iso_value)
     verts2, faces2, _, _ = skm.marching_cubes(selected_dislocation_data, level=0.5)
@@ -4109,23 +4183,23 @@ def plot_3d_dislo_amp_disloline(amp,dislo,iso_value = 0.3,elev=60, azim=-120,sav
     
     # Plot the first isosurface (density) with increased transparency
     mesh1 = Poly3DCollection(verts1[faces1], alpha=0.2, edgecolor='gray', facecolor='white')
-    ax.add_collection3d(mesh1)
+    ax.add_collection3d(mesh1) # type: ignore
     
     # Plot the second isosurface (selected_dislocation_data) with different color
     mesh2 = Poly3DCollection(verts2[faces2], alpha=1.0, edgecolor='blue', facecolor='blue')
-    ax.add_collection3d(mesh2)
+    ax.add_collection3d(mesh2) # type: ignore
     
     # Set axis limits and labels
     ax.set_xlim(0, data_shape[0])
     ax.set_ylim(0, data_shape[1])
-    ax.set_zlim(0, data_shape[2])
+    ax.set_zlim(0, data_shape[2]) # type: ignore
     ax.set_xlabel("X-axis")
     ax.set_ylabel("Y-axis")
-    ax.set_zlabel("Z-axis")
+    ax.set_zlabel("Z-axis") # type: ignore
     ax.set_title(title_fig)
     
     # Adjust viewing angle for better perspective
-    ax.view_init(elev=elev, azim=azim)
+    ax.view_init(elev=elev, azim=azim) # type: ignore
     if save_plot is not None:
         plt.savefig(save_plot)
     
@@ -4173,10 +4247,10 @@ def plot_phase_subplots_allsimu(threecases_raw_results_simu_angle, threecases_ra
         ax = axes[row, col]
 
         # Plot filtered data
-        ax.plot(theta, phi, "<", label=f"{scan}")
-        ax.plot(theta, np.unwrap(phi), "-",linewidth=6,alpha=0.5, label=f"{scan} unwrap")
-        ax.set_title(f"Phase: {scan}")
-        ax.legend(fontsize=8)
+        ax.plot(theta, phi, "<", label=f"{scan}") # type: ignore
+        ax.plot(theta, np.unwrap(phi), "-",linewidth=6,alpha=0.5, label=f"{scan} unwrap") # type: ignore
+        ax.set_title(f"Phase: {scan}") # type: ignore
+        ax.legend(fontsize=8) # type: ignore
 
     # Hide empty subplots if the number of scans is odd
     for j in range(num_scans, num_rows * num_cols):
@@ -4599,7 +4673,7 @@ def plot_phase_data_comparison_exp_to_theo(
     fig.legend(handles, labels_all, loc='upper center', fontsize=fontsize - 2,
                frameon=False, ncol=len(labels_all)//2, bbox_to_anchor=(0.5, 1.12))
 
-    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    plt.tight_layout(rect=[0, 0, 1, 0.97]) # type: ignore
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()
@@ -4730,7 +4804,7 @@ def plot_residuals_with_optional_cos_sin_fit(scan_list,angle_list,phase_list,cen
     fig.legend(handles_accum, labels_accum, loc='upper center', ncol=4,
                fontsize=fontsize-2, frameon=False, bbox_to_anchor=(0.5, 1.02))
 
-    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    plt.tight_layout(rect=[0, 0, 1, 0.97]) # type: ignore
     if save_path:
         plt.savefig(save_path, dpi=300)
     plt.show()
@@ -4801,10 +4875,8 @@ def plot_individual_scans_with_table_in_last_subplot(all_results_exp_scan_list,a
         plt.savefig(save_path, dpi=300)
     plt.show()
 
-import matplotlib.pyplot as plt
-import numpy as np
-import math
-from matplotlib.gridspec import GridSpec
+
+
 
 def plot_individual_scans_with_table_below(
     all_results_exp_scan_list,
@@ -4906,14 +4978,6 @@ def plot_individual_scans_with_table_below(
     if save_path:
         plt.savefig(save_path, dpi=300)
     plt.show()
-
-
-import matplotlib.pyplot as plt
-import numpy as np
-import math
-from matplotlib.gridspec import GridSpec
-
-
 def plot_residuals_with_optional_cos_sin_fit_with_table_below(
     scan_list,
     angle_list,
@@ -5058,7 +5122,7 @@ def plot_residuals_with_optional_cos_sin_fit_with_table_below(
             rowLabels=row_labels,
             cellLoc='center',
             rowLoc='center',
-            bbox=[0, 0.02, 1, 1.0]
+            bbox=[0, 0.02, 1, 1.0] # type: ignore
         )
         table.auto_set_font_size(False)
         table.set_fontsize(fontsize * 0.8)
@@ -5074,7 +5138,7 @@ def plot_residuals_with_optional_cos_sin_fit_with_table_below(
     fig.legend(handles_accum, labels_accum, loc='upper center', ncol=4,
                fontsize=fontsize - 2, frameon=False, bbox_to_anchor=bbox_to_anchor)
 
-    plt.tight_layout(rect=[0, 0.25 if show_table else 0.05, 1, 0.97])
+    plt.tight_layout(rect=[0, 0.25 if show_table else 0.05, 1, 0.97]) # type: ignore
     if save_path:
         plt.savefig(save_path, dpi=300)
     plt.show()
@@ -5148,6 +5212,24 @@ def plot_phase_data_comparison_exp_to_theo_second_version(exp_angle,exp_phase,th
     plt.show()
 #------------------------------------------------------------------------------------------------------------
 def find_best_burgers_vectors_single_scan(theta, phi_exp, b_scaled_list, b_str_list,dislo_phase_model, t, G_exp, top_n=3,align_theta=None,screw_slope=1,fix_exp_slope=None):
+    '''
+    Docstring for find_best_burgers_vectors_single_scan
+    
+    :param theta: Description
+    :param phi_exp: Description
+    :param b_scaled_list: Description
+    :param b_str_list: Description
+    :param dislo_phase_model: Description
+    :param t: Description
+    :param G_exp: Description
+    :param top_n: Description
+    :param align_theta: Description
+    :param screw_slope: Description
+    :param fix_exp_slope: Description
+    '''
+    import pandas as pd
+
+    # Preprocess experimental phase
     f_osc_exp, f_fitosc_exp, _,f_linear_exp,coeffs_linear_exp= decompose_experimental_phase(theta, phi_exp)
     slope_exp,intercept_exp =coeffs_linear_exp
     if fix_exp_slope:
@@ -5385,11 +5467,11 @@ def plot_phase_comparison_grid(all___phase_theo_all_ortho_exp,all___meansquare_t
         ax.tick_params(labelsize=fontsize-2)
 
 
-    for j in range(iii_scan + 1, len(axs)):
+    for j in range(iii_scan + 1, len(axs)): # type: ignore
         fig.delaxes(axs[j])
 
     fig.suptitle("Experimental vs Theoretical Phase Oscillations", fontsize=fontsize+4)
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.tight_layout(rect=[0, 0, 1, 0.96]) # type: ignore
     if save_path:
         plt.savefig(save_path, dpi=dpi)
     plt.show()
@@ -5495,7 +5577,7 @@ def plot_simu_vs_exp_subplots_with_slope_table(scan_list_all_results_simu_raw,al
     handles, labels = axs[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=2, fontsize=fontsize-2, frameon=False)
 
-    plt.tight_layout(rect=[0.05, 0.05, 1, 0.98])
+    plt.tight_layout(rect=[0.05, 0.05, 1, 0.98]) # type: ignore
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()
@@ -5590,7 +5672,7 @@ def plot_simu_vs_exp_subplots_with_slope_table_v1(
 
         # Add proxy for legend (with custom ms_legend)
         legend_proxies.append(
-            plt.Line2D([0], [0], marker=marker, color=color, linestyle="", markersize=ms_legend)
+            plt.Line2D([0], [0], marker=marker, color=color, linestyle="", markersize=ms_legend) # type: ignore
         )
         legend_labels.append(f"Sim {scan_label}")
 
@@ -5602,7 +5684,7 @@ def plot_simu_vs_exp_subplots_with_slope_table_v1(
 
         if not exp_plotted:
             legend_proxies.append(
-                plt.Line2D([0], [0], marker=">", color="black", linestyle="", markersize=ms_legend)
+                plt.Line2D([0], [0], marker=">", color="black", linestyle="", markersize=ms_legend) # type: ignore
             )
             legend_labels.append("Exp S472")
             exp_plotted = True
@@ -5638,7 +5720,7 @@ def plot_simu_vs_exp_subplots_with_slope_table_v1(
             rowLabels=row_labels,
             cellLoc='center',
             rowLoc='center',
-            bbox=[0, 0.05, 1.2, 1.0]
+            bbox=[0, 0.05, 1.2, 1.0] # type: ignore
         )
         table.auto_set_font_size(False)
         table.set_fontsize(fontsize * 0.7)
@@ -5649,7 +5731,7 @@ def plot_simu_vs_exp_subplots_with_slope_table_v1(
                fontsize=fontsize * 0.8, frameon=False, bbox_to_anchor=(0.5, 1.12))
 
     fig.suptitle(suptile_, fontsize=fontsize+3, fontweight='bold')
-    plt.tight_layout(rect=[0., 0., 1.0, 0.9 if show_table else 0.95])
+    plt.tight_layout(rect=[0., 0., 1.0, 0.9 if show_table else 0.95]) # type: ignore
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -5737,7 +5819,7 @@ def plot_selected_simulations_with_theoretical_and_exp(selected_theo_labels,sele
     ax.tick_params(labelsize=fontsize-2)
 
     # Legend above plot
-    fig.legend(handles, labels, loc='upper center', ncol=3,
+    fig.legend(handles, labels, loc='upper center', ncol=3, # type: ignore
                fontsize=fontsize*0.8, frameon=False, bbox_to_anchor=bbox_to_anchor)
 
     plt.tight_layout(rect=rect)  # leave space for legend above
@@ -5849,7 +5931,7 @@ def process_and_merge_clusters_dislo_strain_map_refined(
     smoothing_param=2, eps=2.0, min_samples=5, save_output=True, debug_plot=True):
     import numpy as np
     from scipy.ndimage import label
-    from scipy.spatial import cKDTree
+    from scipy.spatial import cKDTree # type: ignore
     from scipy.spatial.distance import cdist
     import matplotlib.pyplot as plt
     import imageio
@@ -5881,7 +5963,7 @@ def process_and_merge_clusters_dislo_strain_map_refined(
         return splines
 
     binary_data = (data > threshold).astype(np.uint8)
-    labeled_data, num_clusters = label(binary_data)
+    labeled_data, num_clusters = label(binary_data) # type: ignore # type: ignore
     print(f"Number of clusters identified: {num_clusters}")
 
     filtered_clusters = np.zeros_like(labeled_data)
@@ -5921,7 +6003,7 @@ def process_and_merge_clusters_dislo_strain_map_refined(
     cylindrical_mask = np.zeros_like(merged_clusters)
     stencil = create_cylinder_stencil(cylinder_radius)
 
-    for cluster_id in range(1, np.max(merged_clusters) + 1):
+    for cluster_id in range(1, np.max(merged_clusters) + 1): # type: ignore
         if cluster_id not in cluster_points:
             continue
         cluster_indices = np.vstack(cluster_points[cluster_id])
@@ -5940,23 +6022,23 @@ def process_and_merge_clusters_dislo_strain_map_refined(
                     y_max > cylindrical_mask.shape[1] or
                     z_max > cylindrical_mask.shape[2]):
                     continue
-                cylindrical_mask[x_min:x_max, y_min:y_max, z_min:z_max] |= stencil
+                cylindrical_mask[x_min:x_max, y_min:y_max, z_min:z_max] |= stencil # type: ignore
 
     print("Cylindrical mask constructed.")
-    final_labeled_clusters, num_final_clusters = label(cylindrical_mask > 0)
+    final_labeled_clusters, num_final_clusters = label(cylindrical_mask > 0) # type: ignore
 
     if debug_plot:
         frames = []
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
-        ax.set_box_aspect([1, 1, 1])
+        ax.set_box_aspect([1, 1, 1]) # type: ignore
 
         cluster_indices = np.argwhere(final_labeled_clusters > 0)
         scatter = ax.scatter(
             cluster_indices[:, 0],
             cluster_indices[:, 1],
             cluster_indices[:, 2],
-            s=1,
+            s=1, # type: ignore
             c=final_labeled_clusters[final_labeled_clusters > 0],
             cmap="jet",
         )
@@ -5965,12 +6047,12 @@ def process_and_merge_clusters_dislo_strain_map_refined(
         ax.set_title("Refined Clustering")
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_zlabel("Z") # type: ignore
 
         for angle in range(0, 180, 4):  # Fewer frames
-            ax.view_init(30, angle)
+            ax.view_init(30, angle) # type: ignore
             plt.draw()
-            frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype="uint8").reshape(
+            frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype="uint8").reshape( # type: ignore
                 fig.canvas.get_width_height()[::-1] + (3,)
             )
             frames.append(frame)
@@ -5984,6 +6066,8 @@ def process_and_merge_clusters_dislo_strain_map_refined(
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 def plot_phase_around_dislo_one_radius_new    (amp,phase,selected_dislocation_data,r,dr, centroid, direction,  slice_thickness=1,selected_point_index=0,save_vti=False,fig_title=None,plot_debug=True,
                                                save_path=None,voxel_sizes=(1,1,1)):
+    from bcdi.graph                     import graph_utils          as gu # type: ignore
+
     # Create the circular mask and polar angle map
     circular_mask, polar_angles,displacement_vectors,direction = create_circular_mask_with_angles_and_vectors(selected_dislocation_data.shape,centroid, direction, selected_point_index, r, dr, slice_thickness=slice_thickness)
     masked_region_phase=phase*circular_mask
@@ -5995,10 +6079,12 @@ def plot_phase_around_dislo_one_radius_new    (amp,phase,selected_dislocation_da
 
 
         # Save or visualize the circular mask and polar angles
-        gu.save_to_vti(filename=save_path +".vti",voxel_size=tuple(voxel_sizes),
+        gu.save_to_vti(filename=save_path +".vti",voxel_size=tuple(voxel_sizes), # type: ignore
                        tuple_array=(nan_to_zero(amp),nan_to_zero(phase),selected_dislocation_data,circular_mask,polar_angles,vect_x,vect_y,vect_z),
                        tuple_fieldnames=("density", "phase","dislo", "circular_mask", "polar_angles", "vect_x", "vect_y", "vect_z" ),amplitude_threshold=0.01,)
     if plot_debug:
+        from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import phase_offset_to_zero_clement
+        from cdi_dislo.plotutilities.cdi_dislo_plotutilities              import plot_3d_array
         # Debug: Plot the circular mask
         #plot_3d_array(circular_mask);
         fig,ax = plt.subplots(1,1, figsize=(7,5))
@@ -6009,12 +6095,12 @@ def plot_phase_around_dislo_one_radius_new    (amp,phase,selected_dislocation_da
         sort_indices_1=np.argsort(angle_ring_1)
         angle_ring_1=angle_ring_1[sort_indices_1]
         phase_ring_1=phase_ring_1[sort_indices_1]
-        phase_ring_1=np.unwrap(phase_ring_1,discont=pi/3)
+        phase_ring_1=np.unwrap(phase_ring_1,discont=np.pi/3)
         phase_ring_1=phase_offset_to_zero_clement(phase_ring_1)
         angle_ring_1,phase_ring_1=remove_large_jumps(angle_ring_1, phase_ring_1, threshold_factor=1.5)
 
         y= np.unwrap(phase_ring_1[30:-40])
-        x= angle_ring_1[30:-40]*180/pi
+        x= angle_ring_1[30:-40]*180/np.pi
         plt.plot(x,y,'o', label=f'r:%.1f' % r + rf" $\Delta\phi$ %.2f rad" % (-y.min() + y.max()))
         ax.legend(title='distance from\ndislocation center')
         #ax.legend()
@@ -6207,7 +6293,12 @@ def dislo_process_phase_ring_ortho(angle, phase, displacement_vectors, factor_ph
         - phase_filtered (numpy array): Filtered phase values.
         - selected_indices (numpy array): Indices of the selected data points in the original array.
         """
-    
+        import numpy as np
+        from scipy.ndimage import median_filter
+        from scipy.stats import zscore
+        
+        
+            
         original_indices = np.arange(len(angle_ring))  # Track original indices
     
         # Step 1: Identify Large Phase Jumps
@@ -6240,11 +6331,12 @@ def dislo_process_phase_ring_ortho(angle, phase, displacement_vectors, factor_ph
         angle_filtered, phase_filtered, selected_indices = angle_ring[FILTER_DIFF_], phase_ring_smoothed[FILTER_DIFF_], original_indices[FILTER_DIFF_]
     
         # Step 4: Final Cleanup with Z-Score Filtering
-        z_scores = np.abs(zscore(phase_filtered))
+        z_scores = np.abs(zscore(phase_filtered)) # type: ignore
         final_selection = z_scores < zscore_threshold  # Final mask after Z-score filtering
     
         return angle_filtered[final_selection], phase_filtered[final_selection], selected_indices[final_selection]
 
+    from scipy.signal import savgol_filter
     # Extract indices where phase is nonzero
     nonzero_indices = np.nonzero(phase)
     displacement_vectors_ring = displacement_vectors[nonzero_indices]
@@ -6313,7 +6405,7 @@ def dislo_process_phase_ring_ortho(angle, phase, displacement_vectors, factor_ph
 
         axes[0].plot(angle_raw, phase_raw, ">", label="Raw Phase", color="black", alpha=0.7, linewidth=3)
         if jump_filter_ML:
-            axes[0].plot(angle_raw[~sel___], phase_raw[~sel___], ".", label="Filtered Out", color="red", alpha=0.7, linewidth=3,markersize=10)
+            axes[0].plot(angle_raw[~sel___], phase_raw[~sel___], ".", label="Filtered Out", color="red", alpha=0.7, linewidth=3,markersize=10) # type: ignore
         
         axes[0].set_title("Raw Phase Data")
         axes[0].legend()
@@ -6514,7 +6606,11 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
     ---
     **🚀 Optimized for High-Resolution BCDI Dislocation Analysis! 🚀**
     """
-    
+    from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import remove_phase_ramp_abd
+    import time
+    from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import getting_strain_mapvti
+    from bcdi.graph                     import graph_utils          as gu # type: ignore
+
     start_time=time.time()
     a0 = 3.9239  # Lattice parameter
     normalize_factor =1/10 # A° to nm as G is in A°-1
@@ -6541,7 +6637,7 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
         density           = crop_3darray_pos(density  , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False)
         simu_phase        = crop_3darray_pos(simu_phase, output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False)
     if plot_debug:
-        plot_2D_slices_middle_one_array3D(zero_to_nan(simu_phase),cmap='jet',fig_title=f"Raw phase {file_name}",)
+        plot_2D_slices_middle_one_array3D(zero_to_nan(simu_phase),cmap='jet',fig_title=f"Raw phase {file_name}",) # type: ignore
         if path_to_save is not None:
             plt.savefig(path_to_save+file_name+"Step1__0_raw_phase_no_op.png")
         plt.show()
@@ -6556,21 +6652,21 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
                 plt.savefig(path_to_save+file_name+f"Step1__1_raw_center_diffraction_{centering_method_for_fft}.png")
             plt.show()
     if center_by_ramp:
-        simu_phase = adjust_phase_and_plot(density, simu_phase, marker='o', linewidth=4, markersize=2, fontsize=18, save_path=path_to_save+file_name+"shifting_centring_debug.png");
+        simu_phase = adjust_phase_and_plot(density, simu_phase, marker='o', linewidth=4, markersize=2, fontsize=18, save_path=path_to_save+file_name+"shifting_centring_debug.png"); # type: ignore
         if plot_debug:
             plot_2D_slices_middle_one_array3D(zero_to_nan(simu_phase),cmap='jet',fig_title=f"centring by ramping phase {file_name} {center_by_ramp}",)
             if path_to_save is not None:
                 plt.savefig(path_to_save+file_name+f"Step1__2_raw_center_byrampingfit.png")
             plt.show()        
-    supp                  = fill_up_support(np.where(density < 0.1, 0, 1))
-    simu_phase            = simu_phase*supp
-    density               = density*supp
+    supp                  = fill_up_support(np.where(density < 0.1, 0, 1)) # type: ignore
+    simu_phase            = simu_phase*supp # type: ignore
+    density               = density*supp # type: ignore
     if plot_debug:
         plot_2D_slices_middle_one_array3D(zero_to_nan(simu_phase),cmap='jet',fig_title=f"Raw phase {file_name} \n after centring diffraction pattern",)
         if path_to_save is not None:
             plt.savefig(path_to_save+file_name+"step1__3_raw_phase_roundtrip_real_recip.png")
         plt.show()
-    simu_phase_ramp, _    = nan_to_zero(remove_phase_ramp(zero_to_nan(simu_phase)))
+    simu_phase_ramp, _    = nan_to_zero(remove_phase_ramp_abd(zero_to_nan(simu_phase)))
     if plot_debug:
         plot_2D_slices_middle_one_array3D(zero_to_nan(simu_phase_ramp),cmap='jet',fig_title=f"Raw phase {file_name} \n after centring diffraction pattern & Ramp removal",)
         if path_to_save is not None:
@@ -6579,14 +6675,14 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
     simu_phase= nan_to_zero(center_angles(zero_to_nan(simu_phase)))
     # Compute gradient-based masks
     supp_1                = fill_up_support(np.where(density < 0.15, 0, 1))
-    gradient_mask         = 1 - (np.max(nan_to_zero(np.abs(array(get_displacement_gradient(supp_1, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
+    gradient_mask         = 1 - (np.max(nan_to_zero(np.abs(np.array(get_displacement_gradient(supp_1, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
     # Construct complex object with phase information
     obj                   = density * supp * np.exp(1j * simu_phase)
     def compute_strain_map(obj, voxel_size, nb_of_phase_to_test):
         return getting_strain_mapvti(obj=obj, voxel_size=voxel_size, nb_of_phase_to_test=nb_of_phase_to_test)
     strain_mask, strain_amp = compute_strain_map(obj, (1, 1, 1), nb_of_phase_to_test)
     _mask                   = fill_up_support(density > 0.2)
-    gradient_modes_mask     = (np.max(nan_to_zero(np.abs(array(get_displacement_gradient(_mask, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
+    gradient_modes_mask     = (np.max(nan_to_zero(np.abs(np.array(get_displacement_gradient(_mask, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
     strain_amp              = ((1 - gradient_modes_mask) * strain_amp).astype(float)
     strain_amp[strain_amp   < cut_strain_lower] = 0
     strain_amp[strain_amp   > cut_strain_upper] = 0
@@ -6624,14 +6720,14 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
 
     if orthogonalise_data:
         # Define support mask based on magnitude threshold
-        supp_ortho = np.where(ortho_density < 0.1, 0, 1)
+        supp_ortho = np.where(ortho_density < 0.1, 0, 1) # type: ignore
         supp_ortho = fill_up_support(supp_ortho)
         
         det_ref, supp_ortho             = crop_3darray_pos(supp_ortho                      , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods="com", det_ref_return=True)
-        ortho_density                  = crop_3darray_pos(ortho_density                  , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False)
-        ortho_simu_phase                = crop_3darray_pos(ortho_simu_phase                , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False)
-        ortho_selected_dislocation_data = crop_3darray_pos(ortho_selected_dislocation_data , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False)
-        ortho_strain_amp                = crop_3darray_pos(ortho_strain_amp                , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False)
+        ortho_density                  = crop_3darray_pos(ortho_density                  , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False) # type: ignore
+        ortho_simu_phase                = crop_3darray_pos(ortho_simu_phase                , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False) # type: ignore
+        ortho_selected_dislocation_data = crop_3darray_pos(ortho_selected_dislocation_data , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False) # type: ignore
+        ortho_strain_amp                = crop_3darray_pos(ortho_strain_amp                , output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods=det_ref, verbose=False) # type: ignore
         
         # Extract structure and fit a 3D line
         threshold = 0.5  # Remove void space clusters
@@ -6640,13 +6736,13 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
         
         # Generate a filled cylinder along detected dislocation
         filled_cylinder_volume = generate_filled_cylinder_with_disks(
-            ortho_selected_dislocation_data.shape, centroid, direction, final_radius__of_dislo, height, step_along_dislo_line)
+            ortho_selected_dislocation_data.shape, centroid, direction, final_radius__of_dislo, height, step_along_dislo_line) # type: ignore
         ortho_selected_dislocation_data = filled_cylinder_volume * supp_ortho
-        ortho_obj = ortho_density * supp_ortho * np.exp(1j * ortho_simu_phase)
+        ortho_obj = ortho_density * supp_ortho * np.exp(1j * ortho_simu_phase) # type: ignore
         
         if path_to_save is not None:
             gu.save_to_vti(filename=path_to_save + "Step2_ortho_density_phase_dislo_strainamp_" + file_name + ".vti",
-                           voxel_size=tuple(voxel_size_ortho),
+                           voxel_size=tuple(voxel_size_ortho), # type: ignore
                            tuple_array=(nan_to_zero(ortho_density), nan_to_zero(ortho_simu_phase), ortho_selected_dislocation_data, ortho_strain_amp),
                            tuple_fieldnames=("density", "phase", "mask_dislo", "strain_amp"),
                            amplitude_threshold=0.01)
@@ -6657,15 +6753,15 @@ def get_phase_simu_gvector(h5_file, a, b, c, G=[1, -1, 1], path_to_save=None, fi
                        tuple_array=(nan_to_zero(density), nan_to_zero(simu_phase), selected_dislocation_data, strain_amp),
                        tuple_fieldnames=("density", "phase", "mask_dislo", "strain_amp"),
                        amplitude_threshold=0.01)
-    obj = density * supp * np.exp(1j * simu_phase)
+    obj = density * supp * np.exp(1j * simu_phase) # type: ignore
     end_time = time.time()
     print(f"Processing took {np.round((end_time - start_time) / 60, 1)} minutes")
     if plot_debug:
-        plot_3d_dislo_amp_disloline(density,selected_dislocation_data,iso_value = 0.3,elev=60, azim=-120,save_plot=path_to_save+file_name+"step2_0_raw_data_3D_plot_dislo_amp.png",
+        plot_3d_dislo_amp_disloline(density,selected_dislocation_data,iso_value = 0.3,elev=60, azim=-120,save_plot=path_to_save+file_name+"step2_0_raw_data_3D_plot_dislo_amp.png", # type: ignore
                                     title_fig=" Isosurface plot of the amplitude with the dislocation line ")
     if orthogonalise_data:
         if plot_debug:
-            plot_3d_dislo_amp_disloline(nan_to_zero(ortho_density),ortho_selected_dislocation_data,iso_value = 0.3,elev=60, azim=-120,save_plot=path_to_save+file_name+"step2_0_ortho_data_3D_plot_dislo_amp.png",
+            plot_3d_dislo_amp_disloline(nan_to_zero(ortho_density),ortho_selected_dislocation_data,iso_value = 0.3,elev=60, azim=-120,save_plot=path_to_save+file_name+"step2_0_ortho_data_3D_plot_dislo_amp.png", # type: ignore # type: ignore
                                         title_fig=" Isosurface plot of the amplitude with the dislocation line ")
         return simu_phase, obj, strain_amp,selected_dislocation_data, ortho_simu_phase,ortho_obj, ortho_strain_amp,ortho_selected_dislocation_data # type: ignore
     else:
@@ -6769,6 +6865,8 @@ def fit_phase_correction_twodataset(grid_points, phase, predicted_phase_3d, radi
     
     from scipy.linalg import lstsq
     from sklearn.linear_model import RANSACRegressor
+    import pandas as pd
+    import matplotlib.pyplot as plt
 
     coeffs_list = []
     
@@ -6809,7 +6907,7 @@ def fit_phase_correction_twodataset(grid_points, phase, predicted_phase_3d, radi
         plot_phase_for_selected_points(phase, selected_indices,show_plots, "Simulated Phase with Selected Points",save_path_0) # type: ignore # type: ignore
         if save_path:
             save_path_0=save_path+"_Theo_"
-        plot_phase_for_selected_points(predicted_phase_3d, selected_indices,show_plots, "Theoretical Phase with Selected Points",save_path_0)
+        plot_phase_for_selected_points(predicted_phase_3d, selected_indices,show_plots, "Theoretical Phase with Selected Points",save_path_0) # type: ignore
 
     # Compute residuals
     residuals = Delta_Phi - A @ coeffs # type: ignore
@@ -6956,7 +7054,7 @@ def plot_filtered_phase_analysis(angle_raw, phase_raw, file_name, sign=1, condit
     ax2.set_title('Shifted Phase')
 
     # Unwrapped for rest
-    new_phase_unwrapped = unwrap(unwrap(phase_ring_3d[~conditions], period=2 * pi), period=2 * pi)
+    new_phase_unwrapped = np.unwrap(np.unwrap(phase_ring_3d[~conditions], period=2 * np.pi), period=2 * np.pi)
     filtred_angles = angle_ring_3d[~conditions]
     ax3.plot(angle_ring_3d, phase_ring_3d, "<", alpha=0.3)
     ax3.plot(filtred_angles, new_phase_unwrapped, "*")
@@ -7086,6 +7184,10 @@ def step3_process_and_save_ring_mask_data(
 def get_phase_simu_gvector_v1(h5_file, G=[1, -1, 1], path_to_save=None, file_name=None, nb_of_phase_to_test=10, voxel_sizes=(1, 1, 1), stain_threshold=0.1,debug_plot_step_1=False, save_output_step_1=True, plot_debug_centring_obj_from_diffraction=False,
                            min_cluster_size=20, distance_threshold=2.0, cylinder_radius=2, num_spline_points=5000, smoothing_param=4, eps=3.5, min_samples=20, final_radius__of_dislo=1, height=100, step_along_dislo_line=1, 
                            cut_strain_lower=0.2,cut_strain_upper=0.8,           plot_debug=True,centering_method_for_fft="com",center_diffraction=True,shift_center=None,center_by_ramp=False,flip_data=False):
+    from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import getting_strain_mapvti
+    import time
+    from bcdi.graph                     import graph_utils          as gu # type: ignore
+
     start_time=time.time()
     a0 = 3.9239  # Lattice parameter
     def prepare_data(h5_file,plot_debug,path_to_save,file_name):
@@ -7155,7 +7257,7 @@ def get_phase_simu_gvector_v1(h5_file, G=[1, -1, 1], path_to_save=None, file_nam
         return getting_strain_mapvti(obj=obj, voxel_size=voxel_size, nb_of_phase_to_test=nb_of_phase_to_test)
     strain_mask, strain_amp = compute_strain_map(obj, (1, 1, 1), nb_of_phase_to_test)
     _mask                   = fill_up_support(density > 0.2)
-    gradient_modes_mask     = (np.max(nan_to_zero(np.abs(array(get_displacement_gradient(_mask, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
+    gradient_modes_mask     = (np.max(nan_to_zero(np.abs(np.array(get_displacement_gradient(_mask, voxel_size=(1, 1, 1))))), axis=0) != 0).astype(float)
     strain_amp              = ((1 - gradient_modes_mask) * strain_amp).astype(float)
     strain_amp[strain_amp   < cut_strain_lower] = 0
     strain_amp[strain_amp   > cut_strain_upper] = 0
@@ -7261,8 +7363,8 @@ def modify_shaperealspace_basedon_reciprocalspace(obj,shape_data_init):
     phase = np.angle(real_space_object)
     new_obj =amplitude *np.exp(1j*phase)
    
-    com_before = center_of_mass(np.abs(obj))
-    com_after = center_of_mass(np.abs(new_obj))
+    com_before = C_O_M(np.abs(obj))
+    com_after = C_O_M(np.abs(new_obj))
     print("Center of mass (before):", com_before)
     print("Center of mass (after):", com_after)
 

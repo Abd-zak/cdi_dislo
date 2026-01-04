@@ -12,7 +12,6 @@
 #    - `array_to_dict`: Converts a NumPy array into a dictionary.
 
 # 3. Data Reading and Processing:
-#    - `read_orth_rho_phi`: Reads and processes phase and intensity data from files.
 #    - `orth_ID27_gridder_def_new`: Computes reciprocal space coordinates for ID27 beamline data.
 #    - `orth_ID27_gridder_def`: Alternative version for ID27 beamline data orthonormalization.
 #    - `get_abc_direct_space`: Computes direct-space coordinates from reciprocal-space data.
@@ -38,19 +37,21 @@
 
 
 
-import math
 import numpy as np
-from numpy import array
+# from numpy import array
 import matplotlib.pyplot as plt
-from scipy.ndimage import zoom
 import xrayutilities as xu
 from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections, plot_2D_slices_middle_one_array3D
-#####################################################################################################################
-#####################################################################################################################
 
+#####################################################################################################################
+#####################################################################################################################
 def optimize_voxel_reciproque_space(
-    a, b, c, density, direction, start, end, voxel_to_found=60 * 1e-5, round_data=7
-):
+        a, b, c, density, direction, start, end,
+        voxel_to_found=60 * 1e-5, round_data=7
+        ):
+    import numpy as np
+    import xrayutilities as xu
+    
     n_list = np.round(np.arange(start, end, 1), 1)
     result = []
     nx, ny, nz = density.shape
@@ -66,6 +67,7 @@ def optimize_voxel_reciproque_space(
             break
         gridder(a, b, c, density)
         x = gridder.xaxis
+        y = gridder.yaxis
         z = gridder.zaxis
         voxel_size = np.array(
             [(x[-1] - x[0]) / len(x), (y[-1] - y[0]) / len(y), (z[-1] - z[0]) / len(z)]
@@ -74,13 +76,11 @@ def optimize_voxel_reciproque_space(
         result.append(
             np.around(abs(voxel_size[direction] - voxel_to_found), round_data)
         )
-    result = array(result)
+    result = np.array(result)
     return (
         n_list[np.where(result == result.min())[0][0]],
         result[np.where(result == result.min())[0][0]],
     )
-
-
 def adjust_voxel_size(data, qx_lin, qy_lin, qz_lin, target_voxel_size):
     """
     Adjust the voxel size of a 3D numpy array by applying zoom, to match a target voxel size.
@@ -90,13 +90,15 @@ def adjust_voxel_size(data, qx_lin, qy_lin, qz_lin, target_voxel_size):
     :param target_voxel_size: Desired voxel size (e.g., 1 / dq) for uniform voxel size
     :return: Adjusted data array, and the rescaled axis values qx_lin, qy_lin, qz_lin
     """
+    import numpy as np
+    from scipy.ndimage import zoom
     if data.ndim != 3:
         raise ValueError("Input data must be a 3D array.")
 
     # Calculate current step sizes in reciprocal space
-    current_voxel_size_x = abs(qx_lin[1] - qx_lin[0])
-    current_voxel_size_y = abs(qy_lin[1] - qy_lin[0])
-    current_voxel_size_z = abs(qz_lin[1] - qz_lin[0])
+    current_voxel_size_x = np.abs(qx_lin[1] - qx_lin[0])
+    current_voxel_size_y = np.abs(qy_lin[1] - qy_lin[0])
+    current_voxel_size_z = np.abs(qz_lin[1] - qz_lin[0])
 
     # Calculate scaling factors to match target voxel size
     scale_x = current_voxel_size_x / target_voxel_size
@@ -114,20 +116,20 @@ def adjust_voxel_size(data, qx_lin, qy_lin, qz_lin, target_voxel_size):
     )  # order=1 for linear interpolation (minimal)
 
     # Rescale the axis values based on the new voxel size
-    new_qx_lin = np.linspace(qx_lin[0], qx_lin[-1], adjusted_data.shape[0])
-    new_qy_lin = np.linspace(qy_lin[0], qy_lin[-1], adjusted_data.shape[1])
-    new_qz_lin = np.linspace(qz_lin[0], qz_lin[-1], adjusted_data.shape[2])
+    new_qx_lin = np.linspace(qx_lin[0], qx_lin[-1], adjusted_data.shape[0]) # pyright: ignore[reportCallIssue, reportArgumentType]
+    new_qy_lin = np.linspace(qy_lin[0], qy_lin[-1], adjusted_data.shape[1]) # pyright: ignore[reportCallIssue, reportArgumentType]
+    new_qz_lin = np.linspace(qz_lin[0], qz_lin[-1], adjusted_data.shape[2]) # pyright: ignore[reportArgumentType, reportCallIssue]
 
     return adjusted_data, new_qx_lin, new_qy_lin, new_qz_lin
-
-
 def optimize_voxel_real_space_all_directions(
-    a, b, c, density, start, end, voxel_to_found=1e-5, round_data=7
-):
+        a, b, c, density, start, end,
+        voxel_to_found=1e-5, round_data=7
+        ):
+    import numpy as np
+    import xrayutilities as xu
     n_list = np.round(np.arange(start, end, 1), 1)
     result = []
     nx, ny, nz = density.shape
-
     # Iterate over all potential values of nx, ny, and nz
     for nx_val in n_list:
         for ny_val in n_list:
@@ -147,9 +149,8 @@ def optimize_voxel_real_space_all_directions(
                     )
                     / 10
                 )
-
                 # Calculate the deviation from the target voxel size for each direction
-                deviation = np.around(abs(voxel_size - voxel_to_found), round_data)
+                deviation = np.around(np.abs(voxel_size - voxel_to_found), round_data)
 
                 # Append the result with voxel sizes and the deviation sum (to minimize total deviation)
                 result.append((nx_val, ny_val, nz_val, voxel_size, np.sum(deviation)))
@@ -166,11 +167,12 @@ def optimize_voxel_real_space_all_directions(
         "voxel_sizes": optimal_values[3],
         "total_deviation": optimal_values[4],
     }
-
-
 def optimize_voxel_real_space(
-    a, b, c, density, direction, start, end, voxel_to_found=10, round_data=2
-):
+        a, b, c, density, direction, start, end, 
+        voxel_to_found=10, round_data=2
+        ):
+    import numpy as np
+    import xrayutilities as xu
     n_list = np.round(np.arange(start, end, 1), 1)
     result = []
     nx, ny, nz = density.shape
@@ -200,116 +202,13 @@ def optimize_voxel_real_space(
         )
         # print(voxel_size)
         result.append(
-            np.around(abs(voxel_size[direction] - voxel_to_found), round_data)
+            np.around(np.abs(voxel_size[direction] - voxel_to_found), round_data)
         )
-    result = array(result)
+    result = np.array(result)
     return (
         n_list[np.where(result == result.min())[0][0]],
         result[np.where(result == result.min())[0][0]],
     )
-
-
-def read_orth_rho_phi(files, raw_=True, read_=False, save_=True, plot_=False):
-    if raw_:
-        if read_:
-            (
-                data_allscans_mask_modes,
-                data_allscans_rho_modes,
-                data_allscans_phi_modes,
-            ) = fct.modes_read(files)
-        else:
-            data_allscans_rho_modes = np.load(
-                "/home/abdelrahman/data_sixs_2019/results/codes/raw_data_allscans_rho_modes.npz"
-            )
-            data_allscans_phi_modes = np.load(
-                "/home/abdelrahman/data_sixs_2019/results/codes/raw_data_allscans_phi_modes.npz"
-            )
-            data_allscans_mask_modes = np.load(
-                "/home/abdelrahman/data_sixs_2019/results/codes/raw_data_allscans_mask_modes.npz"
-            )
-        if save_:
-            np.savez("raw_data_allscans_rho_modes.npz", **data_allscans_rho_modes)
-            np.savez("raw_data_allscans_phi_modes.npz", **data_allscans_phi_modes)
-            np.savez("raw_data_allscans_mask_modes.npz", **data_allscans_mask_modes)
-    else:
-        if read_:
-            (
-                final_selected_runs_allscsan,
-                data_allscans_runs_modes,
-                data_allscans_rho_modes,
-                data_allscans_phi_modes,
-                data_allscans_mask_modes,
-                data_allscans_COM_modes,
-            ) = fct.modes_processing(mypath, files)
-        else:
-            final_selected_runs_allscsan = np.load(
-                "/home/abdelrahman/data_sixs_2019/results/codes/processed_final_selected_modes_allscsan.npz",
-                allow_pickle=True,
-            )
-            data_allscans_rho_modes = np.load(
-                "/home/abdelrahman/data_sixs_2019/results/codes/processed_data_allscans_rho_modes.npz"
-            )
-            data_allscans_phi_modes = np.load(
-                "/home/abdelrahman/data_sixs_2019/results/codes/processed_data_allscans_phi_modes.npz"
-            )
-            data_allscans_mask_modes = dict(
-                np.load(
-                    "/home/abdelrahman/data_sixs_2019/results/codes/data_allscans_mask_modes.npz"
-                )
-            )
-            # data_allscans_COM_modes                             = dict(np.load('/home/abdelrahman/data_sixs_2019/results/codes/data_allscans_COM_modes.npz'))
-        if save_:
-            np.savez(
-                "processed_final_selected_modes_allscsan.npz",
-                **final_selected_runs_allscsan,
-            )
-            np.savez("processed_data_allscans_rho_modes.npz", **data_allscans_rho_modes)
-            np.savez("processed_data_allscans_phi_modes.npz", **data_allscans_phi_modes)
-            np.savez(
-                "processed_data_allscans_mask_modes.npz", **data_allscans_mask_modes
-            )
-            # np.savez("processed_data_allscans_COM_modes.npz"     , **data_allscans_COM_modes)
-
-    (
-        x_lin_orth_allscans_rho,
-        y_lin_orth_allscans_rho,
-        z_lin_orth_allscans_rho,
-        data_allscans_orth_rho,
-    ) = ortho_data_phaserho(
-        data_allscans_rho_modes, mypath="/home/abdelrahman/data_sixs_2019/", plot_=plot_
-    )
-    data_allscans_orth_mask = {
-        key: value[:] * 0 for key, value in data_allscans_orth_rho.items()
-    }
-
-    for i_scan in data_allscans_orth_mask.keys():
-        for i_mod in range(len(data_allscans_orth_mask[i_scan])):
-            data_allscans_orth_mask[i_scan][i_mod][
-                np.where(data_allscans_orth_rho[i_scan][i_mod] > 5)
-            ] = 1
-    data_allscans_orth_rho = {
-        key: value[:] * data_allscans_orth_mask[key]
-        for key, value in data_allscans_orth_rho.items()
-    }
-    (
-        x_lin_orth_allscans_phi,
-        y_lin_orth_allscans_phi,
-        z_lin_orth_allscans_phi,
-        data_allscans_orth_phi,
-    ) = ortho_data_phaserho(
-        data_allscans_phi_modes, mypath="/home/abdelrahman/data_sixs_2019/", plot_=plot_
-    )
-    data_allscans_orth_phi = {
-        key: value[:] * data_allscans_orth_mask[key]
-        for key, value in data_allscans_orth_phi.items()
-    }
-    if save_:
-        np.savez("processed_data_allscans_orth_phi.npz", **data_allscans_orth_phi)
-        np.savez("processed_data_allscans_orth_rho.npz", **data_allscans_orth_rho)
-        np.savez("processed_data_allscans_orth_mask.npz", **data_allscans_orth_mask)
-    return data_allscans_orth_phi, data_allscans_orth_rho, data_allscans_orth_mask
-
-
 def array_to_dict(array):
     """Converts a NumPy array to a dictionary.
 
@@ -330,15 +229,15 @@ def array_to_dict(array):
         for key, value in zip(array.dtype.names, array.tolist()):
             dictionary[key] = value
     return dictionary
-
-
 #####################################################################################################################
 #####################################################################################################################
 ######################################          plotting                    #########################################
 #####################################################################################################################
 #####################################################################################################################
 def plot_qxqyqzI(qx_, qy_, qz_, Int, i_scan):
-    # %%affichage donnees interpolees
+    import xrayutilities as xu
+    import matplotlib.pyplot as plt
+    # affichage donnees interpolees
     fig1 = plt.figure(1, figsize=(20, 4))
     plt.subplot(1, 3, 1)
 
@@ -361,9 +260,10 @@ def plot_qxqyqzI(qx_, qy_, qz_, Int, i_scan):
     plt.axis("tight")
     fig1.suptitle(r"Scan_" + str(i_scan))
     plt.show()
-
-
 def plotqxqyqzi_imshow(Int, i_scan, vmax=5):
+    import xrayutilities as xu
+    import matplotlib.pyplot as plt
+    # affichage donnees interpolees
     f_s = 16
     fig2 = plt.figure(1, figsize=(20, 4))
     ax = plt.subplot(1, 3, 1)
@@ -397,16 +297,22 @@ def plotqxqyqzi_imshow(Int, i_scan, vmax=5):
     plt.grid(alpha=0.01)
     fig2.suptitle(r"Scan " + str(i_scan), fontsize=f_s)
     return fig2
-
-
 #####################################################################################################################
 #####################################################################################################################
 ###################################### Latest for id27      utility 2025    #########################################
 #####################################################################################################################
 #####################################################################################################################
 def orth_ID27_gridder_def_new(
-    ndata, methode="Xrayutility", omgstep=9.99991e-03, cch_detec=[700, 300]
-):
+        ndata, 
+        methode="Xrayutility", omgstep=9.99991e-03,
+        cch_detec=[700, 300]
+        ):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from scipy.ndimage  import center_of_mass as C_O_M
+    import xrayutilities as xu
+
+
     cx, cy, cz = np.round(np.array(C_O_M(ndata))).astype("int")
     print(cx, cy, cz)
     ##### orthonormalisation d'une solution
@@ -450,7 +356,7 @@ def orth_ID27_gridder_def_new(
         nx, ny, nz = ndata.shape
 
         hxrd = xu.experiment.HXRD([1, 0, 0], [0, 0, 1], en=nrj, qconv=qconv)
-        hxrd.Ang2Q.init_area(
+        hxrd.Ang2Q.init_area( # type: ignore
             "z-",
             "y+",
             cch1=cch[0],
@@ -461,11 +367,11 @@ def orth_ID27_gridder_def_new(
             chpdeg2=chpdeg[1],
             detrot=90.0,
         )
-        cx, cy, cz = hxrd.Ang2Q.area(eta, phi, nu, delta)
+        cx, cy, cz = hxrd.Ang2Q.area(eta, phi, nu, delta) # type: ignore
         return cx, cy, cz
 
     else:
-        # %% NOUVELLE ORTHOGONALISATION PLUS JUSTE
+        #  NOUVELLE ORTHOGONALISATION PLUS JUSTE
 
         lamb = 12.398 / 33.169
         a0 = 3.924
@@ -511,9 +417,10 @@ def orth_ID27_gridder_def_new(
             ii += 1
 
         return Qx, Qy, Qz
-
-
 def orth_ID27_gridder_def(ndata, methode="Xrayutility"):
+    import numpy as np
+    from scipy.ndimage  import center_of_mass as C_O_M
+    import xrayutilities as xu
     cx, cy, cz = np.round(np.array(C_O_M(ndata))).astype("int")
     print(cx, cy, cz)
     ##### orthonormalisation d'une solution
@@ -556,7 +463,7 @@ def orth_ID27_gridder_def(ndata, methode="Xrayutility"):
         nx, ny, nz = ndata.shape
 
         hxrd = xu.experiment.HXRD([1, 0, 0], [0, 0, 1], en=nrj, qconv=qconv)
-        hxrd.Ang2Q.init_area(
+        hxrd.Ang2Q.init_area( # type: ignore
             "z-",
             "y+",
             cch1=cch[0],
@@ -567,7 +474,7 @@ def orth_ID27_gridder_def(ndata, methode="Xrayutility"):
             chpdeg2=chpdeg[1],
             detrot=90.0,
         )
-        cx, cy, cz = hxrd.Ang2Q.area(eta, phi, nu, delta)
+        cx, cy, cz = hxrd.Ang2Q.area(eta, phi, nu, delta) # type: ignore
         return cx, cy, cz
 
     else:
@@ -591,7 +498,7 @@ def orth_ID27_gridder_def(ndata, methode="Xrayutility"):
         newcc = np.dot(matchg, dira)
         print(newcc / np.linalg.norm(dira))
 
-        # %%
+        # vecteur du réseau réciproque
         lamb = 12.398 / 33.169
         dd = 2.24e6
         taypix = 75
@@ -637,9 +544,9 @@ def orth_ID27_gridder_def(ndata, methode="Xrayutility"):
             ii += 1
 
         return Qx, Qy, Qz
-
-
 def get_abc_direct_space(cx, cy, cz, cx0, cy0, cz0, wanted_shape=None):
+    import numpy as np
+
     degree = 180 / np.pi
     qxCOM = cx[cx0, cy0, cz0]
     qyCOM = cy[cx0, cy0, cz0]
@@ -690,20 +597,18 @@ def get_abc_direct_space(cx, cy, cz, cx0, cy0, cz0, wanted_shape=None):
     b = real_x_ * xr[1] + real_y_ * yr[1] + real_z_ * zr[1]
     c = real_x_ * xr[2] + real_y_ * yr[2] + real_z_ * zr[2]
     return a, b, c
-
-
 #####################################################################################################################
 #####################################################################################################################
 ###################################### Latest for sixs 2019 utility 2025    #########################################
 #####################################################################################################################
 #####################################################################################################################
-
-
 def get_abc_direct_space_sixs2019(
-    cx, cy, cz, cx0, cy0, cz0, mu_range_trigger=False, wanted_shape=None, print_log=True
-):
+        cx, cy, cz, cx0, cy0, cz0,
+        mu_range_trigger=False, wanted_shape=None, print_log=True
+        ):
+    import numpy as np
     degree = 180 / np.pi
-    tayx, tayy, tayz = wanted_shape
+    tayx, tayy, tayz = wanted_shape # type: ignore
 
     qxCOM = cx[cx0, cy0, cz0]
     qyCOM = cy[cx0, cy0, cz0]
@@ -773,12 +678,12 @@ def get_abc_direct_space_sixs2019(
     b = real_x_ * xr[1] + real_y_ * yr[1] + real_z_ * zr[1]
     c = real_x_ * xr[2] + real_y_ * yr[2] + real_z_ * zr[2]
     return a, b, c
-
-
 def orth_sixs2019_gridder_def(dim, delta, gamma, mu, cch=[193, 201], wanted_shape=None,
                              nrj = 8.5 # energie du faisceau de rayons X
                              ):
-    # %%
+    import numpy as np
+    ####
+    # orthonormalisation d'une solution
     degree = np.pi / 180.0
     beta = 2 * degree
     dd = 1.215e6  # distance detecteur-echantillon en micron
@@ -826,7 +731,7 @@ def orth_sixs2019_gridder_def(dim, delta, gamma, mu, cch=[193, 201], wanted_shap
         f" the step of rocking angle is {np.mean(np.diff(np.round(mu,5)))}  and the rounded one is {step_mu}"
     )
 
-    # %% in the sample frame
+    # in the sample frame
     CX = np.zeros((len(mu_new), 516, 516))
     CY = np.zeros((len(mu_new), 516, 516))
     CZ = np.zeros((len(mu_new), 516, 516))
@@ -837,15 +742,11 @@ def orth_sixs2019_gridder_def(dim, delta, gamma, mu, cch=[193, 201], wanted_shap
         CZ[ii] = qz
         ii = ii + 1
     return CX, CY, CZ
-
-
 #####################################################################################################################
 #####################################################################################################################
 ######################################              old                     #########################################
 #####################################################################################################################
 #####################################################################################################################
-
-
 def ortho_data_phaserho_sixs2019(
     data_allscan,
     mypath="/home/abdelrahman/data_sixs_2019/",
@@ -853,15 +754,38 @@ def ortho_data_phaserho_sixs2019(
     plot_=True,
     linecut_plotting=True,
     defined_scan=None,
-):
-    from functions_ import (
+    ):
+    from cdi_dislo.general_utilities.cdi_dislo_utils import (
         crop_data_and_update_coordinates,
-        remove_phase_ramp,
         crop_3d_obj_pos,
-        getting_strain_mapvti,
-        get_het_normal_strain,
-        pad_to_shape,
+        pad_to_shape,   
+        nan_to_zero,
+        zero_to_nan,       
     )
+    from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler import (
+        remove_phase_ramp_abd,
+        getting_strain_mapvti,   
+        get_het_normal_strain,       
+    )
+
+    from cdi_dislo.plotutilities.cdi_dislo_plotutilities import (
+        summary_slice_plot_abd,
+    )
+    import matplotlib.pyplot as plt
+    import time
+    import os
+    import h5py
+    from os import listdir
+    from os.path import isfile, join
+    import numpy as np
+    import xrayutilities as xu
+    from scipy.ndimage import center_of_mass as C_O_M
+    from bcdi.graph import graph_utils as gu # type: ignore
+    from functools import reduce
+    from bcdi.graph import linecut as linecut # type: ignore
+    from cdiutils.analysis import find_isosurface
+    from cdiutils.utils import fill_up_support
+
 
     d0 = 2.2655224563000917
 
@@ -894,7 +818,7 @@ def ortho_data_phaserho_sixs2019(
     ii = 0
     for name in files:
         f = h5py.File(name, mode="r")
-        list_elmts = [key for key in f["/com/SIXS"].keys()]
+        list_elmts = [key for key in f["/com/SIXS"].keys()] # type: ignore
         data_ = np.array(f["/com/scan_data/data_02"]) * mask_diff
         delta = np.array(f["/com/SIXS/" + list_elmts[32] + "/position_pre"])[0] * degree
         gamma = np.array(f["/com/SIXS/" + list_elmts[40] + "/position_pre"])[0] * degree
@@ -975,9 +899,9 @@ def ortho_data_phaserho_sixs2019(
         # print('Voxel Size :',delta_x,delta_y,delta_z)
         # %% Normalisation vecteurs du reseau reciproque
         delta_dx_, delta_dy_, delta_dz_ = (
-            mean(np.diff(qx_lin)),
-            mean(np.diff(qy_lin)),
-            mean(np.diff(qz_lin)),
+            np.mean(np.diff(qx_lin)),
+            np.mean(np.diff(qy_lin)),
+            np.mean(np.diff(qz_lin)),
         )
         print("Reciprocal space voxel size :", delta_dx_, delta_dy_, delta_dz_)
         dqX, dqY, dqZ = (
@@ -1055,7 +979,7 @@ def ortho_data_phaserho_sixs2019(
         plot_3D_projections((phase), cmap="jet")
         plt.show()
         phase = zero_to_nan(phase)
-        phase, _ = remove_phase_ramp(phase)
+        phase, _ = remove_phase_ramp_abd(phase)
         # phase=unwrap_phase(phase)   *(density>10).astype(float)
         density = density / np.nanmax(density)
         phase = nan_to_zero(phase)
@@ -1092,8 +1016,8 @@ def ortho_data_phaserho_sixs2019(
                     end="",
                     flush=True,
                 )
-            list_of_error_voxel = array(list_of_error_voxel)
-            best_voxel_size = list_voxel_to_test[(argmin(list_of_error_voxel))]
+            list_of_error_voxel = np.array(list_of_error_voxel)
+            best_voxel_size = list_voxel_to_test[(np.argmin(list_of_error_voxel))]
         # best is 11.5
 
         nx, dif_x = optimize_voxel_real_space(
@@ -1134,19 +1058,19 @@ def ortho_data_phaserho_sixs2019(
 
         obj_ortho = density_ortho * np.exp(1j * phase_ortho)
         obj_ortho = crop_3d_obj_pos(
-            obj_ortho, output_shape=(2 * h_w, 2 * h_w, 2 * h_w), pos="com"
+            obj_ortho, output_shape=(2 * h_w, 2 * h_w, 2 * h_w), methods="com",
         )
 
         density_ortho = np.abs(obj_ortho)
-        mask_ortho = array(density_ortho != 0).astype(float)
+        mask_ortho = np.array(density_ortho != 0).astype(float)
         density_ortho *= mask_ortho
         phase_ortho = 0.0 - np.angle(np.exp(1j * np.angle(obj_ortho))) * mask_ortho
-        phase_ortho, _ = remove_phase_ramp(zero_to_nan(phase_ortho)) * mask_ortho
+        phase_ortho, _ = remove_phase_ramp_abd(zero_to_nan(phase_ortho)) * mask_ortho
 
         isosurface, fig00 = find_isosurface(density_ortho, sigma_criterion=5, plot=True)
         if isosurface < 0 or isosurface > 0.3:
             isosurface = 0.05
-        fig00.savefig(save__orth + scan + f"/S{scan}_amp_dist_isosurface.png")
+        fig00.savefig(save__orth + scan + f"/S{scan}_amp_dist_isosurface.png") # type: ignore
 
         ######################################
         # estimate the volume of the crystal #
@@ -1163,10 +1087,8 @@ def ortho_data_phaserho_sixs2019(
         ####################################################################################################################
         # estimate the bulk, displacement, strain, dspacing ,lattice parameter and strain based on dspacing of the crystal #
         ####################################################################################################################
-        bulk = pu.find_bulk(
-            amp=density_ortho, support_threshold=isosurface, method="threshold"
-        )
-        piz, piy, pix = np.round(np.array(nd.center_of_mass(bulk)), 1).astype("int")
+        bulk = fill_up_support(density_ortho > isosurface)
+        piz, piy, pix = np.round(np.array(C_O_M(bulk)), 1).astype("int")
         print(
             f"phase.max() = {phase_ortho[np.nonzero(bulk)].max():.2f} at voxel ({piz}, {piy}, {pix})"
         )
@@ -1379,15 +1301,15 @@ def ortho_data_phaserho_sixs2019(
             fig9.text(0.60, 0.10, f"Averaging over {2*hwidth+1} pixels", size=20)
             fig9.savefig(save__orth + scan + f"/S{scan}_strain_from_dspacing.png")
             plt.close()
-            fig_summary = summary_slice_plot(
+            fig_summary = summary_slice_plot_abd(
                 title=f"Summary figure Pt 3 ID27 {scan}",
                 support=zero_to_nan(bulk),
                 dpi=150,
                 voxel_size=voxel_size,
                 isosurface=isosurface,
                 det_reference_voxel=g_vector,
-                averaged_dspacing=dspacing_mean,
-                averaged_lattice_parameter=dspacing_mean,
+                averaged_dspacing=dspacing_mean, # type: ignore
+                averaged_lattice_parameter=dspacing_mean, # type: ignore
                 **final_plots,
             )
             # plt.tight_layout()
@@ -1428,7 +1350,7 @@ def ortho_data_phaserho_sixs2019(
         voxel_size_allscan[ii__] = voxel_size
         data_allscan_Int[ii__] = pad_to_shape(ndata, (100, 100, 100), pad_value=0)
         data_allscan_complexe[ii__] = pad_to_shape(
-            (density_ortho * np.exp(1j * a__)) * bulk, (60, 60, 60), pad_value=0 * 1j
+            (density_ortho * np.exp(1j * a__)) * bulk, (60, 60, 60), pad_value=0 * 1j # type: ignore
         )
         data_allscan_displacement[ii__] = pad_to_shape(
             nan_to_zero(displacement * bulk), (60, 60, 60), pad_value=0
@@ -1457,30 +1379,30 @@ def ortho_data_phaserho_sixs2019(
                 support_threshold=0.2,
             )
             plt.show()
-            maskkk = np.where(array(output["dimension_0"]["linecut"][1]) > 0.015)[0]
-            maskkk1 = np.where(array(output["dimension_1"]["linecut"][1]) > 0.015)[0]
-            maskkk2 = np.where(array(output["dimension_2"]["linecut"][1]) > 0.015)[0]
+            maskkk = np.where(np.array(output["dimension_0"]["linecut"][1]) > 0.015)[0]
+            maskkk1 = np.where(np.array(output["dimension_1"]["linecut"][1]) > 0.015)[0]
+            maskkk2 = np.where(np.array(output["dimension_2"]["linecut"][1]) > 0.015)[0]
             plt.figure()
             plt.plot(
-                array(output["dimension_0"]["linecut"][0])[maskkk],
-                array(output["dimension_0"]["linecut"][1])[maskkk],
+                np.array(output["dimension_0"]["linecut"][0])[maskkk],
+                np.array(output["dimension_0"]["linecut"][1])[maskkk],
             )
             plt.plot(
-                array(output["dimension_1"]["linecut"][0])[maskkk1],
-                array(output["dimension_1"]["linecut"][1])[maskkk1],
+                np.array(output["dimension_1"]["linecut"][0])[maskkk1],
+                np.array(output["dimension_1"]["linecut"][1])[maskkk1],
             )
             plt.plot(
-                array(output["dimension_2"]["linecut"][0])[maskkk2],
-                array(output["dimension_2"]["linecut"][1])[maskkk2],
+                np.array(output["dimension_2"]["linecut"][0])[maskkk2],
+                np.array(output["dimension_2"]["linecut"][1])[maskkk2],
             )
-            dimension = array(
+            dimension = np.array(
                 [
-                    array(output["dimension_0"]["linecut"][0])[maskkk].max()
-                    - array(output["dimension_0"]["linecut"][0])[maskkk].min(),
-                    array(output["dimension_1"]["linecut"][0])[maskkk1].max()
-                    - array(output["dimension_1"]["linecut"][0])[maskkk1].min(),
-                    array(output["dimension_2"]["linecut"][0])[maskkk2].max()
-                    - array(output["dimension_2"]["linecut"][0])[maskkk2].min(),
+                    np.array(output["dimension_0"]["linecut"][0])[maskkk].max()
+                    - np.array(output["dimension_0"]["linecut"][0])[maskkk].min(),
+                    np.array(output["dimension_1"]["linecut"][0])[maskkk1].max()
+                    - np.array(output["dimension_1"]["linecut"][0])[maskkk1].min(),
+                    np.array(output["dimension_2"]["linecut"][0])[maskkk2].max()
+                    - np.array(output["dimension_2"]["linecut"][0])[maskkk2].min(),
                 ]
             )
             plt.title(
@@ -1499,11 +1421,11 @@ def ortho_data_phaserho_sixs2019(
         "a_spacing": data_allscan_a_spacing,
         "het_strain": data_allscan_strain_from_dspacing,
         "int": data_allscan_Int,
-        "voxel_size": voxel_size,
+        "voxel_size": voxel_size, # type: ignore
     }
-    r = [x, y, z]
+    r = [x, y, z] # type: ignore
     starting_pixel_val_nm = [
-        r[0][0] - 100 * voxel_size[i] for i in range(len(voxel_size))
+        r[0][0] - 100 * voxel_size[i] for i in range(len(voxel_size)) # type: ignore
     ]
 
     np.savez(
@@ -1523,15 +1445,16 @@ def ortho_data_phaserho_sixs2019(
         **{
             "data_cm": data_allscan_Int,
             "scan": scan_nb,
-            "qx": qx_lin,
-            "qy": qy_lin,
-            "qz": qz_lin,
+            "qx": qx_lin, # type: ignore
+            "qy": qy_lin, # type: ignore
+            "qz": qz_lin, # type: ignore
         },
     )
     return final_data
-
-
 def orth_SIXS2019(ndata):
+    import numpy as np
+    import xrayutilities as xu
+    import scipy.ndimage as nd
     cx, cy, cz = np.round(np.array(nd.center_of_mass(ndata))).astype("int")
     print(cx, cy, cz)
     ##### orthonormalisation d'une solution
@@ -1569,7 +1492,7 @@ def orth_SIXS2019(ndata):
     qx_lin = gridder.xaxis
     qy_lin = gridder.yaxis
     qz_lin = gridder.zaxis
-    ndata = gridder.data
+    int_ortho = gridder.data
     # %% Normalisation vecteurs du reseau reciproque
     delta_x = 2 * np.pi / (qx_lin[-1] - qx_lin[0])
     delta_y = 2 * np.pi / (qy_lin[-1] - qy_lin[0])
@@ -1587,10 +1510,11 @@ def orth_SIXS2019(ndata):
     print("Inverse Step Size :", dqX, dqY, dqZ)
 
     return int_ortho, delta_dx_, delta_dy_, delta_dz_
-
-
 def detectframe_to_labframe(data, mask, delta, gamma, mu, shape_after_ref):
-    # %%
+    import numpy as np
+    import xrayutilities as xu  
+    
+    #  experimental parameters
     degree = np.pi / 180.0
     beta = 1.7 * degree
     dd = 1.215e6  # distance detecteur-echantillon en micron
@@ -1627,7 +1551,7 @@ def detectframe_to_labframe(data, mask, delta, gamma, mu, shape_after_ref):
                     ]
                 ),
             ]
-        )
+        ) # type: ignore
     )
 
     cx = tp * (X - cch[0]) * TM[0, 0] + tp * (Y - cch[1]) * TM[0, 1] + TM[0, 2]

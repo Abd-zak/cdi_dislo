@@ -43,19 +43,18 @@
 
 
 
-from cdi_dislo.common_imports import *
+# from cdi_dislo.common_imports import *
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
 from tabulate import tabulate
 
 #####################################################################################################################
 # Gaussian profile
 def gaussian(x, A, x0, sigma):
+    import numpy as np
     return A * np.exp(-(x - x0)**2 / (2 * sigma**2))
-
 # Lorentzian profile
 def lorentzian(x, A, x0, gamma):
     return A / (1 + ((x - x0) / gamma)**2)
-
 # Pseudo-Voigt profile
 def pseudo_voigt(x, A, x0, sigma, gamma, alpha):
     """Returns the pseudo-Voigt distribution function for the given parameters.
@@ -69,11 +68,13 @@ def pseudo_voigt(x, A, x0, sigma, gamma, alpha):
     Returns:
        A NumPy array of the values of the pseudo-Voigt distribution function at the given values of x.
     """
+    import numpy as np
     gaussian = np.exp(-(x - x0)**2 / (2 * sigma**2))
     lorentzian = 1 / (1 + ((x - x0) / gamma)**2)
     return  A *(1 - alpha) * gaussian + A *alpha * lorentzian
 # Pearson VII profile
 def pearson_vii(x, A, x0, gamma, m):
+    import numpy as np
     gamma_safe = np.maximum(gamma, 1e-10)
     x_diff = (x - x0) / gamma_safe
     x_diff_sq = x_diff**2
@@ -99,20 +100,23 @@ def pearson_vii(x, A, x0, gamma, m):
     denom = np.where(np.isfinite(denom), denom, np.finfo(float).max)
 
     return A / denom
-def fwhm_calculation_geom_methode2(x_data,y_fit):    
+def fwhm_calculation_geom_methode2(x_data,y_fit): 
+    import numpy as np
+    from scipy.signal import find_peaks   
     peaks, _ = find_peaks(y_fit)
-    half_max = max(y_fit) / 2
+    half_max = np.max(y_fit) / 2
     indices_higher_than_hm=np.where(y_fit>=half_max)[0]
     left_peak = indices_higher_than_hm[0]
     right_peak = indices_higher_than_hm[-1]   
     
     fwhm = x_data[right_peak] - x_data[left_peak]
     return fwhm
-
 #####################################################################################################################
-
-
 def plot_single_data_distr(data,i_scan ):
+    from scipy.stats import norm
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import xrayutilities as xu
     data_0=xu.maplog(data.sum(axis=0).flatten())
    # data_0=data_0[data_0!=0]
     mean_0 = np.mean(data_0)#norm.mean(dddata)
@@ -148,7 +152,7 @@ def plot_single_data_distr(data,i_scan ):
     plt.ylabel('', fontsize=f_s)
     plt.axvline(mean_0 - fwhm_0 / 2, color='red', linestyle='dashed')
     plt.axvline(mean_0 + fwhm_0/ 2, color='red', linestyle='dashed')
-    plt.axvline(barycenter_0, color='blue', linestyle='dashed',label='mean')
+    plt.axvline(barycenter_0, color='blue', linestyle='dashed',label='mean') # type: ignore
     plt.legend()
     #plt.yscale('log')
     plt.axis('tight')
@@ -160,7 +164,7 @@ def plot_single_data_distr(data,i_scan ):
     plt.xlabel('Norm Intensity [1]', fontsize=f_s)
     plt.axvline(mean_1 - fwhm_1 / 2, color='red', linestyle='dashed')
     plt.axvline(mean_1 + fwhm_1/ 2, color='red', linestyle='dashed')
-    plt.axvline(barycenter_1, color='blue', linestyle='dashed',label='mean')
+    plt.axvline(barycenter_1, color='blue', linestyle='dashed',label='mean') # type: ignore
     plt.legend()
     #plt.yscale('log')
     plt.axis('tight')
@@ -170,7 +174,7 @@ def plot_single_data_distr(data,i_scan ):
     im=plt.hist(data_2, bins=100,density=True);
     plt.axvline(mean_2 - fwhm_2 / 2, color='red', linestyle='dashed')
     plt.axvline(mean_2 + fwhm_2/ 2, color='red', linestyle='dashed')
-    plt.axvline(barycenter_2, color='blue', linestyle='dashed',label='mean')
+    plt.axvline(barycenter_2, color='blue', linestyle='dashed',label='mean') # type: ignore
     plt.xlabel('Norm Intensity[2]', fontsize=f_s)
     #plt.yscale('log')
     plt.axis('tight')
@@ -181,6 +185,10 @@ def plot_single_data_distr(data,i_scan ):
     plt.show()
     return fig2
 def plot_Int(data,i_scan ):
+    from scipy.optimize import curve_fit
+    import matplotlib.pyplot as plt
+    import numpy as np
+
     data_sum_xy=(data.sum(axis=(0, 1)) ).astype(int) 
     z=np.arange(0,len(data_sum_xy))
     data_sum_xz=(data.sum(axis=(0, 2)) ).astype(int) 
@@ -236,14 +244,17 @@ def voigt(x, A, x0, sigma_g, gamma, alpha):
     return A * (1 - alpha) * gaussian(x, A, x0, sigma_g) + alpha * lorentzian(x, A, x0, gamma)
 # Exponentially Broadened Gaussian profile
 def exp_broadened_gaussian(x, A, x0, sigma, beta):
+    import numpy as np
     return A * np.exp(-beta * (x - x0)) * np.exp(-(x - x0)**2 / (2 * sigma**2))
 # Doniach-Sunjic profile
 def doniach_sunjic(x, I0, gamma, beta, alpha):
+    import numpy as np
     term1 = I0 * (1 + (x / gamma)**2)**(-beta)
     term2 = alpha * I0 * np.exp(-(x / gamma))
     return term1 + term2
 # Skewed Lorentzian profile
 def skewed_lorentzian(x, A, x0, gamma, delta):
+    import numpy as np
     term1 = (1 / (np.pi * gamma)) * (gamma**2 / ((x - x0 - delta)**2 + gamma**2))
     return A * term1
 def pseudo_voigt_fwhm(sigma, gamma,eta ):
@@ -257,6 +268,7 @@ def pseudo_voigt_fwhm(sigma, gamma,eta ):
   Returns:
     The FWHM of the pseudo-Voigt distribution.
   """
+    import numpy as np
 
     # Calculate the variance of the Gaussian distribution.
     sigma_variance = sigma**2
@@ -273,8 +285,11 @@ def pseudo_voigt_fwhm(sigma, gamma,eta ):
     # Multiply the square root by 2.355 to get the FWHM of the pseudo-Voigt distribution.
     return fwhm
 def fwhm_calculation_geom_methode1(x_data,y_fit):
+    import numpy as np
+    from scipy.signal import find_peaks
+
     peaks, _ = find_peaks(y_fit)
-    half_max = max(y_fit) / 2
+    half_max = np.max(y_fit) / 2
     left_peak = peaks[0]
     right_peak = peaks[-1]
     
@@ -285,15 +300,17 @@ def fwhm_calculation_geom_methode1(x_data,y_fit):
     
     fwhm = x_data[right_peak] - x_data[left_peak]
     return fwhm
-
 # Fitting and evaluation
 def fit_best_profile(x_data, y_data,x_data_fit):
+    from scipy.optimize import curve_fit
+    import numpy as np
+
     profiles = [
-        (gaussian, "Gaussian", [max(y_data), np.argmax(y_data), 5]),
-        (lorentzian, "Lorentzian", [max(y_data), np.argmax(y_data), 5]),
-      #  (voigt, "Voigt", [max(y_data), np.argmax(y_data), 10, 5, 0.5]),
-        (pearson_vii, "Pearson VII", [max(y_data), 6, 0.5, 3]),
-        (pseudo_voigt, "Pseudo-Voigt", [max(y_data), np.argmax(y_data), 10, 5, 0.15])]
+        (gaussian, "Gaussian", [np.max(y_data), np.argmax(y_data), 5]),
+        (lorentzian, "Lorentzian", [np.max(y_data), np.argmax(y_data), 5]),
+      #  (voigt, "Voigt", [np.max(y_data), np.argmax(y_data), 10, 5, 0.5]),
+        (pearson_vii, "Pearson VII", [np.max(y_data), 6, 0.5, 3]),
+        (pseudo_voigt, "Pseudo-Voigt", [np.max(y_data), np.argmax(y_data), 10, 5, 0.15])]
     
     best_r_squared = -1
     best_profile = None
@@ -328,29 +345,31 @@ def pseudo_voigt_fwhm_Scherrer(lambda_,FWHM ,theta,k=0.9 ):
   Returns:
     D: is the size of the crystallite in angstroms
   """
+    import numpy as np
     fact=(k*lambda_)/np.cos(np.cos(theta*np.pi/180))
     return fact/(FWHM)
 def theta_bragg_pt(lambda_,h,k,l,a0=3.924):
-    
-  """Calculates the Bragg angle for a given wavelength.
+    """
+    Calculates the Bragg angle for a given wavelength.
 
-  Args:
-    lambda_: The wavelength of the X-rays in Angstroms.
+    Args:
+        lambda_: The wavelength of the X-rays in Angstroms.
 
-  Returns:
-    The Bragg angle in degrees.
-  """
+    Returns:
+        The Bragg angle in degrees.
+    """
+    import numpy as np
 
-  # The Bragg angle for the (111) plane of platinum is 21.28 degrees at the
-  # wavelength of X-rays used in most diffraction experiments.
+    # The Bragg angle for the (111) plane of platinum is 21.28 degrees at the
+    # wavelength of X-rays used in most diffraction experiments.
 
-  d=a0/np.sqrt(h*h+k*k+l*l)  # Spacing between the (111) planes of platinum in Angstroms.
+    d=a0/np.sqrt(h*h+k*k+l*l)  # Spacing between the (111) planes of platinum in Angstroms.
 
-  return np.arcsin(lambda_ / (2 * d)) * 180 / np.pi
+    return np.arcsin(lambda_ / (2 * d)) * 180 / np.pi
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
-def find_fwhm_all(x_data_fit, y_fit):
+def find_fwhm_all(x_data_fit, y_fit,name="Pseudo-Voit", popt=None):
     
     """
     Compute the Full-Width at Half Maximum (FWHM) of a given peak function.
@@ -397,28 +416,19 @@ def find_fwhm_all(x_data_fit, y_fit):
     >>> print(f"FWHM: {fwhm:.3f}")
 
     """
+    from scipy.optimize import curve_fit
+    import numpy as np
+
     try:
         fwhm=fwhm_calculation_geom_methode2(x_data_fit,y_fit)
         #print(name+"first methode")
     except:
         #print("not working")
         try:
+                            half_max = np.max(y_fit) / 2
                             idx = np.argwhere(np.diff(np.sign(y_fit - half_max))).flatten()
                             fwhm = x_data_fit[idx[-1]] - x_data_fit[idx[0]]
         except:
-            try: 
-                if name=="Pseudo-Voit": ##skiped for now the numerical solution doesn't work well on y direction
-                    A, x0, sigma, gamma, alpha = popt
-                    fwhm = pseudo_voigt_fwhm(sigma, gamma, alpha)       
-                else: 
-                        if name==  "Gaussian":    
-                            A, x0, sigma= popt
-                            fwhm = 2.355 *sigma
-                        else:
-                            if name==  "Lorentzian":    
-                                A, x0, gamma= popt
-                                fwhm = 2*gamma                    
-            except:
                 fwhm = 0
     return fwhm 
 #-------------------------------------------------------------------------------------------------------------
@@ -440,16 +450,17 @@ def integral_fwhm(x, y, method='trapz'):
     float
         The Integral FWHM value.
     """
+    import numpy as np
     if method == 'trapz':
         integral_intensity = np.trapz(y, x)  # Trapezoidal integration
     elif method == 'simps':
-        integral_intensity = scipy.integrate.simps(y, x)  # Simpson's rule
+        from scipy.integrate  import simpson  
+        integral_intensity = simpson(y, x)  # Simpson's rule
     else:
         raise ValueError("method must be 'trapz' or 'simps'")
 
     peak_max = np.max(y)
     return integral_intensity / peak_max if peak_max != 0 else 0.0
-
 def fwhm_integral_1(x, y):
     """
     Compute the integral over the Full Width at Half Maximum (FWHM) range using raw data points.
@@ -464,6 +475,8 @@ def fwhm_integral_1(x, y):
     float
         Integral of y over the FWHM range.
     """
+    import numpy as np
+
     peak_max = np.max(y)
     if peak_max == 0:
         return 0.0
@@ -485,7 +498,6 @@ def fwhm_integral_1(x, y):
     return np.trapz(y_fwhm, x_fwhm)
 #-------------------------------------------------------------------------------------------------------------
 def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
-    
     """
     Fit the best peak profile (Gaussian, Lorentzian, Pearson VII, Pseudo-Voigt) 
     to noisy data and compute both standard FWHM and Integral FWHM.
@@ -512,14 +524,18 @@ def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
         - fwhm : float : Full-Width at Half Maximum (geometric method).
         - integral_fwhm : float : Integral Full-Width at Half Maximum.
     """
+    from scipy.optimize import curve_fit
+    from sklearn.metrics import r2_score
+    import numpy as np
+
     if noise_levels is None:
         noise_levels = np.arange(0.01, 0.5, 0.01)
 
     profiles = [
-        (gaussian, "Gaussian", [max(y_data), np.argmax(y_data), 5]),
-        (lorentzian, "Lorentzian", [max(y_data), np.argmax(y_data), 5]),
-        (pearson_vii, "Pearson VII", [max(y_data), 6, 0.5, 3]),
-        (pseudo_voigt, "Pseudo-Voigt", [max(y_data), np.argmax(y_data), 10, 5, 0.15])
+        (gaussian, "Gaussian", [np.max(y_data), np.argmax(y_data), 5]),
+        (lorentzian, "Lorentzian", [np.max(y_data), np.argmax(y_data), 5]),
+        (pearson_vii, "Pearson VII", [np.max(y_data), 6, 0.5, 3]),
+        (pseudo_voigt, "Pseudo-Voigt", [np.max(y_data), np.argmax(y_data), 10, 5, 0.15])
     ]
 
     best_r_squared = -1
@@ -556,12 +572,6 @@ def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
                 continue  
 
     return best_profile
-    
-#-------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------
@@ -673,13 +683,10 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
     from matplotlib import ticker as mticker
     from scipy.stats import skew, kurtosis
     from tabulate import tabulate
-    from sklearn.metrics import r2_score
-    from scipy.signal import find_peaks
-    from scipy.optimize import curve_fit
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
     from matplotlib.colors import LogNorm
-    import scipy.integrate
-
-    import matplotlib
+    from matplotlib.ticker import MaxNLocator
+    
     def MIR_Colormap():
         cdict = {'red':  ((0.0, 1.0, 1.0),
                           (0.11, 0.0, 0.0),
@@ -699,7 +706,8 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
                           (0.62, 0.0, 0.0),
                           (0.87, 0.0, 0.0),
                           (1.0, 0.0, 0.0))}
-        my_cmap = matplotlib.colors.LinearSegmentedColormap('my_colormap',cdict,256)
+        from matplotlib.colors import LinearSegmentedColormap
+        my_cmap = LinearSegmentedColormap('my_colormap',cdict,256) # type: ignore
         return my_cmap
 
     my_cmap = MIR_Colormap()
@@ -730,14 +738,18 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
             - fwhm : float : Full-Width at Half Maximum (geometric method).
             - integral_fwhm : float : Integral Full-Width at Half Maximum.
         """
+        from scipy.optimize import curve_fit
+        from sklearn.metrics import r2_score
+        import numpy as np
+
         if noise_levels is None:
             noise_levels = np.arange(0.01, 0.5, 0.01)
     
         profiles = [
-            (gaussian, "Gaussian", [max(y_data), np.argmax(y_data), 5]),
-            (lorentzian, "Lorentzian", [max(y_data), np.argmax(y_data), 5]),
-            (pearson_vii, "Pearson VII", [max(y_data), 6, 0.5, 3]),
-            (pseudo_voigt, "Pseudo-Voigt", [max(y_data), np.argmax(y_data), 10, 5, 0.15])
+            (gaussian, "Gaussian", [np.max(y_data), np.argmax(y_data), 5]),
+            (lorentzian, "Lorentzian", [np.max(y_data), np.argmax(y_data), 5]),
+            (pearson_vii, "Pearson VII", [np.max(y_data), 6, 0.5, 3]),
+            (pseudo_voigt, "Pseudo-Voigt", [np.max(y_data), np.argmax(y_data), 10, 5, 0.15])
         ]
     
         best_r_squared = -1
@@ -789,6 +801,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
     
         :return: dimensions of the figure in inches (tuple)
         """
+        
         if width == 'default':
             width_pt = 420
         elif width == 'thesis':
@@ -801,7 +814,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
             width_pt = width
     
         # Width of figure (in pts)
-        fig_width_pt = width_pt * scale
+        fig_width_pt = width_pt * scale # type: ignore
     
         # Golden ratio to set aesthetic figure height
         # https://disq.us/p/2940ij3
@@ -816,7 +829,6 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
     
         return (fig_width_in, fig_height_in)
-
     #-------------------------------------------------------------------------------------------------------------
     def integral_fwhm(x, y, method='trapz'):
         """
@@ -836,16 +848,17 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         float
             The Integral FWHM value.
         """
+        import numpy as np
         if method == 'trapz':
             integral_intensity = np.trapz(y, x)  # Trapezoidal integration
         elif method == 'simps':
-            integral_intensity = scipy.integrate.simps(y, x)  # Simpson's rule
+            from scipy.integrate  import simpson
+            integral_intensity = simpson(y, x)  # Simpson's rule
         else:
             raise ValueError("method must be 'trapz' or 'simps'")
     
         peak_max = np.max(y)
         return integral_intensity / peak_max if peak_max != 0 else 0.0
-
     #-------------------------------------------------------------------------------------------------------------
     def find_fwhm_all(x_data_fit, y_fit):
         """
@@ -869,6 +882,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         - This method finds the left and right points where the signal crosses half of its maximum value.
         - It uses `find_peaks` and thresholding to estimate the FWHM geometrically.
         """
+        import numpy as np
         try:
             fwhm = fwhm_calculation_geom_methode2(x_data_fit, y_fit)
         except Exception as e:
@@ -877,12 +891,11 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         return fwhm
     # Gaussian profile
     def gaussian(x, A, x0, sigma):
+        import numpy as np
         return A * np.exp(-(x - x0)**2 / (2 * sigma**2))
-    
     # Lorentzian profile
     def lorentzian(x, A, x0, gamma):
         return A / (1 + ((x - x0) / gamma)**2)
-    
     # Pseudo-Voigt profile
     def pseudo_voigt(x, A, x0, sigma, gamma, alpha):
         """Returns the pseudo-Voigt distribution function for the given parameters.
@@ -896,11 +909,15 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         Returns:
            A NumPy array of the values of the pseudo-Voigt distribution function at the given values of x.
         """
+        import numpy as np
+
         gaussian = np.exp(-(x - x0)**2 / (2 * sigma**2))
         lorentzian = 1 / (1 + ((x - x0) / gamma)**2)
         return  A *(1 - alpha) * gaussian + A *alpha * lorentzian
     # Pearson VII profile
     def pearson_vii(x, A, x0, gamma, m):
+        import numpy as np
+
         gamma_safe = np.maximum(gamma, 1e-10)
         x_diff = (x - x0) / gamma_safe
         x_diff_sq = x_diff**2
@@ -926,27 +943,25 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         denom = np.where(np.isfinite(denom), denom, np.finfo(float).max)
     
         return A / denom
-    def fwhm_calculation_geom_methode2(x_data,y_fit):    
+    def fwhm_calculation_geom_methode2(x_data,y_fit):  
+        from scipy.signal import find_peaks
+        import numpy as np
+
         peaks, _ = find_peaks(y_fit)
-        half_max = max(y_fit) / 2
+        half_max = np.max(y_fit) / 2
         indices_higher_than_hm=np.where(y_fit>=half_max)[0]
         left_peak = indices_higher_than_hm[0]
         right_peak = indices_higher_than_hm[-1]   
         
         fwhm = x_data[right_peak] - x_data[left_peak]
         return fwhm
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    from matplotlib.colors import LogNorm
-    from matplotlib.ticker import MaxNLocator
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import xrayutilities as xu
-    
+ 
 
     def plot_3D_projections(data, mask=None, alpha_mask=0.3, ax=None, fig=None, fw=4, fig_title=None,
                             axes_labels=True, colorbar=False, log_scale=True, log_threshold=False,
                             max_projection=False, vmin=None, vmax=None, fontsize=15, cmap=None,
                             tight_layout=True, step_qxqyqz=None):
+
         def format_unit_label(axis_label, exponent):
             if exponent is None or exponent == 0:
                 return rf"{axis_label} (Å$^{{-1}}$)"
@@ -976,7 +991,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
                 offset_x = ax.xaxis.get_offset_text().get_text().replace("−", "-")
                 if "e" in offset_x:
                     exponent = int(offset_x.split("e")[-1])
-                    exponents["x"] = exponent
+                    exponents["x"] = exponent # type: ignore
                     # REMOVE this line:
                     # ax.ticklabel_format(style='plain', axis='x')
                     ax.xaxis.get_offset_text().set_visible(False)
@@ -989,7 +1004,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
                 offset_y = ax.yaxis.get_offset_text().get_text().replace("−", "-")
                 if "e" in offset_y:
                     exponent = int(offset_y.split("e")[-1])
-                    exponents["y"] = exponent
+                    exponents["y"] = exponent # type: ignore
                     # REMOVE this line:
                     # ax.ticklabel_format(style='plain', axis='y')
                     ax.yaxis.get_offset_text().set_visible(False)
@@ -1041,34 +1056,34 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
             if log_scale:
                 if log_threshold:
                     img = np.log10(np.clip(img, 1e-5, None))
-                    plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', vmin=vmin, vmax=vmax, extent=extent, origin='lower'))
+                    plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', vmin=vmin, vmax=vmax, extent=extent, origin='lower')) # type: ignore
                 else:
                     norm = LogNorm(vmin=vmin, vmax=vmax)
-                    plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', norm=norm, extent=extent, origin='lower'))
+                    plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', norm=norm, extent=extent, origin='lower')) # type: ignore
             else:
-                plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', vmin=vmin, vmax=vmax, extent=extent, origin='lower'))
+                plots.append(ax[n].imshow(img, cmap=cmap, aspect='auto', vmin=vmin, vmax=vmax, extent=extent, origin='lower')) # type: ignore
     
             if mask is not None:
                 mask_plot = np.nanmean(mask, axis=n)
                 mask_plot[mask_plot != 0.] = 1.
                 overlay = np.dstack([mask_plot, np.zeros_like(mask_plot),
                                      np.zeros_like(mask_plot), alpha_mask * mask_plot])
-                ax[n].imshow(overlay, aspect='auto', extent=extent, origin='lower')
+                ax[n].imshow(overlay, aspect='auto', extent=extent, origin='lower') # type: ignore
     
-            ax[n].tick_params(axis='both', labelsize=fontsize)
-            ax[n].xaxis.set_major_locator(MaxNLocator(nbins=3))
-            ax[n].yaxis.set_major_locator(MaxNLocator(nbins=3))
+            ax[n].tick_params(axis='both', labelsize=fontsize) # type: ignore
+            ax[n].xaxis.set_major_locator(MaxNLocator(nbins=3)) # type: ignore
+            ax[n].yaxis.set_major_locator(MaxNLocator(nbins=3)) # type: ignore
     
             if step_qxqyqz is not None:
-                exp_dict = apply_sci_format_imshow(ax[n], axis="both", fontsize=fontsize)
+                exp_dict = apply_sci_format_imshow(ax[n], axis="both", fontsize=fontsize) # type: ignore
                 x_exp = exp_dict["x"]
                 y_exp = exp_dict["y"]
                 
             if axes_labels and step_qxqyqz is not None:
-                xlabel = format_unit_label(axis_titles[n][0], x_exp)
-                ylabel = format_unit_label(axis_titles[n][1], y_exp)
-                ax[n].set_xlabel(xlabel, fontsize=fontsize * fw / 4, fontweight='bold')
-                ax[n].set_ylabel(ylabel, fontsize=fontsize * fw / 4, fontweight='bold')
+                xlabel = format_unit_label(axis_titles[n][0], x_exp) # type: ignore
+                ylabel = format_unit_label(axis_titles[n][1], y_exp) # type: ignore
+                ax[n].set_xlabel(xlabel, fontsize=fontsize * fw / 4, fontweight='bold') # type: ignore
+                ax[n].set_ylabel(ylabel, fontsize=fontsize * fw / 4, fontweight='bold') # type: ignore
 
     
         if colorbar:
@@ -1129,7 +1144,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
     if plot:
         figsize = get_figure_size(scale=3,subplots=subplots)
         figure = plt.figure( figsize=figsize, dpi=150)
-        figure.set_constrained_layout(True)  # Preferred for automatic handling
+        figure.set_constrained_layout(True)  # type: ignore # Preferred for automatic handling
         # Define the grid layout with one row for the large subplot and three subplots in the second row
         gs = gridspec.GridSpec(nrows=4, ncols=3, wspace=wspace_gridspec, hspace=hspace_gridspec, figure=figure)
         ax_table = figure.add_subplot(gs[0, :])
@@ -1144,7 +1159,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         ax2.axis('tight')
         ax3.axis('tight')
 
-        unit_label = '$(\mathrm{\AA}^{-1})$' if step_qxqyqz else '$_{(pixels)}$'
+        unit_label = r'$(\mathrm{\AA}^{-1})$' if step_qxqyqz else '$_{(pixels)}$'
 
         ax.set_title(plot_title, pad=20)
         ax.set_ylabel("Integrated Intensity $_{(a.u.)}$", fontsize=f_s, fontweight='bold')
@@ -1156,9 +1171,9 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
     X_data_all                      = [np.arange(len(d))                                                       for d in data_sum_all]  # Avoid recomputation
     X_fit_all                       = [np.linspace(0, len(d), int(len(d) / step_x_fit))                        for d in data_sum_all]  # More robust
     peak_positions = [np.argmax(d) for d in data_sum_all]
-    h_len = min(min(peak_positions), min(len(d) - p for d, p in zip(data_sum_all, peak_positions))) - 1
+    h_len = np.min(np.min(peak_positions), np.min(len(d) - p for d, p in zip(data_sum_all, peak_positions))) - 1 # type: ignore
     if center_peak:
-        data_sum_all = [d[max(0, peak-h_len):peak+h_len] for d, peak in zip(data_sum_all, peak_positions)]
+        data_sum_all = [d[np.max(0, peak-h_len):peak+h_len] for d, peak in zip(data_sum_all, peak_positions)]
         X_data_all = [np.arange(len(d)) for d in data_sum_all]
         X_fit_all = [np.linspace(0, len(d), int(len(d) / step_x_fit)) for d in data_sum_all]
     if eliminate_linear_background:
@@ -1177,24 +1192,24 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
         fwhm_xyz = [f * step for f, step in zip(fwhm_xyz, step_qxqyqz)]
         fwhm_integral_xyz = [f * step for f, step in zip(fwhm_integral_xyz, step_qxqyqz)]
     if plot and log_distribution:
-        ax.set_yscale('log')
+        ax.set_yscale('log') # type: ignore
     for i in range(len(data_sum_all)):
         if i==0:            axis,direction=(1,2),"X"
         if (i==1):          axis,direction=(0,2),"Y"
         if (i==2):          axis,direction=(0,1),"Z"       
         popt=popt_xyz[i]
         try: 
-            print(f"fit along {direction} results :")
-            display(f"A {popt[0]} {direction}0 {popt[1]} sigma {popt[2]} gamma  {popt[3]}  eta {popt[4]} "  )
+            print(f"fit along {direction} results :") # type: ignore
+            display(f"A {popt[0]} {direction}0 {popt[1]} sigma {popt[2]} gamma  {popt[3]}  eta {popt[4]} "  ) # type: ignore
         except:
             print('Not pseudo-voigt')       
         if plot:
             fit_safe = np.clip(fitted_data[i], 1e-12, None)
             scatter_safe = np.clip(data_sum_all[i], 1e-12, None)
-            ax.scatter(X_data_all[i], scatter_safe, s=marker_size, color=color_list[i])
-            ax.plot(X_fit_all[i], fit_safe, color=color_list[i], alpha=alpha_fit,label=f"Fit {direction} {names[i]}")
+            ax.scatter(X_data_all[i], scatter_safe, s=marker_size, color=color_list[i]) # type: ignore
+            ax.plot(X_fit_all[i], fit_safe, color=color_list[i], alpha=alpha_fit,label=f"Fit {direction} {names[i]}") # type: ignore
     if plot:
-        data_sum_fit_max = np.array([max(fit) for fit in fitted_data])  # Get max values for each fitted dataset
+        data_sum_fit_max = np.array([np.max(fit) for fit in fitted_data])  # Get max values for each fitted dataset
         data_sum_fit_max_max = data_sum_fit_max.max()  # Overall max value for normalization
         #ax.set_ylim(0,2 * data_sum_fit_max_max)  # 20% headroom above the tallest peak
         for i, (fit, color, popt) in enumerate(zip(fitted_data, color_list, popt_xyz)):
@@ -1210,12 +1225,12 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
             fwhm_line_m = center_scaled - fwhm_scaled / 2
             fwhm_line_p = center_scaled + fwhm_scaled / 2
 
-            ax.axvline(x=fwhm_line_m, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
-            ax.axvline(x=fwhm_line_p, color=color, linestyle='--', ymin=0, ymax=half_max_norm)
+            ax.axvline(x=fwhm_line_m, color=color, linestyle='--', ymin=0, ymax=half_max_norm) # type: ignore
+            ax.axvline(x=fwhm_line_p, color=color, linestyle='--', ymin=0, ymax=half_max_norm) # type: ignore
 
-        ax.tick_params(labelsize=f_s)
-        ax.grid(alpha=0.01)
-        ax.legend(loc="best")
+        ax.tick_params(labelsize=f_s) # type: ignore
+        ax.grid(alpha=0.01) # type: ignore
+        ax.legend(loc="best") # type: ignore
     if plot:
         # Stack FWHM and Integral FWHM values
         fwhm_xyz = np.array(fwhm_xyz)
@@ -1253,7 +1268,7 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
                      [[directions[i]] + list(map(str, rounded_values[i])) for i in range(3)]
     
         # Create matplotlib table on ax_table
-        table = Table(ax_table, loc='upper left')
+        table = Table(ax_table, loc='upper left') # type: ignore
         table.auto_set_font_size(False)
         table.set_fontsize(f_s_table)
         table.scale(scale_table[0], scale_table[1])
@@ -1270,43 +1285,43 @@ def get_plot_fwhm_and_skewness_kurtosis(data,plot_title="Sum of intensity along 
                 text = table[i, j].get_text()
                 text.set_fontsize(f_s_table)
                 text.set_color('white')
-                text.set_weight('bold')
+                text.set_weight('bold') # type: ignore # type: ignore
     
         # Add table to axis
-        ax_table.add_table(table)
-        ax_table.axis('off')
+        ax_table.add_table(table) # type: ignore # type: ignore
+        ax_table.axis('off') # type: ignore # type: ignore
     # Print summary table in console
     console_table = [
         ["Metric", "X", "Y", "Z"],
-        [f"FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_xyz],
-        [f"Integral FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_integral_xyz],
+        [f"FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_xyz], # type: ignore
+        [f"Integral FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_integral_xyz], # type: ignore
         ["Skewness"] + [f"{x:.4f}" for x in skewness_xyz],
         ["Kurtosis"] + [f"{x:.4f}" for x in kurtosis_xyz],
         ["R-squared"] + [f"{x:.4f}" for x in rsquared_xyz],
     ]
     print(tabulate(console_table, headers="firstrow", tablefmt="grid"))
     if plot:
-        for ax_obj in figure.get_axes():
+        for ax_obj in figure.get_axes(): # type: ignore
             ax_obj.tick_params(labelsize=f_s)  # only label size allowed
             for label in ax_obj.get_xticklabels() + ax_obj.get_yticklabels():
                 label.set_fontweight('bold')
             ax_obj.title.set_fontsize(f_s)
-            ax_obj.xaxis.label.set_size(f_s)
-            ax_obj.yaxis.label.set_size(f_s)
+            ax_obj.xaxis.label.set_size(f_s) # type: ignore
+            ax_obj.yaxis.label.set_size(f_s) # type: ignore
             legend = ax_obj.get_legend()
             if legend:
                 for text in legend.get_texts():
-                    text.set_weight('bold')
+                    text.set_weight('bold') # type: ignore
                     text.set_fontsize(f_s)
     if plot:
-        y_max = max([max(fit) for fit in fitted_data])
-        x_max = max([max(fit) for fit in X_data_all])
-        ax.set_ylim(0, y_padding_factor * y_max)  # Set bottom to 0, top with headroom
-        ax.set_xlim(0, y_padding_factor * x_max)  # Set bottom to 0, top with headroom
+        y_max = np.max([np.max(fit) for fit in fitted_data])
+        x_max = np.max([np.max(fit) for fit in X_data_all])
+        ax.set_ylim(0, y_padding_factor * y_max)  # type: ignore # Set bottom to 0, top with headroom
+        ax.set_xlim(0, y_padding_factor * x_max)  # type: ignore # Set bottom to 0, top with headroom
     if tight_layout:
-        figure.tight_layout()
+        figure.tight_layout() # type: ignore
     if save_fig:
-        figure.savefig(save_fig)
+        figure.savefig(save_fig) # type: ignore
         #plt.savefig(save_fig)     
         print(f"saving figure to : {save_fig}")
     if plot:

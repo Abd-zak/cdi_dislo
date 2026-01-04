@@ -65,13 +65,10 @@
 #####################################################################################################################
 
 
-
-
-
-
-
-
-from cdi_dislo.common_imports import *
+# from cdi_dislo.common_imports import *
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+import math
 
 #####################################################################################################################
 #####################################################################################################################
@@ -329,7 +326,6 @@ def rotation_matrix_z(angle_degrees):
         [0,         0,          1]
     ])
     return R
-    
 #------------------------------------------------------------------------------------------------------------
 def rotation_matrix_x(angle_degrees):
     """
@@ -391,7 +387,6 @@ def rotation_matrix_to_angles(rotation_matrix, order='xyz', degrees=True):
     rotation = R.from_matrix(rotation_matrix)
     angles = rotation.as_euler(order, degrees=degrees)
     return angles
-
 #------------------------------------------------------------------------------------------------------------
 def compute_rotation_matrix_paraview_style(input_type='basis', vector=None, vector_direction_toalign_with=[0, 0, 1], current_basis=None, target_basis=None):
     """
@@ -472,6 +467,7 @@ def apply_rotation_to_data(data, rotation_matrix, padding_factor=1.5):
     :param padding_factor: Factor by which to increase the grid size (default: 1.5)
     :return: Transformed 3D numpy array of the same shape as the input
     """
+    from scipy.interpolate import RegularGridInterpolator
     original_shape = data.shape
     
     # Pad the data
@@ -668,7 +664,6 @@ def angle_between_vectors(u, v):
     angle_degrees = math.degrees(angle_radians)
     
     return angle_degrees
-
 #------------------------------------------------------------------------------------------------------------
 def transform_data_paraview_style_with_new_axes(data, x, y, z, angle_x, angle_y, angle_z, padding_factor=1.5):
     """
@@ -683,6 +678,7 @@ def transform_data_paraview_style_with_new_axes(data, x, y, z, angle_x, angle_y,
     :param padding_factor: Factor by which to increase the grid size (default: 1.5)
     :return: Transformed 3D numpy array of the same shape as input, and new x, y, z axis values
     """
+    from scipy.interpolate import RegularGridInterpolator
     original_shape = data.shape
 
     # Pad the data array
@@ -748,11 +744,6 @@ def transform_data_paraview_style_with_new_axes(data, x, y, z, angle_x, angle_y,
     rotated_z = rotated_coords_real[0, 0, :, 2]
 
     return transformed_data, rotated_x, rotated_y, rotated_z
-
-
-
-
-
 #------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------------

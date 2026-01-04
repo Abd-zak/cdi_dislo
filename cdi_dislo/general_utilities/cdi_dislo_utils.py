@@ -106,15 +106,14 @@
 #                                   END OF SCRIPT OVERVIEW                                                #
 ############################################################################################################
 """
-
-
-
-from cdi_dislo.common_imports                                     import *
-from cdi_dislo.plotutilities.cdi_dislo_plotutilities              import plotqxqyqzi_imshow
-from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import get_displacement_gradient
-
-from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
-from scipy.ndimage import map_coordinates
+import numpy as np
+from decimal import Decimal, getcontext
+import re
+from scipy.ndimage import center_of_mass as C_O_M
+from cdiutils.utils import CroppingHandler  
+chain_centring = CroppingHandler.chain_centring
+import logging
+import time
 
 #####################################################################################################################
 #####################################################################################################################
@@ -122,9 +121,11 @@ from scipy.ndimage import map_coordinates
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 def save_vti_from_dictdata(dict_data,filename_save,voxel_sizes,amplitude_threshold=0.01):
+    from bcdi.graph                     import graph_utils          as gu # type: ignore
     list_keys= [i_key for i_key,item in dict_data.items() ]
     list_item= [item for i_key,item in dict_data.items() ]
-    gu.save_to_vti(filename=filename_save,voxel_size=tuple(voxel_sizes),tuple_array=list_item,tuple_fieldnames=list_keys,    amplitude_threshold=0.01,)
+    gu.save_to_vti(filename=filename_save,voxel_size=tuple(voxel_sizes),tuple_array=list_item,#
+                   tuple_fieldnames=list_keys,    amplitude_threshold=0.01,)
     return 
 def center_angles(angles):
     """
@@ -137,6 +138,8 @@ def center_angles(angles):
     Returns:
         np.ndarray: Angles centered between -max_angle and max_angle.
     """
+    import numpy as np
+
     min_angle=np.nanmin(angles)
     # Convert angles to a numpy array for vectorized operations
     angles = np.array(angles)
@@ -148,22 +151,24 @@ def center_angles(angles):
     return centered_angles
 # Normalize vector
 def normalize_vector(v):
+    ''' Normalizes a vector to unit length. '''
+    import numpy as np
     norm = np.linalg.norm(v)
     return v / norm if norm > 1e-12 else v
-
 # Project vector onto plane perpendicular to another vector
 def project_vector(v, t):
+    ''' Projects vector v onto the plane perpendicular to vector t. '''
+    import numpy as np
     v = np.array(v, dtype=np.float64)  # Ensure `v` is a NumPy array
     t = np.array(t, dtype=np.float64)  # Ensure `t` is a NumPy array
     return v - (np.dot(v, t) / np.linalg.norm(t)**2) * t
-
-
-
 def fill_up_support(support, plot=False):
     '''
     Modify the support by filling any hole inside.
     '''
-    
+    import numpy as np
+    from cdi_dislo.ewen_utilities.plot_utilities                      import plot_2D_slices_middle_one_array3D
+
     def process_axis(support, axis):
         support_cum = np.cumsum(support, axis=axis)
         support_cum_inv = np.flip(np.cumsum(np.flip(support, axis=axis), axis=axis), axis=axis)
@@ -192,26 +197,33 @@ def fill_up_support(support, plot=False):
         plot_2D_slices_middle_one_array3D(support_convex, cmap='gray_r', fig_title='filled support')
 
     return support_convex
-
-
-
-
 def nan_to_zero(phase):
+    import numpy as np
     return np.nan_to_num(phase, nan=0)
-
+def zero_to_nan(
+        data: np.ndarray,
+        boolean_values: bool = False
+) -> np.ndarray:
+    """Convert zero values to np.nan."""
+    import numpy as np
+    return np.where(data == 0, np.nan, 1 if boolean_values else data)
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 #🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-
-
-    
 def extract_coefficient_and_exponent(number):
+    """ Extracts the coefficient and exponent from a given number.  """
+    import math
+    if number == 0:
+        return 0, 0
+
     # Extract the exponent
     exponent = int(math.log10(np.abs(number)))
     # Calculate the coefficient
     coefficient = number / (10 ** exponent)
     return coefficient, exponent
 def transform_miller_indices(miller_list):
+    ''' Transforms a list of Miller indices from string format to a 2D NumPy array of floats. '''
+    import numpy as np
     transformed_list = []
     for indices in miller_list:
         transformed = []
@@ -224,7 +236,7 @@ def transform_miller_indices(miller_list):
                 transformed.append(int(indices[i]))
                 i += 1  # Move to the next character
         transformed_list.append(transformed)
-    return array(transformed_list).astype(float)
+    return np.array(transformed_list).astype(float)
 def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=None):
     """
     Generate all possible primitive Burgers vector directions [h, k, l] and their negatives [-h, -k, -l]
@@ -241,6 +253,10 @@ def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=
     Returns:
         list: List of tuples (direction, angle) where direction is [h, k, l] and angle is in degrees.
     """
+    from math import gcd, degrees
+    from functools import reduce
+    import numpy as np
+
 
     if m == 0:
         return []  # Skip m = 0 as it corresponds to invisible dislocations.
@@ -254,12 +270,12 @@ def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=
 
     def calculate_angle(v1, v2):
         """ Compute the angle between two vectors in degrees. """
-        dot_product = sum(v1[i] * v2[i] for i in range(len(v1)))
-        magnitude_v1 = sqrt(sum(x**2 for x in v1))
-        magnitude_v2 = sqrt(sum(x**2 for x in v2))
+        dot_product = np.sum(v1[i] * v2[i] for i in range(len(v1))) # type: ignore
+        magnitude_v1 = np.sqrt(np.sum(x**2 for x in v1)) # type: ignore
+        magnitude_v2 = np.sqrt(np.sum(x**2 for x in v2)) # type: ignore
         cos_theta = dot_product / (magnitude_v1 * magnitude_v2)
-        cos_theta = max(-1.0, min(1.0, cos_theta))  # Ensure cos_theta is within [-1, 1]
-        return degrees(acos(cos_theta))
+        cos_theta = np.max(-1.0, np.min(1.0, cos_theta))  # Ensure cos_theta is within [-1, 1]
+        return degrees(np.arccos(cos_theta))
 
     valid_directions = []
     seen_vectors = set()  # To track unique vectors before sorting
@@ -295,10 +311,6 @@ def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=
         valid_directions.sort(key=lambda x: x[1])
 
     return valid_directions
-
-
-
-
 def find_max_and_com_3d(data, window_size=10):
     """
     Finds the position of the maximum value in a 3D array and computes the rounded center of mass (COM)
@@ -312,6 +324,8 @@ def find_max_and_com_3d(data, window_size=10):
     - max_pos: (z, y, x) coordinates of the maximum value.
     - com_pos: (z, y, x) rounded center of mass.
     """
+    import numpy as np
+    # Ensure data is a NumPy array
     data = np.array(data)
 
     # Find the coordinates of the maximum value
@@ -333,17 +347,14 @@ def find_max_and_com_3d(data, window_size=10):
 
     # Adjust COM coordinates to global positions and round them
     com_pos = (
-        round(com_local[0] + z_min),
-        round(com_local[1] + y_min),
-        round(com_local[2] + x_min)
+        round(com_local[0] + z_min), # type: ignore
+        round(com_local[1] + y_min), # type: ignore
+        round(com_local[2] + x_min)  # type: ignore
     )
 
     return max_pos, com_pos
-
-
 def format_as_4digit_string(number):
     return f"{number:04d}"
-
 def isfloat(num):
     try:
         float(num)
@@ -374,7 +385,7 @@ def check_array_empty(array__):
     Returns:
     - bool: True if the array is empty, False otherwise.
     """
-    if array(array__).size == 0:
+    if np.array(array__).size == 0:
         return True
     else:
         return False
@@ -387,7 +398,6 @@ def array_to_dict(array):
   Returns:
     A dictionary.
   """
-
   if array.dtype.names is None:
     array = array.flatten()
     dictionary = {}
@@ -455,6 +465,10 @@ class DualOutput:
         for stream in self.streams:
             stream.flush()
 class Float(float):
+    """A custom float class that performs arithmetic operations with 4 significant digits.
+    """
+    
+
     def __new__(cls, value):
         return float.__new__(cls, value)
 
@@ -496,8 +510,6 @@ def get_numbers_from_string(string):
     result = ''.join(numbers)
     
     return result
-
-
 def std_data(data):
     
     data= data.flatten()
@@ -505,7 +517,6 @@ def std_data(data):
     mean_d= np.sum(data)/len(data)
     std= np.sqrt(np.square(data-mean_d).sum() /len(data) )
     return std
-
 #####################################################################################################################
 #####################################################################################################################
 ############################################      Rotation utility ##################################################
@@ -541,7 +552,6 @@ def build_rotation_matrix_from_axes(angle_x=0, angle_y=0, angle_z=0, degrees=Tru
         R_total = rotation_matrices[axis] @ R_total
 
     return R_total
-
 def alignment_euler_angles(source_vec, target_vec, order='xyz', degrees=True):
     """
     Computes the Euler angles to rotate source_vec to align with target_vec.
@@ -569,10 +579,10 @@ def alignment_euler_angles(source_vec, target_vec, order='xyz', degrees=True):
     # Convert to Euler angles
     angles = rot.as_euler(order, degrees=degrees)
     return tuple(angles), rotation_matrix
-
 # Function to apply centered affine transformation
 def centered_affine_transform(data, transformation_matrix, order=1):
     """Applies a centered orthogonal transformation to a 3D array."""
+    from scipy.ndimage import map_coordinates
     # Validation checks (keep from previous version)
     assert transformation_matrix.shape == (3, 3), "Matrix must be 3x3"
     assert np.allclose(transformation_matrix @ transformation_matrix.T, np.eye(3), atol=1e-6), "Matrix must be orthogonal"
@@ -581,7 +591,7 @@ def centered_affine_transform(data, transformation_matrix, order=1):
     center = (shape - 1) / 2
     
     # Fixed coordinate grid generation
-    indices = np.indices(shape)  # Shape (3, dim_x, dim_y, dim_z)
+    indices = np.indices(shape)  # type: ignore # Shape (3, dim_x, dim_y, dim_z)
     x, y, z = indices[0], indices[1], indices[2]
     coords = np.stack((x.ravel(), y.ravel(), z.ravel()), axis=-1)
     
@@ -612,18 +622,24 @@ def rotation_matrix_from_angles(angle_x, angle_y, angle_z):
     # Combined rotation order: Z -> Y -> X
     R = Rx @ Ry @ Rz
     return R
-
-
-
 #####################################################################################################################
 #####################################################################################################################
 ############################################crop & general utility ##################################################
 #####################################################################################################################
 ##################################################################################################################### 
 def remove_bordersurface_mask(mask,order=2):
-    graadient_modes_mask=(np.max(nan_to_zero(np.abs(array(get_displacement_gradient((mask),voxel_size=(1,1,1))))),axis=0)!=0).astype(float)
+    '''
+    Docstring for remove_bordersurface_mask
+    Removes border surface from a 3D binary mask based on the specified order.
+
+    :param mask:    Description
+    :param order: Description
+    '''
+    from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import get_displacement_gradient
+
+    graadient_modes_mask=(np.max(nan_to_zero(np.abs(np.array(get_displacement_gradient((mask),voxel_size=(1,1,1))))),axis=0)!=0).astype(float)
     if order ==2:
-        graadient_graadient_modes_mask=np.max(nan_to_zero(np.abs(array(get_displacement_gradient((graadient_modes_mask),voxel_size=(1,1,1))))),axis=0)!=0
+        graadient_graadient_modes_mask=np.max(nan_to_zero(np.abs(np.array(get_displacement_gradient((graadient_modes_mask),voxel_size=(1,1,1))))),axis=0)!=0
         mask=(((graadient_modes_mask)*(graadient_graadient_modes_mask)-mask)<0).astype(float)    
     else:
         #print("order is one")
@@ -643,8 +659,11 @@ def get_largest_component(binary_mask):
     - max_label: the label of the largest component
     - max_size: the size of the largest component
     """
+    import numpy as np
+    from scipy.ndimage import label
+
     # Label connected components in the binary mask
-    labeled_mask, num_features = label(binary_mask)
+    labeled_mask, num_features = label(binary_mask) # type: ignore
 
     # Count occurrences of each label, ignoring background label 0
     label_sizes = np.bincount(labeled_mask.flatten())
@@ -659,6 +678,11 @@ def get_largest_component(binary_mask):
 
     return largest_component_mask, max_label, max_size
 def crop_data_and_update_coordinates(x, y, z, data, finalshape, pos="com", k_add=20, verbose=True):
+    """
+    Crop 3D data around a specified position and update the spatial coordinates accordingly.    """
+    import numpy as np  
+    
+
     # Get the original data shape
     orig_shape = np.array(data.shape)
     finalshape = np.array(finalshape)
@@ -675,13 +699,13 @@ def crop_data_and_update_coordinates(x, y, z, data, finalshape, pos="com", k_add
         if (("list" in  type_of_methods) or ("array" in  type_of_methods) ):
             pos_pad=(tuple(pos),)    
     if (('max' in pos ) or ('com' in pos)):
-        pos=array([int(np.round(i)) for i in C_O_M(data)])
+        pos=np.array([int(np.round(i)) for i in C_O_M(data)])
     else:
         pos=pos
     k_add=10
     # Calculate padding
-    pad_before = finalshape // 2 - pos 
-    pad_after = np.maximum((pos + finalshape // 2 + finalshape % 2) - orig_shape, 0) + k_add
+    pad_before = finalshape // 2 - pos  # type: ignore
+    pad_after = np.maximum((pos + finalshape // 2 + finalshape % 2) - orig_shape, 0) + k_add # type: ignore
     pad_after=[i if i>0 else 0 for i in pad_after]
     pad_before=[i if i>0 else 0 for i in pad_before]
     # Pad the array
@@ -693,14 +717,14 @@ def crop_data_and_update_coordinates(x, y, z, data, finalshape, pos="com", k_add
         det_ref,  # the detector reference voxel in the full detector frame
         cropped_det_ref,  # the detector reference voxel in the cropped detector frame
         roi  # the region of interest (ROI) used to crop the data
-    ) = chain_centring(
+    ) = chain_centring( # type: ignore
         padded_data,
-        methods=pos_pad,  # the list of methods used sequentially
-        output_shape=finalshape,  # the output shape you want to work with
+        methods=pos_pad,  # the list of methods used sequentially # type: ignore
+        output_shape=finalshape,  # the output shape you want to work with # type: ignore
         verbose=verbose  # whether to print logs during the reference voxel search
     )  
     #print(array(det_ref)-array(pad_before),array(det_ref),array(pad_before))
-    pos_pad_after_crop=array(det_ref)-array(pad_before)
+    pos_pad_after_crop=np.array(det_ref)-np.array(pad_before)
 
     mean_step_x = np.mean(np.diff(x))
     mean_step_y = np.mean(np.diff(y))
@@ -736,6 +760,11 @@ def crop_data_and_update_coordinates(x, y, z, data, finalshape, pos="com", k_add
     
     return crop_data_cdi, new_x_crop, new_y_crop, new_z_crop
 def crop_3d_obj_pos_and_update_coordinates(obj, x, y, z, output_shape=(100,100,100), pos="com", k_add=20, verbose=False):
+    """
+    Crop complex 3D data around a specified position, with padding if necessary, and update spatial coordinates.    
+    """
+    import numpy as np  
+
     density = np.abs(obj)
     phase = np.angle(obj)
     
@@ -813,7 +842,7 @@ def crop_3d_obj_pos_and_update_coordinates(obj, x, y, z, output_shape=(100,100,1
         logging.info(f"Original shape: {obj.shape}, Cropped shape: {cropped_obj.shape}")
         logging.info(f"New coordinate ranges: x[{new_x_crop[0]:.2f}, {new_x_crop[-1]:.2f}], y[{new_y_crop[0]:.2f}, {new_y_crop[-1]:.2f}], z[{new_z_crop[0]:.2f}, {new_z_crop[-1]:.2f}]")
 
-    return array(cropped_obj), new_x_crop, new_y_crop, new_z_crop
+    return np.array(cropped_obj), new_x_crop, new_y_crop, new_z_crop
 def crop_3d_obj_pos(obj, methods=["max", "com"], verbose=True, output_shape=(100, 100, 100)):
     """
     Crop complex 3D data around a specified position, with padding if necessary.
@@ -850,7 +879,7 @@ def crop_3d_obj_pos(obj, methods=["max", "com"], verbose=True, output_shape=(100
         )
 
         # Reconstruct the cropped complex object
-        obj = density * np.exp(1j * phase)
+        obj = density * np.exp(1j * phase) # type: ignore
 
     else:
         # Use the updated crop_3darray_pos for density and phase separately
@@ -869,7 +898,7 @@ def crop_3d_obj_pos(obj, methods=["max", "com"], verbose=True, output_shape=(100
         )
 
         # Reconstruct the cropped complex object
-        obj = density * np.exp(1j * phase)
+        obj = density * np.exp(1j * phase) # type: ignore
     
     return obj
 def crop_3darray_pos_v00(data, output_shape=[100,100,100], methods=["max", "com"],verbose=True,det_ref_return=False):
@@ -884,14 +913,16 @@ def crop_3darray_pos_v00(data, output_shape=[100,100,100], methods=["max", "com"
     Returns:
     numpy.ndarray: Cropped array of shape output_shape
     """
+    import numpy as np  
+
     # Ensure pos and output_shape are numpy arrays for easier manipulation
     if (('max' in methods ) or ('com' in methods)):
-        pos=array([int(np.round(i)) for i in C_O_M(data)])
+        pos=np.array([int(np.round(i)) for i in C_O_M(data)])
     else:
         pos=methods
 
     output_shape = np.array(output_shape)
-    orig_shape=array(data.shape)
+    orig_shape=np.array(data.shape)
     k_add=10
     # Calculate padding
     pad_before = output_shape // 2 - pos 
@@ -910,23 +941,23 @@ def crop_3darray_pos_v00(data, output_shape=[100,100,100], methods=["max", "com"
             det_ref,  # the detector reference voxel in the full detector frame
             cropped_det_ref,  # the detector reference voxel in the cropped detector frame
             roi  # the region of interest (ROI) used to crop the data
-        ) = chain_centring(
+        ) = chain_centring( # type: ignore
             padded_data,
-            methods=methods,  # the list of methods used sequentially
-            output_shape=output_shape,  # the output shape you want to work with
+            methods=methods,  # the list of methods used sequentially # type: ignore
+            output_shape=output_shape,  # the output shape you want to work with # type: ignore
             verbose=verbose  # whether to print logs during the reference voxel search
         )
     else:
         print('the origin of the crop is given by user ',methods)
         # Calculate crop indices
-        start = methods - output_shape // 2
+        start = methods - output_shape // 2 # type: ignore
         end = start + output_shape
         print(start,end)
         # Crop the padded array
         crop_data_cdi = padded_data[start[0]:end[0], start[1]:end[1], start[2]:end[2]]
         
     if det_ref_return:
-        return det_ref,crop_data_cdi
+        return det_ref,crop_data_cdi # type: ignore
     else:
         return crop_data_cdi
 def crop_3darray_pos(data, output_shape=[100,100,100], methods=["max", "com"],verbose=True,det_ref_return=False):
@@ -943,12 +974,12 @@ def crop_3darray_pos(data, output_shape=[100,100,100], methods=["max", "com"],ve
     """
     # Ensure pos and output_shape are numpy arrays for easier manipulation
     if (('max' in methods ) or ('com' in methods)):
-        pos=array([int(np.round(i)) for i in C_O_M(data)])
+        pos=np.array([int(np.round(i)) for i in C_O_M(data)])
     else:
         pos=methods
 
     output_shape = np.array(output_shape)
-    orig_shape=array(data.shape)
+    orig_shape=np.array(data.shape)
     k_add=10
     # Calculate padding
     pad_before = output_shape // 2 - pos 
@@ -981,10 +1012,10 @@ def crop_3darray_pos(data, output_shape=[100,100,100], methods=["max", "com"],ve
         det_ref,  # the detector reference voxel in the full detector frame
         cropped_det_ref,  # the detector reference voxel in the cropped detector frame
         roi  # the region of interest (ROI) used to crop the data
-    ) = chain_centring(
+    ) = chain_centring( # type: ignore
         padded_data,
-        methods=methods,  # the list of methods used sequentially
-        output_shape=output_shape,  # the output shape you want to work with
+        methods=methods,  # the list of methods used sequentially # type: ignore
+        output_shape=output_shape,  # the output shape you want to work with # type: ignore
         verbose=verbose  # whether to print logs during the reference voxel search
     )
 
@@ -1005,6 +1036,9 @@ def transform_data_paraview_style(data, angle_x, angle_y, angle_z, padding_facto
     :param padding_factor: Factor by which to increase the grid size (default: 1.5)
     :return: Transformed 3D numpy array of the same shape as input
     """
+    from scipy.interpolate import RegularGridInterpolator
+    import numpy as np
+
     original_shape = data.shape
     
     # Pad the data
@@ -1066,15 +1100,16 @@ def crop_3darray_pos_old(data, finalshape, pos="com"):
     Returns:
     numpy.ndarray: Cropped array of shape finalshape
     """
+    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
     # Ensure pos and finalshape are numpy arrays for easier manipulation
     if pos=="com":
-        pos=array([int(np.round(i)) for i in C_O_M(data)])
+        pos=np.array([int(np.round(i)) for i in C_O_M(data)])
     elif pos=="max":
-        pos=array([int(np.round(i)) for i in np.where(data==nanmax(data))[0]])
+        pos=np.array([int(np.round(i)) for i in np.where(data==np.nanmax(data))[0]])
     else:
         pos = np.array(pos)
     finalshape = np.array(finalshape)
-    orig_shape=array(data.shape)
+    orig_shape=np.array(data.shape)
     k_add=10
     # Calculate padding
     pad_before = finalshape // 2 - pos 
@@ -1089,9 +1124,9 @@ def crop_3darray_pos_old(data, finalshape, pos="com"):
     # Adjust position for padded array
 
     if pos=="com":
-        new_pos=array([int(np.round(i)) for i in C_O_M(padded_data)])
+        new_pos=np.array([int(np.round(i)) for i in C_O_M(padded_data)])
     elif pos=="max":
-        new_pos=array([int(np.round(i)) for i in np.where(padded_data==nanmax(padded_data))[0]])
+        new_pos=np.array([int(np.round(i)) for i in np.where(padded_data==np.nanmax(padded_data))[0]])
     else:
         new_pos = pos + pad_before
     
@@ -1120,7 +1155,9 @@ def mask_clusters(data, threshold_factor=0.2, dilation_iterations=20, return_sec
         data_after_masking: Original data with the selected cluster and surroundings set to zero
         dilated_mask: Boolean mask of the identified region
     """
-    
+    import numpy as np
+    from scipy import ndimage
+        
     # Step 1: Find first global maximum
     max_value1 = np.max(data)
     max_coords1 = np.unravel_index(np.argmax(data), data.shape)
@@ -1128,7 +1165,7 @@ def mask_clusters(data, threshold_factor=0.2, dilation_iterations=20, return_sec
     # Step 2: Identify first cluster containing maximum
     threshold = max_value1 * threshold_factor
     binary = data > threshold
-    labeled, num_features = ndimage.label(binary)
+    labeled, num_features = ndimage.label(binary) # type: ignore
     max_label1 = labeled[max_coords1]
 
     # Step 3: Create mask for first cluster and surrounding region
@@ -1136,7 +1173,7 @@ def mask_clusters(data, threshold_factor=0.2, dilation_iterations=20, return_sec
     dilated_mask1 = ndimage.binary_dilation(cluster_mask1, iterations=dilation_iterations)
 
     # Step 4: Apply mask to original data
-    masked_data1 = np.ma.array(data, mask=~dilated_mask1)
+    masked_data1 = np.ma.array(data, mask=~dilated_mask1) # type: ignore
     data_after_first_mask = data * (1 - dilated_mask1)
 
     if not return_second_cluster:
@@ -1150,7 +1187,7 @@ def mask_clusters(data, threshold_factor=0.2, dilation_iterations=20, return_sec
     # Step 6: Identify second cluster containing maximum
     threshold2 = max_value2 * threshold_factor
     binary2 = data_after_first_mask > threshold2
-    labeled2, num_features2 = ndimage.label(binary2)
+    labeled2, num_features2 = ndimage.label(binary2) # type: ignore
     max_label2 = labeled2[max_coords2]
 
     # Step 7: Create mask for second cluster and surrounding region
@@ -1158,15 +1195,26 @@ def mask_clusters(data, threshold_factor=0.2, dilation_iterations=20, return_sec
     dilated_mask2 = ndimage.binary_dilation(cluster_mask2, iterations=dilation_iterations)
 
     # Step 8: Apply masks to original data
-    masked_data2 = np.ma.array(data, mask=~dilated_mask2)
+    masked_data2 = np.ma.array(data, mask=~dilated_mask2) # type: ignore
     data_after_masking = data * (1 - dilated_mask2)
 
     return masked_data2, data_after_masking, dilated_mask2
-
-
-
-#%%data processing
+#data processing
 def data_processing(files,dirlist):
+    '''
+    Docstring for data_processing
+    
+    :param files: Description
+    :param dirlist: Description
+    '''
+    def mean_z_run(data):
+        sum_=data[0]
+        for i in range(1,len(data)):
+            sum_=sum_+ data[i]
+            
+        return sum_/len(data)
+    import time
+
     data_allscans_LLK,data_allscans_runs,data_allscans_rho ,data_allscans_phi , data_allscans_runs_meanz_rho,data_allscans_runs_meanz_phi ,data_allscans_mask ,data_allscans_COM  = {},{},{},{},{},{},{} , {}
     rho_min = 1
     for dir_ in range(len(dirlist)):
@@ -1175,7 +1223,7 @@ def data_processing(files,dirlist):
         size = len(files[dir_])
         scan_nb = files[dir_][0][files[dir_][0].find('results/S') + 9:files[dir_][0].find('results/S') + 12]
         print('********** scan ' + str(scan_nb) + ' with ' + str(len(files[dir_])) + 'runs' + '**********')
-        data_run_nb = [ int(IfStringRepresentsFloat(i[i.find('Run') + 3:i.find('Run') + 8])) for i in files[dir_] ]
+        data_run_nb = [ int(IfStringRepresentsFloat(i[i.find('Run') + 3:i.find('Run') + 8])) for i in files[dir_] ] # type: ignore
         LLK_runs = [ IfStringRepresentsFloat(i[i.find('LLKf') + 16:i.find('LLKf') + 27]) for i in files[dir_] ]
 
         rho_data = [np.abs(np.array(np.load(i)['obj'])) for i in files[dir_]]
@@ -1203,18 +1251,27 @@ def data_processing(files,dirlist):
         end = time.time()
         print(str(int(((end - start) / 60) * 10) / 10) + 'min')
         #if dir_>=1: break
-    return data_run_meanz_rho,data_run_meanz_phi,data_allscans_LLK,data_allscans_runs,data_allscans_rho,data_allscans_phi,data_allscans_runs_meanz_rho,data_allscans_runs_meanz_phi,data_allscans_mask,data_allscans_COM
-#%% modes processing
+    return data_run_meanz_rho,data_run_meanz_phi,data_allscans_LLK,data_allscans_runs,data_allscans_rho,data_allscans_phi,data_allscans_runs_meanz_rho,data_allscans_runs_meanz_phi,data_allscans_mask,data_allscans_COM # type: ignore
+# modes processing
 def modes_processing(files,mypath='/home/abdelrahman/data_sixs_2019/'):
+    '''
+    Docstring for modes_processing
+    
+    :param files: Description
+    :param mypath: Description
+    '''
+    import h5py
+    import numpy as np
+
     final_selected_runs_allscsan={
-        '100': [array([2, 4])],
-        '103': [array([0, 6])],
-        '113': [array([0, 1])],
-        '400': [array([1, 4])],
-        '439': [array([2, 3])],
-        '657': [array([ 1, 16])],
-        '668': [array([ 3, 19])],
-        '671': [array([18, 22])]
+        '100': [np.array([2, 4])],
+        '103': [np.array([0, 6])],
+        '113': [np.array([0, 1])],
+        '400': [np.array([1, 4])],
+        '439': [np.array([2, 3])],
+        '657': [np.array([ 1, 16])],
+        '668': [np.array([ 3, 19])],
+        '671': [np.array([18, 22])]
                                  }
     ii_scan = 0
     data_allscans_runs_mode,data_allscans_rho_modes,data_allscans_phi_modes,data_allscans_mask_modes,data_allscans_COM_modes={}, {}, {}, {}, {}
@@ -1225,8 +1282,8 @@ def modes_processing(files,mypath='/home/abdelrahman/data_sixs_2019/'):
         destination_= [ mypath + 'S' + i_scan + '/selected_runs/'+str(i_run_list)+'/modes.h5' for i_run_list in range(len(final_selected_runs_allscsan[i_scan])) ]
         print('**********' + str(i_scan) + ' with ' + str(len(destination_)) + 'modes' + '**********')
         data_run_nb   = np.array([ i_run_list  for i_run_list in range(len(final_selected_runs_allscsan[i_scan])) ])
-        rho_data      = np.array([np.abs(   np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_])
-        phi_data      = np.array([np.angle( np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_])
+        rho_data      = np.array([np.abs(   np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_]) # type: ignore
+        phi_data      = np.array([np.angle( np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_]) # type: ignore
         rho_data_mask = np.asarray(rho_data) * 0
         for i in range(len(rho_data)):             rho_data_mask[i][np.where(rho_data[i] > rho_min)] = 1
         i_COM = np.array([ np.asarray(C_O_M(rho_data_mask[i])) for i in range(len(destination_)) ])
@@ -1245,9 +1302,13 @@ def modes_processing(files,mypath='/home/abdelrahman/data_sixs_2019/'):
         end = time.time()
         print(str(int(((end - start) / 60) * 1000) / 1000) + 'min')
         ii_scan=ii_scan+1
-    return final_selected_runs_allscsan,data_allscans_runs_modes,data_allscans_rho_modes,data_allscans_phi_modes,data_allscans_mask_modes,data_allscans_COM_modes
+    return final_selected_runs_allscsan,data_allscans_runs_modes,data_allscans_rho_modes,data_allscans_phi_modes,data_allscans_mask_modes,data_allscans_COM_modes # type: ignore
 def runsmode_read(files_sel):
-    scan_nb = np.array([str(int(IfStringRepresentsFloat(files_sel[dir_][0][files_sel[dir_][0].find('/S') + 2:files_sel[dir_][0].find('/S') + 6]))) for dir_ in range(len(files_sel.keys()))])
+    ''' read the selected modes from npy files '''
+    import numpy as np
+    import time
+
+    scan_nb = np.array([str(int(IfStringRepresentsFloat(files_sel[dir_][0][files_sel[dir_][0].find('/S') + 2:files_sel[dir_][0].find('/S') + 6]))) for dir_ in range(len(files_sel.keys()))]) # type: ignore
     ii_scan = 0
     data_allscans_rho_modes = {}
     data_allscans_phi_modes = {}
@@ -1277,15 +1338,20 @@ def runsmode_read(files_sel):
         ii_scan=ii_scan+1
     return data_allscans_rho_modes,data_allscans_phi_modes,data_allscans_data_complex_modes,data_allscans_mask_modes
 def modes_read(mypath='/home/abdelrahman/data_sixs_2019/'):
+    ''' read the selected modes from h5 files '''
+    import h5py
+    import numpy as np
+    import time
+
     final_selected_runs_allscsan={
-        '100': [array([2, 4])],
-        '103': [array([0, 6])],
-        '113': [array([0, 1])],
-        '400': [array([1, 4])],
-        '439': [array([2, 3])],
-        '657': [array([ 1, 16])],
-        '668': [array([ 3, 19])],
-        '671': [array([18, 22])]
+        '100': [np.array([2, 4])],
+        '103': [np.array([0, 6])],
+        '113': [np.array([0, 1])],
+        '400': [np.array([1, 4])],
+        '439': [np.array([2, 3])],
+        '657': [np.array([ 1, 16])],
+        '668': [np.array([ 3, 19])],
+        '671': [np.array([18, 22])]
                                  }
     ii_scan = 0
     data_allscans_rho_modes = {}
@@ -1300,9 +1366,9 @@ def modes_read(mypath='/home/abdelrahman/data_sixs_2019/'):
 
         destination_= [ mypath + 'S' + i_scan + '/selected_runs/'+str(i_run_list)+'/modes.h5' for i_run_list in range(len(final_selected_runs_allscsan[i_scan])) ]
         print('**********' + str(i_scan) + ' with ' + str(len(destination_)) + 'modes' + '**********')
-        rho_data      = np.array([np.abs(   np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_])
-        phi_data      = np.array([np.angle( np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_])
-        data_complex  = np.array([np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] ) for f in destination_])
+        rho_data      = np.array([np.abs(   np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_]) # type: ignore
+        phi_data      = np.array([np.angle( np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] )) for f in destination_]) # type: ignore
+        data_complex  = np.array([np.array(h5py.File(f,'r+')['entry_1']['data_1']['data'][0] ) for f in destination_]) # type: ignore
         mask=np.asarray(rho_data)*0
         mask[np.where(rho_data>5)] = 1
         rho_data=rho_data*mask
@@ -1344,7 +1410,7 @@ def get_dislocation_position(data_mask):
     dislo_positions= np.array([ dislo_positions[i][ (dislo_positions[0]==most_freq_z)] for i in range(len(dislo_positions)) ] )
     for i_index in range(len(dislo_positions[0])):
         if dislo_positions[0][i_index]!=most_freq_z:
-            np.delete()
+            np.delete() # type: ignore
     return dislo_positions,c
 def sum_z_run(data):
     sum_=data[0]
@@ -1363,8 +1429,8 @@ def maxcorr_index(corr_data,shift_from_max,allowed_min):
         if min_corr < allowed_min: 
             print('scan '+str(i_scan) +'reconstruction problem. Runs are not well reconstructed.')
             continue
-        corr_data[i_scan][np.where(max_corr[i_scan]==1)]=0
-        index_best_run=np.array(np.sort(list(set(np.array(np.where(max_corr[i_scan]>min_corr)).flatten()))))
+        corr_data[i_scan][np.where(corr_data[i_scan]==1)]=0
+        index_best_run=np.array(np.sort(list(set(np.array(np.where(corr_data[i_scan]>min_corr)).flatten()))))
         
         n_frames=len(index_best_run)
         print('**********' + i_scan + ' with ' +str(n_frames)  +
@@ -1419,6 +1485,19 @@ def dltaphi(data_phi,data_mask):
         print(str(int(((end - start) / 60) * 10) / 10) + 'min')
     return dphi_allscan
 def std_rho(data_):
+    ''' calculate the std of rho data for all scans and all runs '''
+    def mean_z_run(data):
+        sum_=data[0]
+        for i in range(1,len(data)):
+            sum_=sum_+ data[i]
+            
+        return sum_/len(data)
+    def mean_y_run(data):
+        sum_=data[:,0,:]
+        nb_=data.shape[1]
+        for i in range(1,nb_):
+            sum_=sum_+ data[:,i,:]     
+        return sum_/nb_
     nb_scan = len(data_)
     std_data_allscsans = {}
     mean_overy_data_allscsans={}
@@ -1458,7 +1537,16 @@ def flatten_dict_scan_list_run(dict_):
 
     return np.array(list(set(np.array(a))))
 
-def get_sphere_intsum_mode(int_ortho_scan_cut_max,range_r,radius_step,plot_=False):
+def get_sphere_intsum_mode(int_ortho_scan_cut_max,range_r,radius_step):
+    ''' get the mean intensity in spherical shells of increasing radius '''
+    def xyz_to_thetaphir(x,y,z):
+        hxy = np.hypot(x, y)
+        
+        r=np.hypot(hxy, z)
+        theta=np.array(np.arctan2(z, hxy))
+        phi=np.array(np.arctan2(y, x))
+        return theta,phi,r    
+
     center_ = (np.array(int_ortho_scan_cut_max.shape) / 2).astype(int)
     dim_x, dim_y, dim_z = center_
     frame = np.indices(int_ortho_scan_cut_max.shape)
@@ -1472,14 +1560,11 @@ def get_sphere_intsum_mode(int_ortho_scan_cut_max,range_r,radius_step,plot_=Fals
         circle_matrix[bool_d] = 1
         int_ortho_scan_ = circle_matrix * int_ortho_scan_cut_max
         intensity_sum = np.append(intensity_sum, np.mean(int_ortho_scan_[int_ortho_scan_ != 0]))
-        if plot_:
-            plotqxqyqzi_imshow(data__, str(r_i))
-            plotqxqyqzi_imshow(data_, str(r_i))
     return intensity_sum
 def get_max_or_com(ndata,off_set_y,max_or_com="com"):
         if max_or_com=="com":    
             try:
-                com_=[int(i) for i in C_O_M(ndata)]
+                com_=[int(i) for i in C_O_M(ndata)] # type: ignore
                 com_[1]+=off_set_y
             except:
                 com_=[0,0,0]            
@@ -1493,6 +1578,8 @@ def get_max_or_com(ndata,off_set_y,max_or_com="com"):
             return max_ 
 def load_reco_from_cxinpz(path,multiply_by_mask=False):
     """Load the specfile from the given path"""
+    import silx.io
+    import numpy as np  
     #  return silx.io.specfile.SpecFile(path)
     if (path[-3:]=='cxi') or (path[-2:]=='h5'):
         with silx.io.open(path) as specfile:
@@ -1505,9 +1592,9 @@ def load_reco_from_cxinpz(path,multiply_by_mask=False):
     if path[-3:]=='npz':
         int_=np.array(np.load(path)['obj'])
     if multiply_by_mask: 
-        return int_*mask
+        return int_*mask # type: ignore
     else:
-        return int_
+        return int_ # type: ignore
 def get_max_cut_parametre(parametre,wanted_nb=25):
     to_sort_list=np.array(nan_to_zero(parametre))
     to_sort_list=to_sort_list[to_sort_list!=0]
@@ -1617,6 +1704,14 @@ def fit_model_regression(method, X, y, **kwargs):
     - model: Fitted regression model.
     - predictions: Predictions made by the model.
     """
+    # Import necessary regression models
+    from sklearn.linear_model import LinearRegression
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.tree import DecisionTreeRegressor
+    from sklearn.neighbors import KNeighborsRegressor
+    from sklearn.svm import SVR
+    from sklearn.neural_network import MLPRegressor
+    # Initialize the model based on the specified method
     if method == "LinearRegression":
         model = LinearRegression(**kwargs)
     elif method == "RandomForestRegressor":

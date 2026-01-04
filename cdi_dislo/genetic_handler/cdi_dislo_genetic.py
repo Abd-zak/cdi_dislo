@@ -67,18 +67,13 @@ including multiple reconstructions, object sorting based on sharpness, and genet
 
 
 
-
-
-
-
-
-from cdi_dislo.common_imports import *
-
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_2D_slices_middle
 from cdi_dislo.ewen_utilities.Reconstruction                      import CDI_one_reconstruction
 from cdi_dislo.ewen_utilities.PostProcessing                      import force_same_complex_conjugate_object_list
 from cdi_dislo.ewen_utilities.Object_utilities                    import center_object_list
 
+import numpy as np
+import time 
 
 #####################################################################################################################
 #####################################################################################################################

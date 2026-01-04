@@ -84,10 +84,34 @@ visualization functions, making them more adaptable to different datasets and re
 
 
 
-from cdi_dislo.common_imports                                     import *
+# from cdi_dislo.common_imports                                     import *
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.colors as mcolors
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly.io as pio
+from ipywidgets import interact, widgets
+import pyvista as pv
+import math
+import scipy.stats as stats
+import warnings
+import xrayutilities as xu
+import time
+from matplotlib.backends import backend_pdf as be_pdf
+from cdi_dislo.general_utilities.cdi_dislo_utils import (  
+    nan_to_zero,
+    zero_to_nan,       
+)
 #####################################################################################################################
 def mean_z_run(data):
+    '''
+    Docstring for mean_z_run
+    
+    :param data: Description
+    '''
     sum_=data[0]
     for i in range(1,len(data)):
         sum_=sum_+ data[i]
@@ -136,7 +160,7 @@ def MIR_Colormap():
                       (0.62, 0.0, 0.0),
                       (0.87, 0.0, 0.0),
                       (1.0, 0.0, 0.0))}
-    my_cmap = matplotlib.colors.LinearSegmentedColormap('my_colormap',cdict,256)
+    my_cmap = matplotlib.colors.LinearSegmentedColormap('my_colormap',cdict,256) # type: ignore
     return my_cmap
 #####################################################################################################################
 
@@ -174,6 +198,7 @@ def visualize_3d_data(
     - window_size (tuple): Window size for the plot (default: (800, 800)).
     - plot_title (str): Title of the plot window.
     """
+    
     # Enable headless rendering if needed
     pv.start_xvfb()
     
@@ -380,7 +405,7 @@ def plot_summary_difraction(data_original,com_,max_,path_save=None,fig_title="",
     cbar.set_label("Intensity (a.u.)", fontsize=f_s)
     
     fig.tight_layout()
-    plt.savefig(path_save + "_xproj_" + fig_save_, dpi=300, bbox_inches="tight")
+    plt.savefig(path_save + "_xproj_" + fig_save_, dpi=300, bbox_inches="tight") # type: ignore
     plt.show()
 
     # --- Y projection ---
@@ -394,7 +419,7 @@ def plot_summary_difraction(data_original,com_,max_,path_save=None,fig_title="",
     cbar.set_label("Intensity (a.u.)", fontsize=f_s)
     
     fig.tight_layout()
-    plt.savefig(path_save + "_yproj_" + fig_save_, dpi=300)
+    plt.savefig(path_save + "_yproj_" + fig_save_, dpi=300) # type: ignore
     plt.show()
     
     # --- Z projection ---
@@ -406,7 +431,7 @@ def plot_summary_difraction(data_original,com_,max_,path_save=None,fig_title="",
     cbar.ax.tick_params(labelsize=f_s*0.8)
     cbar.set_label("Intensity (a.u.)", fontsize=f_s)
     fig.tight_layout()
-    plt.savefig(path_save + "_zproj_" + fig_save_, dpi=300)
+    plt.savefig(path_save + "_zproj_" + fig_save_, dpi=300) # type: ignore
     plt.show()
 
 
@@ -469,7 +494,7 @@ def plot_mechanical_properties(slopes_elastic, f_max_elastic_x, f_max_elastic_y,
         if plot_fit:
             # Perform linear regression
             slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-            r_squared = r_value**2
+            r_squared = r_value**2 # type: ignore
             
             # Only plot the fit if R-squared is above the threshold
             if r_squared > r_squared_threshold:
@@ -502,7 +527,7 @@ def plot_mechanical_properties(slopes_elastic, f_max_elastic_x, f_max_elastic_y,
         # Print the fit parameters for each plot
         for i, (x, y, title) in enumerate(zip(x_data, y_data, titles), 1):
             slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-            r_squared = r_value**2
+            r_squared = r_value**2 # type: ignore
             print(f"\nFit parameters for {title}:")
             print(f"Slope: {slope:.4e}")
             print(f"Intercept: {intercept:.4e}")
@@ -515,10 +540,12 @@ def plot_mechanical_properties(slopes_elastic, f_max_elastic_x, f_max_elastic_y,
 
 def get_color_list(nb):
     from itertools import combinations
+    import random as py_random
+
        
     # Get colors from tab10 and Paired colormaps
-    tab10_colors = plt.cm.tab10(np.linspace(0, 0.8, 8))  # Use only 80% of the colormap
-    paired_colors = plt.cm.Paired(np.linspace(0, 1, 6))
+    tab10_colors = plt.cm.tab10(np.linspace(0, 0.8, 8))  # type: ignore # Use only 80% of the colormap
+    paired_colors = plt.cm.Paired(np.linspace(0, 1, 6)) # type: ignore
     
     # Get XKCD color names
     xkcd_colors = list(mcolors.XKCD_COLORS.keys())
@@ -555,6 +582,7 @@ def get_color_list(nb):
     colors =py_random.sample(filtered_colors, nb)
     return colors   
 def get_x_y_of_drops_plastic(x,y,plot_debug=False):
+    from numpy import linspace,random
     x_min,xmax=x.min(),x.max()
     trig_min=np.where(x==x_min)[0][0]
     list_slope_local,mean_slope_all=[],[]
@@ -569,7 +597,7 @@ def get_x_y_of_drops_plastic(x,y,plot_debug=False):
         if coef[0]>4:
             if coef[0]>1:
                 trig_min=trig_max
-                mean_slope_all.append(array(list_slope_local).max())
+                mean_slope_all.append(np.array(list_slope_local).max())
                 list_slope_local=[]
                 continue
     new_y_phase1=(y-x*mean_slope_all[0])
@@ -773,103 +801,8 @@ def corr_plot(abs_data):
     cb1=plt.colorbar(i1,ax=ax1)
     cb1.ax.tick_params(labelsize=18)
     plt.grid(alpha=0.5)    
-def plot_mean_function(file):
-
-    data=np.load(file)
-    data_I=np.array(data['obj'])
-    abs_data=np.abs(data_I)
-    angle_data=np.angle(data_I)
-    abs_plot(abs_data,120)
-    plt.savefig('plot_allplan_rho_image.pdf')
     plt.show()
-    
-    size=240
-    pos_min=100
-    pos_max=200
-    xmin=70
-    xmax=200
-    #cutted_abs_data0= np.zeros((size, size, size))
-    #cutted_angle_data0 = np.zeros((size, size, size))
-    #cutted_abs_data1= np.zeros((size, size, size))
-    #cutted_angle_data1= np.zeros((size, size, size))
-
-
-    #for i in range(0,240):#data0_I.shape[0]):
-    #    for j in range(0,240):#data0_I.shape[1]):
-    #        for k in range(0,240):#data0_I.shape[2]):
-    #            if ( (i>xmin & i<xmax) & (j>pos_min & j<pos_max) & (k>pos_min & k<pos_max)):
-    #                if ( abs_data   [i][j][k] > 1):
-    #                    cutted_abs_data[i][j][k]   = abs_data   [i][j][k]
-    #                    cutted_angle_data[i][j][k] = angle_data [i][j][k]
-
-    mean_abs_data0=np.mean(abs_data0[np.where(abs_data0>1)])
-    mean_abs_data1=np.mean(abs_data1[np.where(abs_data1>1)])
-
-    print(mean_abs_data0,mean_abs_data1)
-    
-    plt.tight_layout(pad=0.5, w_pad=0.01, h_pad=2.0)
-    plt.title('abs. distrubition: mean :%.2f'%mean_abs_data0, fontsize=18)
-    h1=plt.hist(abs_data0[np.where(abs_data0>1)],bins=50);
-
-    plt.axvline(mean_abs_data0, color='k', linestyle='dashed', linewidth=1)
-
-    min_ylim, max_ylim = plt.ylim()
-    plt.text(mean_abs_data0*1.2, max_ylim*0.9, 'Mean: {:.2f}'.format(mean_abs_data0))
-    plt.savefig('dist_rho.pdf')
-def plot_selcted_runs_z(index_best_run_scans,data_scans,data_allscans_runs,data_allscans_LLK,param,file_save):
-    pdf = be_pdf.PdfPages(
-        file_save)
-    for i_scan in index_best_run_scans.keys():
-        start = time.time()
-
-        n_frames = len(index_best_run_scans[i_scan])
-        print('**********' + i_scan + ' with ' + str(n_frames) + 'selected runs' +
-              '**********')
-        #print(data_scans[i_scan][index_best_run_scans[i_scan]])
-        n_sbplots_cols = 3
-        if ((n_frames % n_sbplots_cols) == 0):
-            n_sbplots_row = (n_frames // n_sbplots_cols)
-        else:
-            n_sbplots_row = (n_frames // n_sbplots_cols) + 1
-        fig, axs = plt.subplots(
-            nrows=n_sbplots_row,
-            ncols=n_sbplots_cols,
-            figsize=(16 * n_sbplots_cols, 10 * n_sbplots_row),
-        )
-        i_plot=0
-        for i in index_best_run_scans[i_scan]:
-            x_title_pos=0.5
-            f_s=34
-            if n_frames==2:
-                    x_title_pos=0.38
-                    f_s=30
-            ax = plt.subplot(n_sbplots_row, n_sbplots_cols, i_plot + 1)
-            if param=='phi':
-                im = ax.imshow(mean_z_run(data_scans[i_scan][i]),cmap='jet')
-            else:
-                im = ax.imshow(mean_z_run(data_scans[i_scan][i]),cmap='jet',vmin=0,vmax=6)
-            plt.colorbar(im, ax=ax)
-            ax.set_xlabel("X", fontsize=f_s, labelpad=10)
-            ax.set_ylabel("Y", fontsize=f_s, labelpad=10)
-            ax.tick_params(labelsize=f_s)
-            plt.grid(0.1)
-            ax.set_title(
-                'Run:' + str(int(data_allscans_runs[i_scan][i])) +'/ LLK:' + str(int(data_allscans_LLK[i_scan][i] * 10000) /10000) + '/ mean '+param + ' :' + str(int(mean_data(data_scans[i_scan][i]) *10000) / 10000) + '/ $std_{\\rho}$ :' +str(int(std_data(data_scans[i_scan][i]) *10000) / 10000),
-                fontsize=f_s,pad=40)
-            i_plot+=1
-        fig.suptitle('scan: ' + i_scan +' | comparaison of '+ param+' for selected runs',fontweight='bold',fontsize=f_s,horizontalalignment='center',x = x_title_pos,y=1)
-        
-        if n_sbplots_row*n_sbplots_cols!=n_frames:
-            empty_fig_nb=n_sbplots_row*n_sbplots_cols-n_frames
-            for i_empty in range(int(empty_fig_nb)):
-                ax = plt.subplot(n_sbplots_row, n_sbplots_cols, n_frames+i_empty+1)
-                ax.set_visible(False)
-        plt.grid(None)
-        pdf.savefig(fig, dpi=150)
-        plt.show()
-        end = time.time()
-        print(str(int(((end - start) / 60) * 100) / 100) + 'min')
-    pdf.close()
+    return fig
 def plot_selcted_runs_y(index_best_run_scans,data_scans,data_allscans_runs,data_allscans_LLK,param,file_save):
     pdf = be_pdf.PdfPages(file_save)
     for i_scan in index_best_run_scans.keys():
@@ -901,7 +834,7 @@ def plot_selcted_runs_y(index_best_run_scans,data_scans,data_allscans_runs,data_
             ax.set_title('Run:' + str(int(data_allscans_runs[i_scan][i])) +'/ LLK:' + str(int(data_allscans_LLK[i_scan][i] * 10000) /10000) +
                          '/ mean '+param + ' :' + str(int(mean_data(data_scans[i_scan][i]) *10000) / 10000) + '/ $std_{\\rho}$ :' 
                          +str(int(std_data(data_scans[i_scan][i]) *10000) / 10000),fontsize=font_size,pad=40)
-            plt.grid(0.1)
+            plt.grid(0.1) # type: ignore
 
             i_plot+=1
         if n_sbplots_row*n_sbplots_cols!=n_frames:
@@ -909,7 +842,7 @@ def plot_selcted_runs_y(index_best_run_scans,data_scans,data_allscans_runs,data_
             for i_empty in range(int(empty_fig_nb)):
                 ax = plt.subplot(n_sbplots_row, n_sbplots_cols, n_frames+i_empty+1)
                 ax.set_visible(False)
-        fig.suptitle('scan: ' + i_scan +' | comparaison of '+ param+' for selected runs',fontweight='bold',fontsize=f_s,horizontalalignment='center',x = x_title_pos,y=1)
+        fig.suptitle('scan: ' + i_scan +' | comparaison of '+ param+' for selected runs',fontweight='bold',fontsize=f_s,horizontalalignment='center',x = x_title_pos,y=1) # type: ignore
         plt.grid(None)
         pdf.savefig(fig, dpi=150)
         plt.show()
@@ -930,12 +863,12 @@ def plot_3d_array(data, step=2):
     ax = fig.add_subplot(111, projection='3d')
     
     # Plot scatter
-    ax.scatter3D(x, y, z, c=cdata, cmap='jet', linewidth=1)
+    ax.scatter3D(x, y, z, c=cdata, cmap='jet', linewidth=1) # type: ignore
     
     # Set labels
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    ax.set_zlabel('Z') # type: ignore
     
     # Add colorbar
     cbar = plt.colorbar(ax.collections[0], ax=ax)
@@ -954,6 +887,9 @@ def plot_3d_array_ipv(data, norm=True):
     Returns:
     - None
     """
+    import ipyvolume as ipv
+    import matplotlib.pyplot as plt
+
     plt.figure()
     if norm:
         data = data / data.max()
@@ -1074,7 +1010,7 @@ def plot_selcted_runs_x(index_best_run_scans,data_scans,data_allscans_runs,data_
             ax.set_title('Run:' + str(int(data_allscans_runs[i_scan][i])) +'/ LLK:' + str(int(data_allscans_LLK[i_scan][i] * 10000) /10000) + '/ mean '+
                          param + ' :' + str(int(mean_data(data_scans[i_scan][i]) *10000) / 10000) + '/ $std_{\\rho}$ :' +
                          str(int(std_data(data_scans[i_scan][i]) *10000) / 10000),fontsize=font_size,pad=40)
-            plt.grid(0.1)
+            plt.grid(0.1) # type: ignore
 
             i_plot+=1
         if n_sbplots_row*n_sbplots_cols!=n_frames:
@@ -1082,7 +1018,7 @@ def plot_selcted_runs_x(index_best_run_scans,data_scans,data_allscans_runs,data_
             for i_empty in range(int(empty_fig_nb)):
                 ax = plt.subplot(n_sbplots_row, n_sbplots_cols, n_frames+i_empty+1)
                 ax.set_visible(False)
-        fig.suptitle('scan: ' + i_scan +' | comparaison of '+ param+' for selected runs',fontweight='bold',fontsize=f_s,horizontalalignment='center',x = x_title_pos,y=1)
+        fig.suptitle('scan: ' + i_scan +' | comparaison of '+ param+' for selected runs',fontweight='bold',fontsize=f_s,horizontalalignment='center',x = x_title_pos,y=1) # type: ignore
         plt.grid(None)
         pdf.savefig(fig, dpi=150)
         plt.show()
@@ -1133,7 +1069,7 @@ def plot_phases(pressure___sel,pressure___sel1,pressure___sel2,z_max_sel,z_com_s
         plt.plot(pressure___sel,z_max_sel,"+",label='max')
     if com___:
         plt.plot(pressure___sel,z_com_sel,"+",label='com')
-    plt.ylabel(plot_, fontsize=f_s)
+    plt.ylabel(plot_, fontsize=f_s) # type: ignore
     plt.xlabel('Pressure', fontsize=f_s)
     plt.axis('tight')
     ax.invert_yaxis()
@@ -1147,7 +1083,7 @@ def plot_phases(pressure___sel,pressure___sel1,pressure___sel2,z_max_sel,z_com_s
     if com___:
         plt.plot(pressure___sel1,z_com_sel1,"+",label='com')
     plt.xlabel('Pressure', fontsize=f_s)
-    plt.ylabel(plot_, fontsize=f_s)
+    plt.ylabel(plot_, fontsize=f_s) # type: ignore
     plt.axis('tight')
     ax.invert_yaxis()
     ax.tick_params(labelsize=f_s)
@@ -1159,7 +1095,7 @@ def plot_phases(pressure___sel,pressure___sel1,pressure___sel2,z_max_sel,z_com_s
         plt.plot(pressure___sel2,z_max_sel2,"+",label='max')
     if com___:
         plt.plot(pressure___sel2,z_com_sel2,"+",label='com')
-    plt.ylabel(plot_, fontsize=f_s)
+    plt.ylabel(plot_, fontsize=f_s) # type: ignore
     plt.xlabel('Pressure', fontsize=f_s)
     plt.axis('tight')
     ax.invert_yaxis()
@@ -1167,7 +1103,7 @@ def plot_phases(pressure___sel,pressure___sel1,pressure___sel2,z_max_sel,z_com_s
     plt.grid(alpha=0.01)
     plt.legend(fontsize=f_s)
     ax.set_title("Third phase")    
-    fig.suptitle(title__, fontsize=16)
+    fig.suptitle(title__, fontsize=16) # type: ignore
     plt.savefig(save_file_name,dpi=100)
     plt.show()
 def plot_xyz_com(com_values, scan, axis_labels, plot_norm=False, f_s=16,
@@ -1218,11 +1154,12 @@ def plot_xyz_com(com_values, scan, axis_labels, plot_norm=False, f_s=16,
                 com_values[1])**2 + np.array(
                 com_values[2])**2)
         else:
-                norm_values_i_pt=norm_values[i_pt]
-                if filter_zero_value:
-                    norm_values_i_pt = np.array(norm_values_i_pt)[non_zero_indices]  
+                # norm_values_i_pt=norm_values[i_pt]
+                # if filter_zero_value:
+                #     norm_values_i_pt = np.array(norm_values_i_pt)[non_zero_indices]  
+                pass  # type: ignore
                     
-        plot_single_subplot(ax, norm_values_i_pt, axis_labels[3],scan)
+        plot_single_subplot(ax, norm_values_i_pt, axis_labels[3],scan) # type: ignore
 
     if file_name_save:
         fig.savefig(file_name_save, dpi=dpi)
@@ -1269,13 +1206,13 @@ def plot_combined_xyz(com_values, scan_values, axis_labels,
             else:
                 norm_values_i_pt=norm_values[i_pt]
                 if filter_zero_value:
-                    norm_values_i_pt = np.array(norm_values_i_pt)[non_zero_indices]   
+                    norm_values_i_pt = np.array(norm_values_i_pt)[non_zero_indices]    # type: ignore
             if Normalize_parametre:
                 max_val=np.round(norm_values_i_pt.max())
                 norm_values_i_pt=norm_values_i_pt/max_val
                 axis_labels_i_pt=axis_labels[3]+"/"+str(max_val)
                 
-            axes[i_pt].plot(scan_row, norm_values_i_pt, "o-",
+            axes[i_pt].plot(scan_row, norm_values_i_pt, "o-", # type: ignore
                             label=f'{axis_labels[3]}')
         axes[i_pt].set_xlabel('Scan', fontsize=f_s)
         axes[i_pt].set_ylabel('Coordinate', fontsize=f_s)
@@ -1339,6 +1276,7 @@ def plot_combined_single_coordinate(com_values, scan_values, axis_label, f_s=16,
     return fig
 def plot_3darray_as_gif_animation(data,file_save,vmin,vmax,title_fig=''
                                  ):
+    import matplotlib.animation as animation
     def update(frame
               ):
         ax[0].clear()  # Clear the previous plot for XY projection
@@ -1364,28 +1302,78 @@ def plot_3darray_as_gif_animation(data,file_save,vmin,vmax,title_fig=''
 
     
     # Set up the animation
-    ani = animation.FuncAnimation(fig, update, frames=data.shape[2], interval=100)
+    ani = animation.FuncAnimation(fig, update, frames=data.shape[2], interval=100) # type: ignore
     
     # Save the animation as a gif
     ani.save(file_save, writer='imagemagick',dpi=80, fps=10)
     plt.close()
 
 def summary_slice_plot_abd(
-        save: str = None,
-        title: str = None,
+        save: str = None, # type: ignore
+        title: str = None, # type: ignore
         dpi: int = 200,
         show: bool = False,
-        voxel_size: np.ndarray or list or tuple = None,
-        isosurface: float = None,
-        averaged_dspacing: float = None,
-        averaged_lattice_parameter: float = None,
-        det_reference_voxel: np.ndarray or list or tuple = None,
+        voxel_size: np.ndarray or list or tuple = None, # type: ignore
+        isosurface: float = None, # type: ignore
+        averaged_dspacing: float = None, # type: ignore
+        averaged_lattice_parameter: float = None, # type: ignore
+        det_reference_voxel: np.ndarray or list or tuple = None, # type: ignore
         respect_aspect=False,
-        support: np.ndarray = None,
-        single_vmin: float = None,
-        single_vmax: float = None,
+        support: np.ndarray = None, # type: ignore
+        single_vmin: float = None, # type: ignore
+        single_vmax: float = None, # type: ignore
         phase_min_max=None,displacement_min_max=None,het_strain_min_max=None ,
-        **kwargs) -> matplotlib.figure.Figure:
+        **kwargs) -> matplotlib.figure.Figure: # type: ignore
+    
+    """
+    Summary plot of 3D arrays with central slices in xy, xz, and zy planes.     
+    Parameters
+    ----------
+    save : str, optional
+        File path to save the figure. If None, the figure is not saved. 
+    title : str, optional
+
+        Title of the figure. If None, no title is set.
+    dpi : int, optional     
+
+
+        Dots per inch for the saved figure. Default is 200.
+    show : bool, optional
+        Whether to display the figure. Default is False.
+    voxel_size : array-like, optional
+        Voxel size in each dimension to respect aspect ratios. If None, aspect ratios are set to 'auto'.
+    isosurface : float, optional    
+        Isosurface value for reference (not used in this function).
+    averaged_dspacing : float, optional
+        Averaged d-spacing value for reference (not used in this function).
+    averaged_lattice_parameter : float, optional
+        Averaged lattice parameter for reference (not used in this function).   
+    det_reference_voxel : array-like, optional
+        Detector reference voxel (not used in this function).
+    respect_aspect : bool, optional
+        Whether to respect aspect ratios based on voxel size. Default is False.
+    support : ndarray, optional
+        Support mask to apply to the arrays before plotting. If None, no mask is applied.
+    single_vmin : float, optional
+        Single minimum value for all plots.
+    single_vmax : float, optional
+        Single maximum value for all plots. 
+    phase_min_max : tuple, optional
+        Minimum and maximum values for phase plotting.
+    displacement_min_max : tuple, optional
+        Minimum and maximum values for displacement plotting.
+    het_strain_min_max : tuple, optional
+        Minimum and maximum values for heterogenous strain plotting.
+    **kwargs : dict
+        Key-value pairs where keys are parameter names (e.g., 'amplitude', 'phase', etc.) and values are 3D numpy arrays to be plotted.
+    Returns
+    -------
+    matplotlib.figure.Figure
+        The created matplotlib figure.
+    """
+    import matplotlib.pyplot as plt
+    from cdiutils.plot import (get_figure_size,set_plot_configs,white_interior_ticks_labels)
+    from cdiutils.plot.slice import plot_contour
 
     ANGSTROM_SYMBOL, _, PLOT_CONFIGS = set_plot_configs()
 
@@ -1459,10 +1447,10 @@ def summary_slice_plot_abd(
                 vmin = single_vmin
                 vmax = single_vmax
         shape = array.shape
-        axes[0, i].matshow(array[shape[0] // 2],vmin=vmin,vmax=vmax,cmap=cmap,origin="lower",aspect=aspect_ratios["yx"])
-        axes[1, i].matshow(array[:, shape[1] // 2, :],vmin=vmin,vmax=vmax,cmap=cmap,origin="lower",aspect=aspect_ratios["zx"])
-        mappables[key] = axes[2, i].matshow(np.swapaxes(array[..., shape[2] // 2], axis1=0, axis2=1),vmin=vmin,vmax=vmax,
-                                            cmap=cmap,origin="lower",aspect=aspect_ratios["zy"])
+        axes[0, i].matshow(array[shape[0] // 2],vmin=vmin,vmax=vmax,cmap=cmap,origin="lower",aspect=aspect_ratios["yx"]) # type: ignore
+        axes[1, i].matshow(array[:, shape[1] // 2, :],vmin=vmin,vmax=vmax,cmap=cmap,origin="lower",aspect=aspect_ratios["zx"]) # type: ignore
+        mappables[key] = axes[2, i].matshow(np.swapaxes(array[..., shape[2] // 2], axis1=0, axis2=1),vmin=vmin,vmax=vmax, # type: ignore
+                                            cmap=cmap,origin="lower",aspect=aspect_ratios["zy"]) # type: ignore
         axes[0, i].tick_params(axis='both', which='both', width=0., labelsize=8)
         axes[1, i].tick_params(axis='both', which='both', width=0., labelsize=8)
         axes[2, i].tick_params(axis='both', which='both', width=0., labelsize=8)
@@ -1472,7 +1460,7 @@ def summary_slice_plot_abd(
             plot_contour(axes[0, i], support[shape[0] // 2], color="k")
             plot_contour(axes[1, i], support[:, shape[1] // 2, :], color="k")
             plot_contour(axes[2, i],np.swapaxes(support[..., shape[2] // 2], axis1=0, axis2=1),color="k")
-    table_ax = figure.add_axes([0.25, -0.175, 0.5, 0.1])
+    table_ax = figure.add_axes([0.25, -0.175, 0.5, 0.1]) # type: ignore
     table_ax.axis("tight")
     table_ax.axis("off")
     # format the data
@@ -1506,7 +1494,7 @@ def summary_slice_plot_abd(
             0.93,
             w - 0.01,
             0.03
-        ])
+        ]) # type: ignore
         cax.set_title(PLOT_CONFIGS[key]["title"],fontsize=cb_font_2)
         figure.colorbar(mappables[key], cax=cax, extend="both", orientation="horizontal" )
         cax.tick_params(axis='x', which='major', pad=0.5,labelsize=cb_font_2)
@@ -1532,6 +1520,7 @@ def summary_slice_plot_abd(
     return figure
 def plot_3darray_slices_as_subplots(data,file_prefix, vmin, vmax,title_subplots='', title_fig='' ,proj=1
                                    ):
+    import matplotlib.animation as animation
     def update_xy(frame
                  ):
         for i, ax_subplot in enumerate(ax.flat):
@@ -1549,7 +1538,7 @@ def plot_3darray_slices_as_subplots(data,file_prefix, vmin, vmax,title_subplots=
     fig.suptitle(title_fig, fontsize=16)
 
     # Set up the animation
-    ani_xy = animation.FuncAnimation(fig, update_xy, frames=data.shape[1], interval=100)
+    ani_xy = animation.FuncAnimation(fig, update_xy, frames=data.shape[1], interval=100) # type: ignore
 
     # Save the animation as a gif
     ani_xy.save(file_prefix + '_xy_subplots.gif', writer='pillow', dpi=150, fps=5)
@@ -1558,6 +1547,7 @@ def plot_3darray_slices_as_subplots(data,file_prefix, vmin, vmax,title_subplots=
     plt.close()
 def plot_single_3darray_slices_as_subplots(data,file_prefix, vmin, vmax,title_fig='' ,proj=1,dpi=150, fps=5
                                           ):
+    import matplotlib.animation as animation
     def update_xy(frame
                  ):
             ax.clear()  # Clear the previous plot for XY projection
@@ -1574,7 +1564,7 @@ def plot_single_3darray_slices_as_subplots(data,file_prefix, vmin, vmax,title_fi
     fig.suptitle(title_fig, fontsize=16)
 
     # Set up the animation
-    ani_xy = animation.FuncAnimation(fig, update_xy, frames=data.shape[0], interval=100)
+    ani_xy = animation.FuncAnimation(fig, update_xy, frames=data.shape[0], interval=100) # type: ignore
 
     # Save the animation as a gif
     ani_xy.save(file_prefix + '_xy_subplots.gif', writer='pillow', dpi=dpi, fps=fps)
@@ -1640,7 +1630,7 @@ def plot_X_vs_Y_allpart_or_onebyone(X, Y, part_name_list, save_dir_plot=None, x_
                 plt.savefig(save_dir_plot + "lattice_parameter_" + particle + ".png")
             if show_plt:
                 plt.show()    
-        return fig
+        return fig # type: ignore
 
 def plot_data_lattice_parametre_multidata(x_label, y_label, fig_title, subtitles, a_min, a_max,
               nov_2022_temp_scan, nov_2022_lattice_parametre, nov_2022_part_name_list,
@@ -1654,7 +1644,7 @@ def plot_data_lattice_parametre_multidata(x_label, y_label, fig_title, subtitles
     all_part_name_lists = [nov_2022_part_name_list, Avril_2023_part_name_list, Jan_2024_part_name_list]
     all_part_name_array = np.concatenate(all_part_name_lists)
     unique_particles = np.unique(all_part_name_array)
-    colors = plt.cm.tab10(np.linspace(0, 1, len(unique_particles)))
+    colors = plt.cm.tab10(np.linspace(0, 1, len(unique_particles))) # type: ignore
     for particle, color in zip(unique_particles, colors):
         color_map[particle] = color
 
@@ -1767,14 +1757,14 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
     if (len(subtitles) != num_plots ) :
         raise ValueError("Number of subtitles must match the number of plots.")
     if norm:
-        max_for_norm=(array([ data_sets[i_dataset][i_exp][1].max() for i_dataset in range(len(data_sets)) for i_exp in range(len(data_sets[i_dataset]))]).max())
+        max_for_norm=(np.array([ data_sets[i_dataset][i_exp][1].max() for i_dataset in range(len(data_sets)) for i_exp in range(len(data_sets[i_dataset]))]).max())
         print()
         max_for_norm=np.round(extract_coefficient_and_exponent(max_for_norm)[0],2)*10**extract_coefficient_and_exponent(max_for_norm)[1]
     # Define color map for particles
     from itertools import combinations
     # Get colors from tab10 and Paired colormaps
-    tab10_colors = plt.cm.tab10(np.linspace(0, 0.8, 8))  # Use only 80% of the colormap
-    paired_colors = plt.cm.Paired(np.linspace(0, 1, 6))
+    tab10_colors = plt.cm.tab10(np.linspace(0, 0.8, 8))  # type: ignore # Use only 80% of the colormap
+    paired_colors = plt.cm.Paired(np.linspace(0, 1, 6)) # type: ignore
     # Get XKCD color names
     xkcd_colors = list(mcolors.XKCD_COLORS.keys())
     # Custom muted colors in hex format
@@ -1838,12 +1828,12 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
         y_label_,unit_y= y_label,None
     if unit_y:
         if norm:
-            y_label_for_saving= y_label_+f'_over_{max_for_norm}{unit_y}'
+            y_label_for_saving= y_label_+f'_over_{max_for_norm}{unit_y}' # type: ignore
         else:
             y_label_for_saving= y_label_+unit_y
     else:
         if norm:
-            y_label_for_saving= y_label_+f'_over_{max_for_norm}'
+            y_label_for_saving= y_label_+f'_over_{max_for_norm}' # type: ignore
         else:
             y_label_for_saving= y_label_
     
@@ -1862,10 +1852,10 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                     else:
                         X_new=X
                     for particle in np.unique(part_name_list):
-                        x_plot = array([x for x, p in zip(X_new, part_name_list) if p == particle])
-                        y_plot = array([y for y, p in zip(Y, part_name_list) if p == particle])
+                        x_plot = np.array([x for x, p in zip(X_new, part_name_list) if p == particle])
+                        y_plot = np.array([y for y, p in zip(Y, part_name_list) if p == particle])
                         if norm:
-                            y_plot/=max_for_norm
+                            y_plot/=max_for_norm # type: ignore
                         plt.plot(x_plot,y_plot, marker=marker, ms=marker_size,label=particle, color=color_map[particle],linestyle=linestyle,linewidth=linewidth,)
                         plt.xticks(rotation=rotation_xtick, fontsize=f_s, fontweight='bold')
 
@@ -1873,15 +1863,15 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                     plt.xlabel(x_label)
                     if norm:
                         if unit_y:
-                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos]+f"/({max_for_norm}"+f"$_{{(\mathrm{{{unit_y}}})}}$)")
+                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos]+f"/({max_for_norm}"+f"$_{{(\mathrm{{{unit_y}}})}}$)") # type: ignore
                         else:
-                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos]+f"/({max_for_norm}")
+                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos]+f"/({max_for_norm}") # type: ignore
   
                     else:
                         if unit_y:
-                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos] +f"$_{{(\mathrm{{{unit_y}}})}}$")
+                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos] +f"$_{{(\mathrm{{{unit_y}}})}}$") # type: ignore
                         else:
-                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos])
+                            plt.ylabel(y_label_+ ' ' +y_labels[i_datasets_pos]) # type: ignore
                     plt.legend(loc='best', ncols=3  )
                     if (a_min and a_max):
                         plt.ylim(a_min, a_max)
@@ -1945,7 +1935,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                 plt.close()
     else:
         if xyz_plot:
-            colors = plt.cm.tab10(np.linspace(0, 0.5, 3))
+            colors = plt.cm.tab10(np.linspace(0, 0.5, 3)) # type: ignore
             for particle in np.unique(unique_particles):
                 trigger_subplots=np.zeros(num_plots, dtype=bool)  # One for X, Y, Z
                 for i_datasets_pos in range(3):
@@ -1953,7 +1943,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                         X, Y, part_name_list = data_set
                         if particle  in part_name_list:
                             trigger_subplots[i]+=1  
-                trigger_subplots=array(trigger_subplots)
+                trigger_subplots= np.array(trigger_subplots)
                 num_plots_loc=(trigger_subplots.sum()).astype(int)
                 print(trigger_subplots,num_plots_loc)
                 fig, axes = plt.subplots(nrows=1, ncols=num_plots_loc, figsize=(figsize_UNIT[0]*num_plots_loc, figsize_UNIT[1]))
@@ -1974,24 +1964,24 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                         else:
                             X_new=X
                         ax_loc.tick_params(axis='x', labelrotation=rotation_xtick)
-                        x_plot = array([x for x, p in zip(X_new, part_name_list) if p == particle])
-                        y_plot = array([y for y, p in zip(Y, part_name_list) if p == particle])
+                        x_plot = np.array([x for x, p in zip(X_new, part_name_list) if p == particle])
+                        y_plot = np.array([y for y, p in zip(Y, part_name_list) if p == particle])
 
                         if norm:
-                            y_plot/=max_for_norm
+                            y_plot/=max_for_norm # type: ignore
 
                         
-                        ax_loc.plot(x_plot, y_plot, marker,  ms=marker_size,color=colors[i_datasets_pos],label=y_labels[i_datasets_pos],linestyle=linestyle,linewidth=linewidth)
+                        ax_loc.plot(x_plot, y_plot, marker,  ms=marker_size,color=colors[i_datasets_pos],label=y_labels[i_datasets_pos],linestyle=linestyle,linewidth=linewidth) # type: ignore
                         ax_loc.set_xlabel( x_label  )
                         if norm:
                             if unit_y:
-                                ax_loc.set_ylabel(y_label_+ ' ' +f"/({max_for_norm}"+f"$_{{(\mathrm{{{unit_y}}})}}$)")
+                                ax_loc.set_ylabel(y_label_+ ' ' +f"/({max_for_norm}"+f"$_{{(\mathrm{{{unit_y}}})}}$)") # type: ignore
                             else:
-                                ax_loc.set_ylabel(y_label_+ ' ' +f"/({max_for_norm}")
+                                ax_loc.set_ylabel(y_label_+ ' ' +f"/({max_for_norm}") # type: ignore
       
                         else:
                             if unit_y:
-                                ax_loc.set_ylabel(y_label_+ ' ' +f"$_{{(\mathrm{{{unit_y}}})}}$")
+                                ax_loc.set_ylabel(y_label_+ ' ' +f"$_{{(\mathrm{{{unit_y}}})}}$") # type: ignore
                             else:
                                 ax_loc.set_ylabel(y_label_)
                         format_ticks_scientific(ax_loc, axis='y', font_size=f_s)
@@ -2006,10 +1996,10 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                             ax_loc.set_title("{}".format(i+1))
                         i_subplots+=1
                 suptitle=plt.suptitle(fig_title + " "+particle ,ha='center')
-                try:
-                    suptitle.set_y(y_coords.max()+0.08 )
-                except:
-                    pass
+                # try:
+                #     suptitle.set_y(y_coords.max()+0.08 )
+                # except:
+                #     pass
                 plt.tight_layout()
                 
                 if save_dir_plot:
@@ -2062,7 +2052,7 @@ def plot_data_single_or_multiple(x_label, y_label, fig_title, subtitles, a_min=N
                         else:
                             plt.title("{}".format(i+1))
                         i_subplots+=1
-                plt.suptitle(fig_title + " "+particle, x=i_subplots*0.5/(i+1))
+                plt.suptitle(fig_title + " "+particle, x=i_subplots*0.5/(i+1)) # type: ignore
                 plt.tight_layout()
                 if save_dir_plot:
                     plt.savefig(save_dir_plot + y_label_for_saving+ "_vs_" +( x_label )   + "_"+particle+f".{file_type}",)
@@ -2077,6 +2067,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
                              ):
     import matplotlib.ticker as mticker
     from matplotlib.ticker import ScalarFormatter
+    import matplotlib.gridspec as gridspec
     
     def figure_axes_desidn(ax, label_rot):
         plt.axis('tight')
@@ -2120,8 +2111,8 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
     #list_to_replace = [x_absis[i] for i in range(len(x_absis)) if " S0" in x_absis[i]]
     #list_indices_to_replace = [i for i in range(len(x_absis)) if " S0" in x_absis[i]]   
     list_presure_to_show_p = pressure_allscan_list[list_indices_to_replace]
-    list_presure_to_show=array(['0.3', '1.6', '4.5', '4.6','', '5', '5.0', '', '5.6','6.7'])
-    #list_presure_to_show=array(['0.3', '1.6', '4.5', '4.6', '4.77', '5', '5.0', '5.2', '5.6','6.7'])
+    list_presure_to_show= np.array(['0.3', '1.6', '4.5', '4.6','', '5', '5.0', '', '5.6','6.7'])
+    #list_presure_to_show= np.array(['0.3', '1.6', '4.5', '4.6', '4.77', '5', '5.0', '5.2', '5.6','6.7'])
     def get_color(i_pres):
         try:
             if float(i_pres) < 3:
@@ -2190,7 +2181,7 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
 
     
     if len(zoom_indices) > 0:
-        ax_zoom = fig.add_axes([0.64, .14, 0.15, 0.0005])
+        ax_zoom = fig.add_axes([0.64, .14, 0.15, 0.0005]) # type: ignore
         ax_zoom.set_xlim(ax3.get_xlim())
         ax_zoom.set_xticks(zoom_indices)
         figure_axes_desidn(ax_zoom,label_rot)
@@ -2211,9 +2202,9 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
         #ax_zoom.set_facecolor('#E6E6E6')  # Light gray color
 
     
-    ax1.set_ylim(y_min,y_max)
-    ax2.set_ylim(y_min,y_max)
-    ax3.set_ylim(y_min,y_max)
+    ax1.set_ylim(y_min,y_max) # type: ignore
+    ax2.set_ylim(y_min,y_max) # type: ignore
+    ax3.set_ylim(y_min,y_max) # type: ignore
 
     
     # Adjust the layout
@@ -2223,9 +2214,6 @@ def plot_stast_evolution_id27(x_absis, stats_x, stats_y, stats_z, pressure_allsc
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     
     plt.show()
-
-
-
 
 
 def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names, 
@@ -2306,7 +2294,7 @@ def anealing_plot_stat_multiple(temperatures, stat_params_groups, particle_names
     
     unique_particles = np.unique(particle_names)
     n_particles = len(unique_particles)
-    color_map = matplotlib.cm.get_cmap("tab10", n_particles)
+    color_map = matplotlib.cm.get_cmap("tab10", n_particles) # type: ignore
     particle_to_color = {particle: color_map(i) for i, particle in enumerate(unique_particles)}
     marker_list = ['o', 's', '^', 'd', 'v', '<', '>', 'P', 'X', '*']
     particle_to_marker = {particle: marker_list[i % len(marker_list)] for i, particle in enumerate(unique_particles)}

@@ -58,8 +58,8 @@
 
 
 
-from cdi_dislo.common_imports import *
-from cdi_dislo.common_imports import C_O_M, zero_to_nan, nanmax
+# from cdi_dislo.common_imports import *
+# from cdi_dislo.common_imports import C_O_M, zero_to_nan, nanmax
 
 from cdi_dislo.general_utilities.cdi_dislo_utils                  import check_array_empty,IfStringRepresentsFloat,load_reco_from_cxinpz,optimize_cropping,crop_3darray_pos,get_max_cut_parametre
 from cdi_dislo.plotutilities.cdi_dislo_plotutilities              import plot_single_3darray_slices_as_subplots,plot_3darray_as_gif_animation
@@ -67,6 +67,23 @@ from cdi_dislo.plotutilities.cdi_dislo_plotutilities              import plot_si
 from cdi_dislo.orthogonalisation_handler.cdi_dislo_ortho_handler  import remove_phase_ramp_abd
 remove_phase_ramp=remove_phase_ramp_abd
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
+
+import os
+import glob
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import time
+from matplotlib import rc
+import logging
+from datetime import datetime
+from scipy.ndimage import center_of_mass as C_O_M
+from cdi_dislo.general_utilities.cdi_dislo_utils import (  
+    nan_to_zero,
+    zero_to_nan,       
+)
+from matplotlib.backends import backend_pdf as be_pdf
+import shutil
 #####################################################################################################################
 #####################################################################################################################
 def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov_2022/',
@@ -141,8 +158,8 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
                              selection_method='looped')
     """
     # Function body
-    rc['text.usetex'] = True;sns.set_theme();rc['figure.figsize']= (9, 9);  rc['font.size']= 14;rc['xtick.labelsize']= 14;
-    rc['ytick.labelsize']   = 14;rc["figure.autolayout"] = True;  plt.rcParams['text.usetex'] = False
+    rc['text.usetex'] = True;sns.set_theme();rc['figure.figsize']= (9, 9);  rc['font.size']= 14;rc['xtick.labelsize']= 14; # type: ignore
+    rc['ytick.labelsize']   = 14;rc["figure.autolayout"] = True;  plt.rcParams['text.usetex'] = False # type: ignore
     start_glob = time.time()
     print("Time: "+ str(datetime.now().strftime("%H:%M:%S")))
     
@@ -196,7 +213,7 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         list_llkf = np.where(list_llkf > 10., 10., list_llkf)
     except:
         list_llkf=np.array([ IfStringRepresentsFloat(i_run) for i_run in llkf_run ])
-        list_llkf = np.where(llkf_run > 10., 10., llkf_run)
+        list_llkf = np.where(llkf_run > 10., 10., llkf_run) # type: ignore
     print('********** scan ' + str(scan) + ' with ' + str(len(files)) + 'runs' + '**********')
     def data_read_selection(files,multiply_by_mask):
         """
@@ -219,17 +236,17 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         rho_data*=rho_data>rho_data.max()*0.05    
         phi_data       = np.angle(data_allrun)*(rho_data>rho_data.max()*0.05)
         phi_data=np.angle(rho_data*np.exp(1j*phi_data))  
-        mask= array([ ((i>0).astype(float)) for i in rho_data])
+        mask= np.array([ ((i>0).astype(float)) for i in rho_data])
         
-        com_int=[ list(array(C_O_M(i)).astype(int)) for i in  mask]
-        half_w=int(np.max(array([optimize_cropping(i>0) for i in rho_data]))/2+5)
+        com_int=[ list(np.array(C_O_M(i)).astype(int)) for i in  mask]
+        half_w=int(np.max(np.array([optimize_cropping(i>0) for i in rho_data]))/2+5)
         half_w=shape_=100   #int(2*half_w*1.25)
         #ndata_centre=crop_3darray_pos(rho_data,com_int ,(shape_,shape_,shape_))
         
-        rho_data         = array([ crop_3darray_pos(rho_data[i], methods=com_int[i],output_shape=(half_w,half_w,half_w))  for i in range(len(rho_data))])
-        phi_data         = array([ crop_3darray_pos(phi_data[i], methods=com_int[i],output_shape=(half_w,half_w,half_w))  for i in range(len(rho_data))])
+        rho_data         = np.array([ crop_3darray_pos(rho_data[i], methods=com_int[i],output_shape=(half_w,half_w,half_w))  for i in range(len(rho_data))])
+        phi_data         = np.array([ crop_3darray_pos(phi_data[i], methods=com_int[i],output_shape=(half_w,half_w,half_w))  for i in range(len(rho_data))])
     
-        mask= array([ ((i>0).astype(float)) for i in rho_data])
+        mask= np.array([ ((i>0).astype(float)) for i in rho_data])
         rho_data=zero_to_nan(rho_data)
         mask=zero_to_nan(mask)
         phi_data=phi_data*mask
@@ -252,23 +269,23 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
                                                       'list_run_allscan':list_run,
                                                       'list_scan':scan,
                                                       'list_llkf_allscan':list_llkf})
-            print("saving data processed rho \& phi \& list of run \& the LLKf in " +wdir_save+'all_part_scan_results.npz')
+            print("saving data processed rho \& phi \& list of run \& the LLKf in " +wdir_save+'all_part_scan_results.npz') # type: ignore
         
         f=np.load(wdir_save+"all_part_scan_results.npz",allow_pickle=True)
-        rho_data    =array(f["rho_data"])
-        phi_data    =array(f["phi_data"])
+        rho_data    = np.array(f["rho_data"])
+        phi_data    = np.array(f["phi_data"])
         data_allscans_mask   =rho_data>0
         end = time.time()
         print(str(int(((end - start) / 60) * 10) / 10) + 'min')
         
         rho_data=zero_to_nan(rho_data)
-        results_STD=nanmax(rho_data, axis=(1, 2, 3))
+        results_STD= np.nanmax(rho_data, axis=(1, 2, 3))
         end = time.time()
         print(str(int(((end - start) / 60) * 10) / 10) + 'min')
         np.savez(wdir_save+'all_part_scan_results_selection.npz', **{'STD_rho':results_STD ,
                                                                      'list_llkf_allscan':list_llkf})
-        f=np.load(wdir_save+"all_part_scan_results_selection.npz",allow_pickle=True)
-        results_STD         = array(f["STD_rho"])
+        f= np.load(wdir_save+"all_part_scan_results_selection.npz",allow_pickle=True)
+        results_STD         = np.array(f["STD_rho"])
     list_llkf_allscan   = list_llkf#array(f["list_llkf_allscan"])
     print("done estimation of std of the density")
     nb_frames = len(list_llkf)
@@ -306,7 +323,7 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
             print('selection based on nb active pixel')
             sum_pixel = []
             for i_run in range(nb_frames):
-                sum_pixel.append(int(np.sum(data_allscans_mask[i_run])))
+                sum_pixel.append(int(np.sum(data_allscans_mask[i_run]))) # type: ignore
             sum_pixel = np.array(sum_pixel)
             MIN_sumpixel = get_max_cut_parametre(sum_pixel, wanted_nb=nb_nbpixel)
             select_nb_pixel = np.where((sum_pixel >= MIN_sumpixel))[0]
@@ -318,7 +335,7 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
             print("*******" + scan + "*********" + str(len(trigger_llk)) + "*********" + str(np.round(max_llkf, 4)))
         
             print('selection based on std rho')
-            RESULTS_stdrho = np.array(results_STD)
+            RESULTS_stdrho = np.array(results_STD) # type: ignore
             max_stdrho = get_max_cut_parametre(RESULTS_stdrho, wanted_nb=nb_sel_stdrho)
             trigger_STDRHO = np.where(np.array(RESULTS_stdrho) <= max_stdrho)[0]
             print("*******" + scan + "*********" + str(len(trigger_STDRHO)) + "*********" + str(np.round(max_stdrho, 4)))
@@ -370,7 +387,7 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         print('selection based on nb active pixel')
         sum_pixel = []
         for i_run in range(nb_frames):
-            sum_pixel.append(int(np.sum(data_allscans_mask[i_run])))
+            sum_pixel.append(int(np.sum(data_allscans_mask[i_run]))) # type: ignore
         sum_pixel = np.array(sum_pixel)
         MIN_sumpixel = get_max_cut_parametre(sum_pixel, wanted_nb=nb_nbpixel)
         select_nb_pixel = np.where((sum_pixel >= MIN_sumpixel))[0]
@@ -382,7 +399,7 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         print("*******" + scan + "*********" + str(len(trigger_llk)) + "*********" + str(np.round(max_llkf, 4)))
     
         print('selection based on std rho')
-        RESULTS_stdrho = np.array(results_STD)
+        RESULTS_stdrho = np.array(results_STD) # type: ignore
         max_stdrho = get_max_cut_parametre(RESULTS_stdrho, wanted_nb=nb_sel_stdrho)
         trigger_STDRHO = np.where(np.array(RESULTS_stdrho) <= max_stdrho)[0]
         print("*******" + scan + "*********" + str(len(trigger_STDRHO)) + "*********" + str(np.round(max_stdrho, 4)))
@@ -418,8 +435,8 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         fig1=plt.figure(1,figsize=(9,5))
         y=np.array(list_run).astype(float)
         x=np.array(list_llkf)
-        y_sel=    np.array(y)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)]
-        x_sel=    np.array(x)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)]
+        y_sel=    np.array(y)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)] # type: ignore
+        x_sel=    np.array(x)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)] # type: ignore
         p=plt.plot(x,y, '*',linewidth=2,label="all runs")
         p=plt.plot(x_sel,y_sel, '*',linewidth=2,label="selected")
         plt.ylabel("Run", fontsize=24)
@@ -438,10 +455,10 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         print("couldn't plot std rho vs LLKf all runs")        
     try:   
         fig1=plt.figure(1,figsize=(9,5))
-        y=np.array(results_STD)
+        y=np.array(results_STD) # type: ignore
         x=np.array(list_llkf)
-        y_sel=    np.array(y)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)]
-        x_sel=    np.array(x)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)]
+        y_sel=    np.array(y)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)] # type: ignore
+        x_sel=    np.array(x)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)] # type: ignore
         p=plt.plot(x,y, '*',linewidth=2,label="all runs")
         p=plt.plot(x_sel,y_sel, '*',linewidth=2,label="selected")
         plt.ylabel("$STD \\rho$", fontsize=24)
@@ -460,19 +477,19 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         print("couldn't plot std rho vs LLKf all runs")
     try:
         fig1=plt.figure(1,figsize=(9,5))
-        a=np.max(RESULTS_LLKf[RESULTS_LLKf!=10.])
-        y_sel=    np.asarray(RESULTS_stdrho)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)]
-        x_sel=    np.asarray(RESULTS_LLKf)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)]
-        p=plt.plot(RESULTS_LLKf,RESULTS_stdrho, '*',linewidth=2,label="all runs")
-        plt.plot([RESULTS_LLKf.min(),RESULTS_LLKf.max()],[max_stdrho,max_stdrho],c=p[0].get_color())
-        plt.plot([max_llkf,max_llkf],[RESULTS_stdrho.min(),RESULTS_stdrho.max()],c=p[0].get_color())
+        a=np.max(RESULTS_LLKf[RESULTS_LLKf!=10.]) # type: ignore
+        y_sel=    np.asarray(RESULTS_stdrho)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)] # type: ignore
+        x_sel=    np.asarray(RESULTS_LLKf)[np.hstack(trigger_LLK_pixelNB_mtm_stdrho)] # type: ignore
+        p=plt.plot(RESULTS_LLKf,RESULTS_stdrho, '*',linewidth=2,label="all runs") # type: ignore
+        plt.plot([RESULTS_LLKf.min(),RESULTS_LLKf.max()],[max_stdrho,max_stdrho],c=p[0].get_color()) # type: ignore
+        plt.plot([max_llkf,max_llkf],[RESULTS_stdrho.min(),RESULTS_stdrho.max()],c=p[0].get_color()) # type: ignore
         p=plt.plot(x_sel,y_sel, '>',linewidth=2,label="selected")
-        plt.ylabel("$\sigma_{\\rho}$", fontsize=24)
+        plt.ylabel("$\sigma_{\\rho}$", fontsize=24) # type: ignore
         plt.xlabel("LLKf", fontsize=24)
         plt.grid(alpha=0.5)
         plt.legend(fontsize=14,loc="best",ncol=1)
         plt.title(scan,fontsize=24)
-        plt.xlim((RESULTS_LLKf.min(),a))
+        plt.xlim((RESULTS_LLKf.min(),a)) # type: ignore
         plt.savefig(wdir_save  + "LLKf_vs_sigmarho.png", dpi=150)
         if show_plots:
             plt.show()
@@ -483,9 +500,9 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
     try:
         fig1=plt.figure(1,figsize=(9,5))
         
-        sns.histplot(RESULTS_stdrho, kde=True, stat='count', fill=True,bins=int(nb_frames*0.75))
-        plt.axvline(max_stdrho, color='red', linestyle='--', linewidth=2)  # Add a vertical line for max_stdrho
-        plt.xlabel('$\sigma_{ \\rho}$', fontsize=24)
+        sns.histplot(RESULTS_stdrho, kde=True, stat='count', fill=True,bins=int(nb_frames*0.75)) # type: ignore
+        plt.axvline(max_stdrho, color='red', linestyle='--', linewidth=2)  # type: ignore # Add a vertical line for max_stdrho
+        plt.xlabel('$\sigma_{ \\rho}$', fontsize=24) # type: ignore
         plt.ylabel('# of run', fontsize=24)  # Label the y-axis appropriately
         plt.title(scan, fontsize=24)
         plt.xticks(fontsize=24)
@@ -500,8 +517,8 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
     try:
         file_save=wdir_save+'selectedd_data_rho.pdf'
         pdf = be_pdf.PdfPages(file_save)
-        for i_run in trigger_LLK_pixelNB_mtm_stdrho:
-            fig=plot_3D_projections(zero_to_nan(rho_data[i_run]),fig_title='S'+scan+' Run '+str(list_run[i_run])+' llkf '+str(np.round(list_llkf[i_run],3))+" $\sigma_{\\rho}$ "+str(np.round(results_STD[i_run],3)))
+        for i_run in trigger_LLK_pixelNB_mtm_stdrho: # type: ignore
+            fig=plot_3D_projections(zero_to_nan(rho_data[i_run]),fig_title='S'+scan+' Run '+str(list_run[i_run])+' llkf '+str(np.round(list_llkf[i_run],3))+" $\sigma_{\\rho}$ "+str(np.round(results_STD[i_run],3))) # type: ignore
             pdf.savefig(fig, dpi=150)
             if show_plots:
                 plt.show()
@@ -513,8 +530,8 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
     try: 
         file_save=wdir_save+'selectedd_data_phi.pdf'
         pdf = be_pdf.PdfPages(file_save)
-        for i_run in trigger_LLK_pixelNB_mtm_stdrho:
-            fig=plot_3D_projections(phi_data[i_run],cmap='jet',fig_title='S'+scan+' Run '+str(list_run[i_run])+' llkf '+str(np.round(list_llkf[i_run],3))+" $\sigma_{\\rho}$ "+str(np.round(results_STD[i_run],3)))
+        for i_run in trigger_LLK_pixelNB_mtm_stdrho: # type: ignore
+            fig=plot_3D_projections(phi_data[i_run],cmap='jet',fig_title='S'+scan+' Run '+str(list_run[i_run])+' llkf '+str(np.round(list_llkf[i_run],3))+" $\sigma_{\\rho}$ "+str(np.round(results_STD[i_run],3))) # type: ignore
             pdf.savefig(fig, dpi=150)
             if show_plots:
                 plt.show()
@@ -527,7 +544,7 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
         os.system(f"cd {wdir_save_reco_sel};mkdir {old_results}; mv * {old_results}")
     if clear_previous_recosel:
         os.system(f"cd {wdir_save_reco_sel}; rm *")
-    for i_run in range(len(trigger_LLK_pixelNB_mtm_stdrho)):
+    for i_run in range(len(trigger_LLK_pixelNB_mtm_stdrho)): # type: ignore
         print("the reconstructions selected will be saved to the following path")
         print(wdir_save_reco_sel)
         L=files[i_run]
@@ -547,7 +564,7 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
     if save_animation:
         start_time=time.time()
         phi_max=0.25*np.pi
-        for i_run in range(len(trigger_LLK_pixelNB_mtm_stdrho)):
+        for i_run in range(len(trigger_LLK_pixelNB_mtm_stdrho)): # type: ignore
             L0=files[0]
             destination_=wdir_save
             L=files[i_run]
@@ -556,15 +573,15 @@ def selection_of_reco_in_path(path_to_reco: str = '/home/abdelrahman/cristal_Nov
                 print('create animation of the phase along direction X')
                 save_file_name=  destination_+L[L.find("_pynx") :-4] + '_x'+str(phi_max)+'.gif'
                 title_fig= 'Animation in direction X '+scan + ' run ' + str(list_run[i_run]) 
-                plot_single_3darray_slices_as_subplots(zero_to_nan(phi_data[i_run]),save_file_name,-phi_max, phi_max, title_fig=title_fig, proj=0)
+                plot_single_3darray_slices_as_subplots(zero_to_nan(phi_data[i_run]),save_file_name,-phi_max, phi_max, title_fig=title_fig, proj=0) # type: ignore
                 print('create animation of the phase along direction Y')
                 save_file_name=  destination_+L[L.find("_pynx") :-4]  + '_y'+str(phi_max)+'.gif'
                 title_fig= 'Animation in direction Y '+scan + ' run ' + str(list_run[i_run]) 
-                plot_single_3darray_slices_as_subplots(zero_to_nan(phi_data[i_run]),save_file_name,-phi_max, phi_max, title_fig=title_fig, proj=1)
+                plot_single_3darray_slices_as_subplots(zero_to_nan(phi_data[i_run]),save_file_name,-phi_max, phi_max, title_fig=title_fig, proj=1) # type: ignore
                 print('create animation of the phase along direction Z')
                 save_file_name= destination_+L[L.find("_pynx") :-4]  + '_z'+str(phi_max)+'.gif'
                 title_fig= 'Animation in direction Z '+scan + ' run ' + str(list_run[i_run]) 
-                plot_single_3darray_slices_as_subplots(zero_to_nan(phi_data[i_run]),save_file_name,-phi_max, phi_max, title_fig=title_fig, proj=2)
+                plot_single_3darray_slices_as_subplots(zero_to_nan(phi_data[i_run]),save_file_name,-phi_max, phi_max, title_fig=title_fig, proj=2) # type: ignore
             except IndexError as e:
                     print(e)
                     continue

@@ -61,8 +61,18 @@
 
 
 
-from cdi_dislo.common_imports import *
+# from cdi_dislo.common_imports import *
 from cdi_dislo.ewen_utilities.plot_utilities                      import plot_3D_projections ,plot_2D_slices_middle_one_array3D
+
+import numpy as np
+from sklearn.linear_model                                     import LinearRegression   
+import h5py
+import matplotlib.pyplot as plt
+from xrayutilities                  import en2lam
+from cdi_dislo.general_utilities.cdi_dislo_utils import (  
+    nan_to_zero,
+    zero_to_nan,       
+)
 #####################################################################################################################
 #####################################################################################################################
 #####################################################################################################################
@@ -219,7 +229,7 @@ def setup_preprocessing(
     return params
 
 
-def remove_phase_ramp_abd(phase: np.array):
+def remove_phase_ramp_abd(phase: np.array): # type: ignore
     """
     Remove the phase ramp of a 3D volume phase.                                                                                                                                                              
 
@@ -252,7 +262,7 @@ def remove_phase_ramp_abd(phase: np.array):
 
     return phase - ramp, ramp
 #------------------------------------------------------------------------------------------------------------
-def get_het_normal_strain(displacement: np.ndarray,g_vector: np.ndarray or tuple or list,voxel_size: np.ndarray or tuple or list,gradient_method: str = "hybrid",) -> np.ndarray:
+def get_het_normal_strain(displacement: np.ndarray,g_vector: np.ndarray or tuple or list,voxel_size: np.ndarray or tuple or list,gradient_method: str = "hybrid",) -> np.ndarray: # type: ignore
         """
         Compute the heterogeneous normal strain, i.e. the gradient of
         the displacement projected along the measured Bragg peak
@@ -271,7 +281,7 @@ def get_het_normal_strain(displacement: np.ndarray,g_vector: np.ndarray or tuple
         displacement_gradient = np.moveaxis(np.asarray(displacement_gradient),source=0,destination=3)
         return np.dot(displacement_gradient, g_vector / np.linalg.norm(g_vector))
 #------------------------------------------------------------------------------------------------------------
-def get_displacement_gradient(displacement: np.ndarray,voxel_size: np.ndarray or tuple or list,gradient_method: str = "hybrid") -> np.ndarray:
+def get_displacement_gradient(displacement: np.ndarray,voxel_size: np.ndarray or tuple or list,gradient_method: str = "hybrid") -> np.ndarray: # type: ignore
         """
         Calculate the gradient of the displacement.
         Args:
@@ -292,7 +302,7 @@ def get_displacement_gradient(displacement: np.ndarray,voxel_size: np.ndarray or
             grad_function = hybrid_gradient
         else:
             raise ValueError("Unknown method for normal strain computation.")
-        return grad_function(displacement, *voxel_size)
+        return grad_function(displacement, *voxel_size) # type: ignore
 
 
 #------------------------------------------------------------------------------------------------------------
@@ -302,6 +312,7 @@ def hybrid_gradient(data: np.ndarray, d0: float, d1: float, d2: float) -> tuple[
     in the interior of the non-nan object, 1st order at the interface between
     the non-nan object and the surrounding nan values.
     """
+    import warnings
    
     def compute_gradient(data, axis, d):
         """Compute gradient along a specific axis."""
@@ -345,12 +356,6 @@ def hybrid_gradient(data: np.ndarray, d0: float, d1: float, d2: float) -> tuple[
 
 
     return result
-
-
-
-
-
-
 #------------------------------------------------------------------------------------------------------------
 def get_max_without_num(data,num):
     data[data==num]=np.nan
@@ -370,7 +375,7 @@ def get_lattice_parametre(nrj,
     """
     get the lattice parametre
     """
-    vg=gamma+s_g*(cch[1]-cz)/(scale*cos(delta*np.pi/180.))
+    vg=gamma+s_g*(cch[1]-cz)/(scale*np.cos(delta*np.pi/180.))
     vd=delta+s_d*(cy-cch[0])/scale
     tth=np.arccos(np.cos(vg*np.pi/180)*np.cos(vd*np.pi/180))*180/np.pi
     lamb=12.4/nrj
@@ -428,47 +433,40 @@ def remove_phase_ramp_clement(phase: np.ndarray) -> np.ndarray:
 
         return phase - ramp  
 #------------------------------------------------------------------------------------------------------------
-def phase_offset_to_zero_clement(phase: np.ndarray,support: np.ndarray = None,) -> np.ndarray:
+def phase_offset_to_zero_clement(phase: np.ndarray,support: np.ndarray = None,) -> np.ndarray: # type: ignore
         """
         Set the phase offset to the mean phase value.
         """
         return phase - np.nanmean(phase * support if support else 1) 
-
-
-
 #------------------------------------------------------------------------------------------------------------
 def getting_strain_mapvti(path="", obj=None, voxel_size=[1,1,1], nb_of_phase_to_test=10,
                               path_to_save="", save_filename_vti='', plot_debug=False, output_shape=(40, 60,60)):
     
     def calculate_displacement_gradient(phase, voxel_size):
         return get_displacement_gradient(phase, voxel_size)
-    
-    
     def find_closest_to_zero(gradients):
         closest_to_zero_indices = np.argmin(np.abs(nan_to_zero(gradients)), axis=0)
         shape_data = gradients.shape
         i, j, k = np.meshgrid(np.arange(shape_data[1]), np.arange(shape_data[2]), np.arange(shape_data[3]), indexing='ij')
         return gradients[closest_to_zero_indices, i, j, k]
-    
-   
     def calculate_strain(displacement_gradient_min):
         strain_amp = ((displacement_gradient_min[0]**2 + displacement_gradient_min[1]**2 + displacement_gradient_min[2]**2)**0.5)
         strain_amp = strain_amp / np.nanmax(strain_amp)
         strain_mask = ((nan_to_zero(displacement_gradient_min)!=0.).astype(float).sum(axis=0)!=0.).astype(float)
         return strain_amp, strain_mask
     if path:
-        obj = array(h5py.File(path)['entry_1/data_1/data'])[0]
+        obj = np.array(h5py.File(path)['entry_1/data_1/data'])[0]
     elif obj is not None:
         obj_list = obj
     else:
         print("no obj or path to mode are provided")
         return None, None
 
-    if str(np.abs(obj_list).max()) == "nan":
-        obj_list = nan_to_zero(np.abs(obj_list)) * np.exp(1j * nan_to_zero(np.angle(obj_list)))
+    if str(np.abs(obj_list).max()) == "nan": # type: ignore
+        obj_list = nan_to_zero(np.abs(obj_list)) * np.exp(1j * nan_to_zero(np.angle(obj_list))) # type: ignore
     
-    modulus = zero_to_nan(np.abs(obj_list))
-    phase_0 = np.angle(np.exp(1j * zero_to_nan(np.angle(obj_list))))
+    modulus = zero_to_nan(np.abs(obj_list)) # type: ignore
+    phase_0 = np.angle(np.exp(1j * zero_to_nan(np.angle(obj_list)))) # type: ignore
     
     displacement_gradient_0 = calculate_displacement_gradient(phase_0, voxel_size)
     displacement_gradient_0 = np.asarray(displacement_gradient_0)
@@ -510,8 +508,9 @@ def getting_strain_mapvti(path="", obj=None, voxel_size=[1,1,1], nb_of_phase_to_
     print(f"Min value:  {displacement_gradient_min[2][shd_x//2,sh_y//2,sh_z//2]}")
 
     if save_filename_vti:
+        from bcdi.graph                     import graph_utils          as gu # type: ignore
         gu.save_to_vti(filename=save_filename_vti,voxel_size=list(voxel_size),
-                           tuple_array=(nan_to_zero(modulus)                     ,nan_to_zero(phase_0)                   ,zero_to_nan(phase_1),
+                           tuple_array=(nan_to_zero(modulus)                     ,nan_to_zero(phase_0)                   ,zero_to_nan(phase_1), # type: ignore
                                         nan_to_zero(displacement_gradient_min[0]),nan_to_zero(displacement_gradient_0[0]),
                                         nan_to_zero(displacement_gradient_min[1]),nan_to_zero(displacement_gradient_0[1]),
                                         nan_to_zero(displacement_gradient_min[2]),nan_to_zero(displacement_gradient_0[2]),strain_mask,strain_amp),
@@ -524,15 +523,15 @@ def getting_strain_mapvti(path="", obj=None, voxel_size=[1,1,1], nb_of_phase_to_
         plot_2D_slices_middle_one_array3D(phase_0,vmin=-3,vmax=3,cmap="jet",fig_title="original phase midlle slice")
         if save_filename_vti:
             plt.savefig(path_to_save+"original_phase.png")
-        plot_2D_slices_middle_one_array3D(phase_1,vmin=-3,vmax=3,cmap="jet",fig_title=f"phase + {np.round(i_phase,4)} midlle slice")
+        plot_2D_slices_middle_one_array3D(phase_1,vmin=-3,vmax=3,cmap="jet",fig_title=f"phase + {np.round(i_phase,4)} midlle slice") # type: ignore
         if save_filename_vti:
             plt.savefig(path_to_save+"plus_phase.png")
         plot_2D_slices_middle_one_array3D(displacement_gradient_0[1],vmin=-0.3,vmax=0.3,cmap="jet",fig_title="original phase gradient midlle slice")
         if save_filename_vti:
             plt.savefig(path_to_save+"original_gradientphase.png")
-        plot_2D_slices_middle_one_array3D(displacement_gradient_min[1],vmin=-0.3,vmax=0.3,cmap="jet",fig_title=f"phase  + {np.round(i_phase,4)} gradient midlle slice")
+        plot_2D_slices_middle_one_array3D(displacement_gradient_min[1],vmin=-0.3,vmax=0.3,cmap="jet",fig_title=f"phase  + {np.round(i_phase,4)} gradient midlle slice") # type: ignore
         if save_filename_vti:
             plt.savefig(path_to_save+"plus_gradientphase.png")
     return nan_to_zero(strain_mask), nan_to_zero(strain_amp)
-
-
+#####################################################################################################################
+###############################################   END OF FILE   ####################################################    
