@@ -1294,9 +1294,9 @@ def crop_3darray_pos(
             print("the methods choosed to centering is a tuple of strings")
     elif (type_of_methods == "tuple of int") or (
         type_of_methods == "tuple of float"
-    ): 
+    ):
         if np.array(methods).size == 3:
-            methods= (tuple(methods),)
+            methods = (tuple(methods),)
         if len(methods) == 1:
             if verbose:
                 print(
@@ -1304,7 +1304,7 @@ def crop_3darray_pos(
                     methods,
                 )
             pos = np.array([int(v) for v in methods[0]])
-            methods = tuple([ [int(v) for v in methods[0]] ] )
+            methods = tuple([[int(v) for v in methods[0]]])
         else:
             if verbose:
                 print(
@@ -1312,7 +1312,7 @@ def crop_3darray_pos(
                     methods,
                 )
             pos = np.array([int(v) for v in methods[0]])
-            methods = tuple([[int(v) for v in methods[0]] ])
+            methods = tuple([[int(v) for v in methods[0]]])
     else:  # tuple of mixed
         if verbose:
             print(
