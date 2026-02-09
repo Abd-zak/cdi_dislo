@@ -1,3 +1,8 @@
 [build-system]
 requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
+[tool.ruff]
+exclude = [
+    "*.ipynb",
+    "**/*.ipynb",'ewen_utilities','ewen_utilities/*/*/*','cdi_dislo\common_imports.py','lib'
+]
