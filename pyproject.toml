@@ -76,6 +76,7 @@ viz = [
   "jupyter_bokeh",
   "panel",
   "gif",
+  "seaborn",
 ]
 
 docs = [
@@ -112,6 +113,7 @@ all = [
   "mypy",
   "pre-commit",
   "gif",
+  "seaborn",
 ]
 
 [project.scripts]
