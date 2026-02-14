@@ -75,6 +75,7 @@ viz = [
   "bokeh",
   "jupyter_bokeh",
   "panel",
+  "gif",
 ]
 
 docs = [
@@ -110,6 +111,7 @@ all = [
   "black",
   "mypy",
   "pre-commit",
+  "gif",
 ]
 
 [project.scripts]
