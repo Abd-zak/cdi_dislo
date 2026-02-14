@@ -25,20 +25,20 @@ jobs:
 
       - name: Install package (with dev + all extras)
         run: |
-          pip install -e .[all]
+          pip install -e .[dev,all]
 
       - name: Lint with Ruff
         run: |
           ruff check .
 
       - name: Format check with Black
-      run: |
-        black --check .
+        run: |
+          black --check .
 
       - name: Install cdiutils
         run: |
-          pip install git+https://github.com/clatlan/cdiutils@dev # or @dev for the dev branch
-          
+          pip install git+https://github.com/clatlan/cdiutils@dev
+
       - name: Install pynx
         run: |
           pip install git+https://gitlab.esrf.fr/favre/PyNX@devel
