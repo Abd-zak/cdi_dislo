@@ -34,14 +34,12 @@ def open_citius_data(filename, roi=None, verbose=False):
 
                 for frame in key_frames:
                     if roi is None:
-                        data[n] += h5f[f"entry/{key}/{frame}/sensor_image_1"][
-                            ()
-                        ]
+                        data[n] += h5f[f"entry/{key}/{frame}/sensor_image_1"][()]
                     else:
                         data[n] += h5f[f"entry/{key}/{frame}/sensor_image_1"][
                             roi[0] : roi[1], roi[2] : roi[3]
                         ]
-            except Exception :
+            except Exception:
                 print(f"failed at entry/{key}")
                 return data
 
@@ -82,9 +80,7 @@ class Scan:
             if roi is None:
                 data = np.zeros((len(key_list), 728, 384))
             else:
-                data = np.zeros(
-                    (len(key_list), roi[1] - roi[0], roi[3] - roi[2])
-                )
+                data = np.zeros((len(key_list), roi[1] - roi[0], roi[3] - roi[2]))
 
             for n, key in enumerate(key_list):
                 if self.verbose:
@@ -100,14 +96,12 @@ class Scan:
 
                     for frame in key_frames:
                         if roi is None:
-                            data[n] += h5f[
-                                f"entry/{key}/{frame}/sensor_image_1"
-                            ][()]
+                            data[n] += h5f[f"entry/{key}/{frame}/sensor_image_1"][()]
                         else:
-                            data[n] += h5f[
-                                f"entry/{key}/{frame}/sensor_image_1"
-                            ][roi[0] : roi[1], roi[2] : roi[3]]
-                except Exception :
+                            data[n] += h5f[f"entry/{key}/{frame}/sensor_image_1"][
+                                roi[0] : roi[1], roi[2] : roi[3]
+                            ]
+                except Exception:
                     print(f"failed at entry/{key}")
                     return data
 

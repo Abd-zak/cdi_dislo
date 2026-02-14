@@ -279,8 +279,8 @@ def remove_phase_ramp_abd(phase: np.array):  # type: ignore
     :return: the phase without the computed ramp. Return the ramp if
     return_ramp is true.
     """
-    from sklearn.linear_model import LinearRegression
     import numpy as np
+    from sklearn.linear_model import LinearRegression
 
     x, y, z = np.indices(phase.shape)
     non_nan_coordinates = np.where(np.logical_not(np.isnan(phase)))
@@ -295,9 +295,7 @@ def remove_phase_ramp_abd(phase: np.array):  # type: ignore
 
     x, y, z = np.indices(phase.shape)
 
-    ramp = (
-        reg.coef_[0] * x + reg.coef_[1] * y + reg.coef_[2] * z + reg.intercept_
-    )
+    ramp = reg.coef_[0] * x + reg.coef_[1] * y + reg.coef_[2] * z + reg.intercept_
 
     return phase - ramp, ramp
 
@@ -375,6 +373,7 @@ def hybrid_gradient(
     the non-nan object and the surrounding nan values.
     """
     import warnings
+
     import numpy as np
 
     def compute_gradient(data, axis, d):
@@ -458,11 +457,7 @@ def get_lattice_parametre(
 
     vg = gamma + s_g * (cch[1] - cz) / (scale * np.cos(delta * np.pi / 180.0))
     vd = delta + s_d * (cy - cch[0]) / scale
-    tth = (
-        np.arccos(np.cos(vg * np.pi / 180) * np.cos(vd * np.pi / 180))
-        * 180
-        / np.pi
-    )
+    tth = np.arccos(np.cos(vg * np.pi / 180) * np.cos(vd * np.pi / 180)) * 180 / np.pi
     lamb = 12.4 / nrj
     # a0 = 3.924
     d = lamb / (2 * np.sin(tth * np.pi / 360))
@@ -516,9 +511,7 @@ def remove_phase_ramp_clement(phase: np.ndarray) -> np.ndarray:
 
     i, j, k = np.indices(phase.shape)
 
-    ramp = (
-        reg.coef_[0] * i + reg.coef_[1] * j + reg.coef_[2] * k + reg.intercept_
-    )
+    ramp = reg.coef_[0] * i + reg.coef_[1] * j + reg.coef_[2] * k + reg.intercept_
 
     return phase - ramp
 
@@ -547,16 +540,17 @@ def getting_strain_mapvti(
     plot_debug=False,
     output_shape=(40, 60, 60),
 ):
+    import h5py
+    import matplotlib.pyplot as plt
     import numpy as np
+
     from cdi_dislo.ewen_utilities.plot_utilities import (
         plot_2D_slices_middle_one_array3D,
     )
-    import h5py
     from cdi_dislo.utils.utils import (
         nan_to_zero,
         zero_to_nan,
     )
-    import matplotlib.pyplot as plt
 
     def calculate_displacement_gradient(phase, voxel_size):
         return get_displacement_gradient(phase, voxel_size)
@@ -564,9 +558,7 @@ def getting_strain_mapvti(
     def find_closest_to_zero(gradients):
         import numpy as np
 
-        closest_to_zero_indices = np.argmin(
-            np.abs(nan_to_zero(gradients)), axis=0
-        )
+        closest_to_zero_indices = np.argmin(np.abs(nan_to_zero(gradients)), axis=0)
         shape_data = gradients.shape
         i, j, k = np.meshgrid(
             np.arange(shape_data[1]),
@@ -584,9 +576,7 @@ def getting_strain_mapvti(
         ) ** 0.5
         strain_amp = strain_amp / np.nanmax(strain_amp)
         strain_mask = (
-            (nan_to_zero(displacement_gradient_min) != 0.0)
-            .astype(float)
-            .sum(axis=0)
+            (nan_to_zero(displacement_gradient_min) != 0.0).astype(float).sum(axis=0)
             != 0.0
         ).astype(float)
         return strain_amp, strain_mask
@@ -607,18 +597,14 @@ def getting_strain_mapvti(
     modulus = zero_to_nan(np.abs(obj_list))  # type: ignore
     phase_0 = np.angle(np.exp(1j * zero_to_nan(np.angle(obj_list))))  # type: ignore
 
-    displacement_gradient_0 = calculate_displacement_gradient(
-        phase_0, voxel_size
-    )
+    displacement_gradient_0 = calculate_displacement_gradient(phase_0, voxel_size)
     displacement_gradient_0 = np.asarray(displacement_gradient_0)
 
     all_gradients = [displacement_gradient_0]
     phase_futures = []
     for i_phase in np.linspace(-2 * np.pi, 2 * np.pi, nb_of_phase_to_test):
         phase_1 = np.angle(np.exp((phase_0 + i_phase) * 1j))
-        phase_futures.append(
-            calculate_displacement_gradient(phase_1, voxel_size)
-        )
+        phase_futures.append(calculate_displacement_gradient(phase_1, voxel_size))
 
     all_gradients.extend(phase_futures)
 
@@ -641,9 +627,7 @@ def getting_strain_mapvti(
     print(
         f"\nOriginal values at position ({shd_x // 2, sh_y // 2, sh_z // 2}) for x direction:"
     )
-    print(
-        f"Gradient 0: {displacement_gradient_0[0][shd_x // 2, sh_y // 2, sh_z // 2]}"
-    )
+    print(f"Gradient 0: {displacement_gradient_0[0][shd_x // 2, sh_y // 2, sh_z // 2]}")
     print(
         f"Min value:  {displacement_gradient_min[0][shd_x // 2, sh_y // 2, sh_z // 2]}"
     )
@@ -651,9 +635,7 @@ def getting_strain_mapvti(
     print(
         f"\nOriginal values at position ({shd_x // 2, sh_y // 2, sh_z // 2}) for y direction:"
     )
-    print(
-        f"Gradient 0: {displacement_gradient_0[1][shd_x // 2, sh_y // 2, sh_z // 2]}"
-    )
+    print(f"Gradient 0: {displacement_gradient_0[1][shd_x // 2, sh_y // 2, sh_z // 2]}")
     print(
         f"Min value:  {displacement_gradient_min[1][shd_x // 2, sh_y // 2, sh_z // 2]}"
     )
@@ -661,9 +643,7 @@ def getting_strain_mapvti(
     print(
         f"\nOriginal values at position ({shd_x // 2, sh_y // 2, sh_z // 2}) for z direction:"
     )
-    print(
-        f"Gradient 0: {displacement_gradient_0[2][shd_x // 2, sh_y // 2, sh_z // 2]}"
-    )
+    print(f"Gradient 0: {displacement_gradient_0[2][shd_x // 2, sh_y // 2, sh_z // 2]}")
     print(
         f"Min value:  {displacement_gradient_min[2][shd_x // 2, sh_y // 2, sh_z // 2]}"
     )

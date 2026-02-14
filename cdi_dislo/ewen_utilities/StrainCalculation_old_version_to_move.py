@@ -28,9 +28,7 @@ def EB_custom_gradient(array, voxel_sizes=None):
         slice2[n] = slice(None, -1)
 
         grad_n = array[tuple(slice1)] - array[tuple(slice2)]
-        grad_n = np.nanmean(
-            [grad_n[tuple(slice1)], grad_n[tuple(slice2)]], axis=0
-        )
+        grad_n = np.nanmean([grad_n[tuple(slice1)], grad_n[tuple(slice2)]], axis=0)
 
         #         padding = np.zeros((array.ndim, array.ndim)).astype('int')
         padding = np.zeros((array.ndim, 2)).astype("int")
@@ -130,16 +128,14 @@ def compute_strain(
     )
 
     if use_negative_phase:
-        phase = -phase  # We need that due to the definition of numpy fft used in pynx !!!!!!!!!!!!
+        phase = (
+            -phase
+        )  # We need that due to the definition of numpy fft used in pynx !!!!!!!!!!!!
 
     grad = EB_custom_gradient(phase, voxel_sizes=voxel_sizes)
 
-    strain = np.sum(
-        [q_cen[n] * grad[n] for n in range(obj_ortho.ndim)], axis=0
-    )
-    strain = strain / np.sum(
-        [q_cen[n] ** 2.0 for n in range(obj_ortho.ndim)], axis=0
-    )
+    strain = np.sum([q_cen[n] * grad[n] for n in range(obj_ortho.ndim)], axis=0)
+    strain = strain / np.sum([q_cen[n] ** 2.0 for n in range(obj_ortho.ndim)], axis=0)
 
     d_cen = 2.0 * np.pi / np.sqrt(np.sum(q_cen**2.0, axis=0))
     d_spacing = d_cen * (1.0 + strain)
@@ -261,16 +257,14 @@ def compute_strain_2D_Zlotnikov(
     )
 
     if use_negative_phase:
-        phase = -phase  # We need that due to the definition of numpy fft used in pynx !!!!!!!!!!!!
+        phase = (
+            -phase
+        )  # We need that due to the definition of numpy fft used in pynx !!!!!!!!!!!!
 
     grad = EB_custom_gradient(phase, voxel_sizes=voxel_sizes)
 
-    strain = np.sum(
-        [q_cen[n] * grad[n] for n in range(obj_ortho.ndim)], axis=0
-    )
-    strain = strain / np.sum(
-        [q_cen[n] ** 2.0 for n in range(obj_ortho.ndim)], axis=0
-    )
+    strain = np.sum([q_cen[n] * grad[n] for n in range(obj_ortho.ndim)], axis=0)
+    strain = strain / np.sum([q_cen[n] ** 2.0 for n in range(obj_ortho.ndim)], axis=0)
 
     d_cen = 2.0 * np.pi / np.sqrt(np.sum(q_cen**2.0, axis=0))
     d_spacing = d_cen * (1.0 + strain)

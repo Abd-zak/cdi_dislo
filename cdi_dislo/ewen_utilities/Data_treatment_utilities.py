@@ -2,8 +2,10 @@ import numpy as np
 
 from skimage.registration import phase_cross_correlation
 import scipy
+
 # from cdi_dislo.ewen_utilities.plot_utilities import *
 from cdi_dislo.ewen_utilities.Object_utilities import create_support
+
 #################################################################################################################################
 #################################                Align objects                    ###############################################
 #################################################################################################################################
@@ -28,9 +30,7 @@ def force_same_shape(obj_list, verbose=False):
     for n, obj in enumerate(obj_list):
         pad = np.array(forced_shape) - np.array(obj.shape)
         padding = [(p // 2, p // 2 + p % 2) for p in pad]
-        obj_list[n] = np.pad(
-            obj, padding, mode="constant", constant_values=(0,)
-        )
+        obj_list[n] = np.pad(obj, padding, mode="constant", constant_values=(0,))
 
     if verbose:
         print(f"All objects have now the shape : {forced_shape}")
@@ -51,15 +51,11 @@ def realign_object_list(
     """
 
     obj_ref = np.copy(obj_list[ref_index])
-    support_ref = create_support(
-        obj_ref, threshold_module, fill_support=fill_support
-    )
+    support_ref = create_support(obj_ref, threshold_module, fill_support=fill_support)
 
     obj_list_shift = np.zeros(obj_list.shape)
     for n, obj in enumerate(obj_list):
-        support = create_support(
-            obj, threshold_module, fill_support=fill_support
-        )
+        support = create_support(obj, threshold_module, fill_support=fill_support)
         shift, error, diffphase = phase_cross_correlation(support_ref, support)
         obj_list_shift[n] += scipy.ndimage.shift(np.abs(obj), shift)
 

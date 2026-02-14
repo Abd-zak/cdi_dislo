@@ -28,6 +28,7 @@ from cdi_dislo.ewen_utilities.Global_utilities import (
     center_the_center_of_mass,
 )
 from cdi_dislo.ewen_utilities.Object_utilities import center_object
+
 # from cdi_dislo.ewen_utilities.Reconstruction_crop_algo                    import *
 
 
@@ -99,9 +100,7 @@ def CreateRandomInitialObject(shape, amin=0, amax=80, phirange=np.pi / 2.0):
 ######################################################################################################################################
 
 
-def EB_custom_support_from_object(
-    obj, sigma=3, threshold=0.1, plot=False, alpha=0.3
-):
+def EB_custom_support_from_object(obj, sigma=3, threshold=0.1, plot=False, alpha=0.3):
     module = np.abs(obj)
     module_gauss = scipy.ndimage.gaussian_filter(module, sigma=sigma)
 
@@ -123,9 +122,7 @@ def EB_custom_support_from_object(
             )
         )
         ax[0].set_title("module (gray)", fontsize=15)
-        ax[1].set_title(
-            "module (gray)\nsupport (transparent red)", fontsize=15
-        )
+        ax[1].set_title("module (gray)\nsupport (transparent red)", fontsize=15)
     return support
 
 
@@ -187,9 +184,7 @@ def CDI_one_reconstruction(data, params, plot_result=True):
         )
 
     if params["center_data"]:
-        data, centering_offsets = center_the_center_of_mass(
-            data, return_offsets=True
-        )
+        data, centering_offsets = center_the_center_of_mass(data, return_offsets=True)
         if params["mask"] is not None:
             params["mask"] = np.roll(
                 params["mask"],
@@ -202,14 +197,9 @@ def CDI_one_reconstruction(data, params, plot_result=True):
         support = params["support_init"]
         print("using the support array given by user")
     elif type(params["support_init"]) == str:
-        if (
-            params["support_init"] == "gauss_conv"
-            and params["obj_init"] is not None
-        ):
+        if params["support_init"] == "gauss_conv" and params["obj_init"] is not None:
             print("using gaussian convoluted and threshold as support")
-            support = EB_custom_support_from_object(
-                params["obj_init"], plot=False
-            )
+            support = EB_custom_support_from_object(params["obj_init"], plot=False)
         else:
             support = None  # Autocorrelation support will be used
     else:
@@ -265,9 +255,7 @@ def CDI_one_reconstruction(data, params, plot_result=True):
         )
 
     else:
-        support_threshold_relative = np.copy(
-            params["support_threshold_relative"]
-        )
+        support_threshold_relative = np.copy(params["support_threshold_relative"])
     #     sup = SupportUpdate(threshold_relative=support_threshold_relative, smooth_width=params['support_smooth_width'],
     #                 force_shrink=False,method='max', post_expand=None)
     sup = SupportUpdate(
@@ -287,10 +275,7 @@ def CDI_one_reconstruction(data, params, plot_result=True):
         method = algo.split("_")[0]
         iterations = int(algo.split("_")[1])
 
-        if (
-            params["support_update"] == False
-            or params["support_update"] == None
-        ):
+        if params["support_update"] == False or params["support_update"] == None:
             if method == "HIO":
                 cdi = (
                     HIO(
@@ -479,9 +464,7 @@ def make_several_reconstructions(
         #         plt.title('Reconstruction {}'.format(n_reconstruction), fontsize=20)
         while 1:
             try:
-                obj, llk, support, return_dict = CDI_one_reconstruction(
-                    data, params
-                )
+                obj, llk, support, return_dict = CDI_one_reconstruction(data, params)
 
                 save_reconstruction_best_recon_algo(
                     file_dict, obj, llk, last_recon_nb + 1 + n_reconstruction
@@ -501,8 +484,6 @@ def make_several_reconstructions(
 
 def put_back_centering_ramp(obj, centering_offsets):
     Fexp = ifftshift(fftn(fftshift(obj)))
-    Fexp = np.roll(
-        Fexp, -np.array(centering_offsets), axis=range(len(Fexp.shape))
-    )
+    Fexp = np.roll(Fexp, -np.array(centering_offsets), axis=range(len(Fexp.shape)))
     obj = fftshift(ifftn(ifftshift(Fexp)))
     return obj

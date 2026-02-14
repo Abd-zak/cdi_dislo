@@ -65,14 +65,10 @@ def center_of_mass_calculation_two_steps(data, crop=50, plot=False):
             ]
         )
 
-    s = [
-        slice(cropping_dim[n][0], cropping_dim[n][1]) for n in range(data.ndim)
-    ]
+    s = [slice(cropping_dim[n][0], cropping_dim[n][1]) for n in range(data.ndim)]
     center2 = center_of_mass(data[tuple(s)])
 
-    center = [
-        int(round(cropping_dim[n][0] + center2[n])) for n in range(data.ndim)
-    ]
+    center = [int(round(cropping_dim[n][0] + center2[n])) for n in range(data.ndim)]
 
     if plot:
         from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
@@ -279,9 +275,7 @@ def subplots_numerous_images(
     for one_axe in axe:
         one_axe.locator_params(axis="both", nbins=5)
         one_axe.xaxis.set_ticks_position("bottom")
-        one_axe.tick_params(
-            axis="both", which="major", labelsize=12 * fw / 4.0
-        )
+        one_axe.tick_params(axis="both", which="major", labelsize=12 * fw / 4.0)
 
     fig.tight_layout()
 

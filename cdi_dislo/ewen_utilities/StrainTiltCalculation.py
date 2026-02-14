@@ -28,9 +28,7 @@ def EB_custom_gradient(array, voxel_sizes=None):
         slice2[n] = slice(None, -1)
 
         grad_n = array[tuple(slice1)] - array[tuple(slice2)]
-        grad_n = np.nanmean(
-            [grad_n[tuple(slice1)], grad_n[tuple(slice2)]], axis=0
-        )
+        grad_n = np.nanmean([grad_n[tuple(slice1)], grad_n[tuple(slice2)]], axis=0)
 
         #         padding = np.zeros((array.ndim, array.ndim)).astype('int')
         padding = np.zeros((array.ndim, 2)).astype("int")
@@ -51,9 +49,7 @@ def EB_custom_gradient(array, voxel_sizes=None):
 ######################################################################################################################################
 
 
-def EB_custom_gradient_defect(
-    phase, qcen, voxel_sizes=None, phase_shift=np.pi / 2.0
-):
+def EB_custom_gradient_defect(phase, qcen, voxel_sizes=None, phase_shift=np.pi / 2.0):
     grad_shift_list = []
     for n in [0, 1, 2]:
         shifted_phase_map = np.mod(phase + n * phase_shift, 2.0 * np.pi)
@@ -65,9 +61,7 @@ def EB_custom_gradient_defect(
     grad_clean[np.isnan(grad_shift_list[0])] = np.nan
 
     for indices in [[0, 1], [0, 2], [1, 2]]:
-        mask = np.isclose(
-            grad_shift_list[indices[0]], grad_shift_list[indices[1]]
-        )
+        mask = np.isclose(grad_shift_list[indices[0]], grad_shift_list[indices[1]])
         grad_clean[mask == 1] = grad_shift_list[indices[0]][mask == 1]
 
     if qcen is not None:
@@ -97,7 +91,9 @@ def displacement_and_gradient(
         obj_ortho, unwrap=unwrap, threshold_module=threshold_module, crop=crop
     )
     if use_negative_phase:
-        phase = -phase  # We need that due to the definition of numpy fft used in pynx !!!!!!!!!!!!
+        phase = (
+            -phase
+        )  # We need that due to the definition of numpy fft used in pynx !!!!!!!!!!!!
 
     displacement = phase / np.linalg.norm(qcen)
     displacement = displacement - np.nanmean(
@@ -138,7 +134,7 @@ def displacement_and_gradient(
                 displacement,
                 fig=fig,
                 ax=ax[0],
-                fig_title="displacement ($\AA$)",
+                fig_title=r"displacement ($\AA$)",
                 voxel_sizes=voxel_sizes,
                 cmap="turbo",
             )
@@ -414,9 +410,7 @@ def compute_strain_tilt_2D(
     grad, qcen, voxel_sizes=None, angle_error_limit=10, plot=True, verbose=True
 ):
     # First check that you're not doing something totally wrong
-    Bragg_inplane_check(
-        qcen, angle_error_limit=angle_error_limit, verbose=verbose
-    )
+    Bragg_inplane_check(qcen, angle_error_limit=angle_error_limit, verbose=verbose)
 
     u_bragg, u_perp = orthogonal_vector_2D(qcen, verbose=verbose, plot=plot)
 
@@ -439,7 +433,7 @@ def compute_strain_tilt_2D(
         )
         plot_global_2d(
             d_spacing,
-            fig_title="d spacing ($\AA$)",
+            fig_title=r"d spacing ($\AA$)",
             voxel_sizes=voxel_sizes,
             fig=fig,
             ax=ax[1],

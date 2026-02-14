@@ -60,11 +60,18 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.backends import backend_pdf as be_pdf
-from scipy.ndimage import center_of_mass as C_O_M
 import seaborn as sns
 from matplotlib import rc
+from matplotlib.backends import backend_pdf as be_pdf
+from scipy.ndimage import center_of_mass as C_O_M
 
+from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
+from cdi_dislo.geometry.ortho_handler import (
+    remove_phase_ramp_abd,
+)
+from cdi_dislo.plotting.plotutilities import (
+    plot_single_3darray_slices_as_subplots,
+)
 from cdi_dislo.utils.utils import (
     IfStringRepresentsFloat,
     check_array_empty,
@@ -74,13 +81,6 @@ from cdi_dislo.utils.utils import (
     optimize_cropping,
     zero_to_nan,
 )
-from cdi_dislo.geometry.ortho_handler import (
-    remove_phase_ramp_abd,
-)
-from cdi_dislo.plotting.plotutilities import (
-    plot_single_3darray_slices_as_subplots,
-)
-from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
 
 
 #####################################################################################################################
@@ -198,9 +198,7 @@ def selection_of_reco_in_path(
                 else:
                     wdir += prefix_to_reco_2
                     if not os.path.exists(wdir):
-                        print(
-                            f"The file or directory '{wdir}' does not exist."
-                        )
+                        print(f"The file or directory '{wdir}' does not exist.")
                         return
 
     print("Searching data in this path: " + wdir)
@@ -232,16 +230,10 @@ def selection_of_reco_in_path(
     )
     logging.info("Starting selection_of_reco_in_path function.")
 
-    print(
-        "results of the selection and debugging will be save to : " + wdir_save
-    )
+    print("results of the selection and debugging will be save to : " + wdir_save)
 
     list_run = [
-        i_run[
-            i_run.find("_Run") + len("_Run") : i_run.find("_Run")
-            + len("_Run")
-            + 4
-        ]
+        i_run[i_run.find("_Run") + len("_Run") : i_run.find("_Run") + len("_Run") + 4]
         for i_run in files
     ]
     llkf_run = [
@@ -255,9 +247,7 @@ def selection_of_reco_in_path(
         list_llkf = np.array(llkf_run).astype(float)
         list_llkf = np.where(list_llkf > 10.0, 10.0, list_llkf)
     except Exception:
-        list_llkf = np.array(
-            [IfStringRepresentsFloat(i_run) for i_run in llkf_run]
-        )
+        list_llkf = np.array([IfStringRepresentsFloat(i_run) for i_run in llkf_run])
         list_llkf = np.where(llkf_run > 10.0, 10.0, llkf_run)  # type: ignore
     print(
         "********** scan "
@@ -288,9 +278,7 @@ def selection_of_reco_in_path(
             [
                 np.pad(
                     np.array(
-                        load_reco_from_cxinpz(
-                            i_run, multiply_by_mask=multiply_by_mask
-                        )
+                        load_reco_from_cxinpz(i_run, multiply_by_mask=multiply_by_mask)
                     ),
                     (
                         (pad_add, pad_add),
@@ -309,8 +297,7 @@ def selection_of_reco_in_path(
 
         com_int = [list(np.array(C_O_M(i)).astype(int)) for i in mask]
         half_w = int(
-            np.max(np.array([optimize_cropping(i > 0) for i in rho_data])) / 2
-            + 5
+            np.max(np.array([optimize_cropping(i > 0) for i in rho_data])) / 2 + 5
         )
         half_w = 100  # int(2*half_w*1.25)
         # ndata_centre=crop_3darray_pos(rho_data,com_int ,(shape_,shape_,shape_))
@@ -345,10 +332,7 @@ def selection_of_reco_in_path(
         ######################################
         if ramp_phase:
             phi_data = np.array(
-                [
-                    remove_phase_ramp_abd((phi_data[i]))[0]
-                    for i in range(len(phi_data))
-                ]
+                [remove_phase_ramp_abd((phi_data[i]))[0] for i in range(len(phi_data))]
             )
         end = time.time()
         print(str(int(((end - start) / 60) * 10) / 10) + "min")
@@ -371,7 +355,7 @@ def selection_of_reco_in_path(
                 },
             )
             print(
-                "saving data processed rho \& phi \& list of run \& the LLKf in "
+                r"saving data processed rho \& phi \& list of run \& the LLKf in "
                 + wdir_save
                 + "all_part_scan_results.npz"
             )  # type: ignore
@@ -402,9 +386,7 @@ def selection_of_reco_in_path(
     if selection_method == "filter_by_llkf":
         nb_sel_LLKF = int(nb_frames * per_LLKf)
         # run_list = np.arange(0, nb_frames, step=1).astype(str)
-        print(
-            "####################################################################"
-        )
+        print("####################################################################")
         print("selection based only on LLKf")
         RESULTS_LLKf = np.array(list_llkf)
         max_llkf = get_max_cut_parametre(RESULTS_LLKf, wanted_nb=nb_sel_LLKF)
@@ -427,9 +409,7 @@ def selection_of_reco_in_path(
         print(b)
         print("list of LLKf of selected run ")
         print(a)
-        print(
-            "####################################################################"
-        )
+        print("####################################################################")
         pass
     elif selection_method == "looped":
         while True:
@@ -446,9 +426,7 @@ def selection_of_reco_in_path(
             for i_run in range(nb_frames):
                 sum_pixel.append(int(np.sum(data_allscans_mask[i_run])))  # type: ignore
             sum_pixel = np.array(sum_pixel)
-            MIN_sumpixel = get_max_cut_parametre(
-                sum_pixel, wanted_nb=nb_nbpixel
-            )
+            MIN_sumpixel = get_max_cut_parametre(sum_pixel, wanted_nb=nb_nbpixel)
             select_nb_pixel = np.where((sum_pixel >= MIN_sumpixel))[0]
             print(
                 "*******"
@@ -460,12 +438,8 @@ def selection_of_reco_in_path(
             )
             print("selection based on LLKf")
             RESULTS_LLKf = np.array(list_llkf)
-            max_llkf = get_max_cut_parametre(
-                RESULTS_LLKf, wanted_nb=nb_sel_LLKF
-            )
-            trigger_llk = np.where((list_llkf <= max_llkf) & (list_llkf != 0))[
-                0
-            ]
+            max_llkf = get_max_cut_parametre(RESULTS_LLKf, wanted_nb=nb_sel_LLKF)
+            trigger_llk = np.where((list_llkf <= max_llkf) & (list_llkf != 0))[0]
             print(
                 "*******"
                 + scan
@@ -477,12 +451,8 @@ def selection_of_reco_in_path(
 
             print("selection based on std rho")
             RESULTS_stdrho = np.array(results_STD)  # type: ignore
-            max_stdrho = get_max_cut_parametre(
-                RESULTS_stdrho, wanted_nb=nb_sel_stdrho
-            )
-            trigger_STDRHO = np.where(np.array(RESULTS_stdrho) <= max_stdrho)[
-                0
-            ]
+            max_stdrho = get_max_cut_parametre(RESULTS_stdrho, wanted_nb=nb_sel_stdrho)
+            trigger_STDRHO = np.where(np.array(RESULTS_stdrho) <= max_stdrho)[0]
             print(
                 "*******"
                 + scan
@@ -505,11 +475,7 @@ def selection_of_reco_in_path(
                 else:
                     continue
             print(
-                "*******"
-                + scan
-                + "*********"
-                + str(len(trigger___))
-                + f"/{nb_frames}"
+                "*******" + scan + "*********" + str(len(trigger___)) + f"/{nb_frames}"
             )
             trigger_LLK_pixelNB_mtm_stdrho = trigger___
             a, b, c = [], [], []
@@ -528,17 +494,13 @@ def selection_of_reco_in_path(
             )
 
             # Ask user if they are satisfied with the selection
-            user_input = input(
-                "Are you satisfied with the selection? (yes/no): "
-            )
+            user_input = input("Are you satisfied with the selection? (yes/no): ")
             if user_input.lower() == "yes":
                 break
             elif user_input.lower() == "no":
                 # Modify parameters based on user input
                 per_LLKf = float(input("Enter the new percentage of LLKf: "))
-                per_stdrho = float(
-                    input("Enter the new percentage of stdrho: ")
-                )
+                per_stdrho = float(input("Enter the new percentage of stdrho: "))
                 per_nbpixel = float(
                     input("Enter the new percentage of active pixels: ")
                 )
@@ -551,9 +513,7 @@ def selection_of_reco_in_path(
         nb_nbpixel = nb_frames - int(nb_frames * per_nbpixel)
 
         # run_list = np.arange(0, nb_frames, step=1).astype(str)
-        print(
-            "####################################################################"
-        )
+        print("####################################################################")
         print("selection based on nb active pixel")
         sum_pixel = []
         for i_run in range(nb_frames):
@@ -584,9 +544,7 @@ def selection_of_reco_in_path(
 
         print("selection based on std rho")
         RESULTS_stdrho = np.array(results_STD)  # type: ignore
-        max_stdrho = get_max_cut_parametre(
-            RESULTS_stdrho, wanted_nb=nb_sel_stdrho
-        )
+        max_stdrho = get_max_cut_parametre(RESULTS_stdrho, wanted_nb=nb_sel_stdrho)
         trigger_STDRHO = np.where(np.array(RESULTS_stdrho) <= max_stdrho)[0]
         print(
             "*******"
@@ -609,13 +567,7 @@ def selection_of_reco_in_path(
                 trigger___.append(i_run)
             else:
                 continue
-        print(
-            "*******"
-            + scan
-            + "*********"
-            + str(len(trigger___))
-            + f"/{nb_frames}"
-        )
+        print("*******" + scan + "*********" + str(len(trigger___)) + f"/{nb_frames}")
         trigger_LLK_pixelNB_mtm_stdrho = trigger___
         a, b, c = [], [], []
         for i_run in trigger_LLK_pixelNB_mtm_stdrho:
@@ -628,9 +580,7 @@ def selection_of_reco_in_path(
         print(a)
         print("list of #pixel in supp of selected run ")
         print(c)
-        print(
-            "####################################################################"
-        )
+        print("####################################################################")
         pass
     else:
         print("Invalid selection method. Please choose 'looped' or 'auto'.")
@@ -701,7 +651,7 @@ def selection_of_reco_in_path(
             c=p[0].get_color(),
         )  # type: ignore
         p = plt.plot(x_sel, y_sel, ">", linewidth=2, label="selected")
-        plt.ylabel("$\sigma_{\\rho}$", fontsize=24)  # type: ignore
+        plt.ylabel("$\\sigma_{\\rho}$", fontsize=24)  # type: ignore
         plt.xlabel("LLKf", fontsize=24)
         plt.grid(alpha=0.5)
         plt.legend(fontsize=14, loc="best", ncol=1)
@@ -725,7 +675,7 @@ def selection_of_reco_in_path(
             bins=int(nb_frames * 0.75),
         )  # type: ignore
         plt.axvline(max_stdrho, color="red", linestyle="--", linewidth=2)  # type: ignore # Add a vertical line for max_stdrho
-        plt.xlabel("$\sigma_{ \\rho}$", fontsize=24)  # type: ignore
+        plt.xlabel("$\\sigma_{ \\rho}$", fontsize=24)  # type: ignore
         plt.ylabel("# of run", fontsize=24)  # Label the y-axis appropriately
         plt.title(scan, fontsize=24)
         plt.xticks(fontsize=24)
@@ -749,7 +699,7 @@ def selection_of_reco_in_path(
                 + str(list_run[i_run])
                 + " llkf "
                 + str(np.round(list_llkf[i_run], 3))
-                + " $\sigma_{\\rho}$ "
+                + " $\\sigma_{\\rho}$ "
                 + str(np.round(results_STD[i_run], 3)),
             )  # type: ignore
             pdf.savefig(fig, dpi=150)
@@ -773,7 +723,7 @@ def selection_of_reco_in_path(
                 + str(list_run[i_run])
                 + " llkf "
                 + str(np.round(list_llkf[i_run], 3))
-                + " $\sigma_{\\rho}$ "
+                + " $\\sigma_{\\rho}$ "
                 + str(np.round(results_STD[i_run], 3)),
             )  # type: ignore
             pdf.savefig(fig, dpi=150)
@@ -785,15 +735,11 @@ def selection_of_reco_in_path(
     except Exception:
         print("couldn't plot phase for selected runs")
     if move_previous_recosel:
-        os.system(
-            f"cd {wdir_save_reco_sel};mkdir {old_results}; mv * {old_results}"
-        )
+        os.system(f"cd {wdir_save_reco_sel};mkdir {old_results}; mv * {old_results}")
     if clear_previous_recosel:
         os.system(f"cd {wdir_save_reco_sel}; rm *")
     for i_run in range(len(trigger_LLK_pixelNB_mtm_stdrho)):  # type: ignore
-        print(
-            "the reconstructions selected will be saved to the following path"
-        )
+        print("the reconstructions selected will be saved to the following path")
         print(wdir_save_reco_sel)
         L = files[i_run]
         print(L[:-3])
@@ -804,9 +750,7 @@ def selection_of_reco_in_path(
             print(e)
             continue
     if create_mode:
-        print(
-            "****** running the mode for the seleceted reconstriction ******"
-        )
+        print("****** running the mode for the seleceted reconstriction ******")
         if ramp_mode:
             os.system(
                 f"cd {wdir_save_reco_sel}; pynx-cdi-analysis *cxi modes=1 phase_ramp modes_output={mode_output_file_name}"
@@ -832,10 +776,7 @@ def selection_of_reco_in_path(
                     + ".gif"
                 )
                 title_fig = (
-                    "Animation in direction X "
-                    + scan
-                    + " run "
-                    + str(list_run[i_run])
+                    "Animation in direction X " + scan + " run " + str(list_run[i_run])
                 )
                 plot_single_3darray_slices_as_subplots(
                     zero_to_nan(phi_data[i_run]),
@@ -854,10 +795,7 @@ def selection_of_reco_in_path(
                     + ".gif"
                 )
                 title_fig = (
-                    "Animation in direction Y "
-                    + scan
-                    + " run "
-                    + str(list_run[i_run])
+                    "Animation in direction Y " + scan + " run " + str(list_run[i_run])
                 )
                 plot_single_3darray_slices_as_subplots(
                     zero_to_nan(phi_data[i_run]),
@@ -876,10 +814,7 @@ def selection_of_reco_in_path(
                     + ".gif"
                 )
                 title_fig = (
-                    "Animation in direction Z "
-                    + scan
-                    + " run "
-                    + str(list_run[i_run])
+                    "Animation in direction Z " + scan + " run " + str(list_run[i_run])
                 )
                 plot_single_3darray_slices_as_subplots(
                     zero_to_nan(phi_data[i_run]),

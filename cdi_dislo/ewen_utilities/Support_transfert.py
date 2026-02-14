@@ -57,9 +57,7 @@ def transfer_support(
     file = dict(file)
     file["preprocessed_datapath"] = preprocessed_datapath
     R, _ = compute_positions_inverse_matrix(file)
-    support_new = rgi(
-        (R[0], R[1], R[2]), method="linear"
-    )  # Your transferred support
+    support_new = rgi((R[0], R[1], R[2]), method="linear")  # Your transferred support
 
     if plot:
         plot_2D_slices_middle_one_array3D(

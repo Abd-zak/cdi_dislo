@@ -45,9 +45,7 @@ class Scan_spec:
         verbose = show some output
         """
         self.specfile = specfile
-        self.h5file = (
-            self.specfile[:-5] + ".h5"
-        )  # Dummy h5file for saving function
+        self.h5file = self.specfile[:-5] + ".h5"  # Dummy h5file for saving function
         self.spec = SF(self.specfile)
         self.scan_string = "{}.1".format(scan_nb)
         self.path_imgs = path_imgs
@@ -93,10 +91,8 @@ class Scan_spec:
             motor_pos = SpecH5(self.specfile)[self.scan_string]["measurement"][
                 motor_name
             ][()]
-        except Exception :
-            motor_pos = self.spec[self.scan_string].motor_position_by_name(
-                motor_name
-            )
+        except Exception:
+            motor_pos = self.spec[self.scan_string].motor_position_by_name(motor_name)
         return motor_pos
 
     #######################################################################################################################################
@@ -146,9 +142,7 @@ class Scan_spec:
         # Test if there's an error
         first_nb = int(self.img_first_file.split(".")[0].split("_")[-1])
         if first_nb != img_nb_list[0]:
-            print(
-                "Error : first image number from GetImageNumbers seems wrong !"
-            )
+            print("Error : first image number from GetImageNumbers seems wrong !")
 
         for img_nb in img_nb_list:
             img_path_list.append(prefix + "%05d" % img_nb + suffix)
@@ -169,9 +163,7 @@ class Scan_spec:
                 img = fabio.open(img_path).data
             elif self.suffix == ".h5":
                 hdf5 = h5py.File(img_path)
-                img = hdf5[list(hdf5.keys())[0]]["measurement"][
-                    "data"
-                ].__array__()[0]
+                img = hdf5[list(hdf5.keys())[0]]["measurement"]["data"].__array__()[0]
 
             if n == 0:
                 data = np.zeros((len(self.img_path_list),) + img.shape)
@@ -199,12 +191,8 @@ class Scan_spec:
             if "#UDETCALIB" in line:
                 break
 
-        det_calib["beam_center_x"] = float(
-            line.split()[1].split(",")[0].split("=")[1]
-        )
-        det_calib["beam_center_y"] = float(
-            line.split()[1].split(",")[1].split("=")[1]
-        )
+        det_calib["beam_center_x"] = float(line.split()[1].split(",")[0].split("=")[1])
+        det_calib["beam_center_y"] = float(line.split()[1].split(",")[1].split("=")[1])
         #         pixperdeg = float(line.split()[1].split(',')[2].split('=')[1])
         # det_distance_CC = float(line.split()[1].split(",")[3].split("=")[1])
         det_distance_COM = float(line.split()[1].split(",")[4].split("=")[1])
@@ -233,9 +221,7 @@ class Scan_spec:
 
 class StandardScan_spec(Scan_spec):
     def __init__(self, filename, scan_nb, path_imgs=None, verbose=False):
-        super().__init__(
-            filename, scan_nb, path_imgs=path_imgs, verbose=verbose
-        )
+        super().__init__(filename, scan_nb, path_imgs=path_imgs, verbose=verbose)
 
         _ = self.getDscanMotorPosition()
 
@@ -271,9 +257,7 @@ class StandardScan_spec(Scan_spec):
 
 class DmeshScan_spec(Scan_spec):
     def __init__(self, filename, scan_nb, path_imgs=None, verbose=True):
-        super().__init__(
-            filename, scan_nb, path_imgs=path_imgs, verbose=verbose
-        )
+        super().__init__(filename, scan_nb, path_imgs=path_imgs, verbose=verbose)
 
         _ = self.getMeshMotorPosition()
 
@@ -419,14 +403,10 @@ def openScan(filename, scan_nb, verbose=False, path_imgs=None):
     #         return LookupScan(filename, scan_nb, verbose=verbose)
 
     if "mesh" in command:
-        return DmeshScan_spec(
-            filename, scan_nb, verbose=verbose, path_imgs=path_imgs
-        )
+        return DmeshScan_spec(filename, scan_nb, verbose=verbose, path_imgs=path_imgs)
 
     if "_pscando" in command:
-        return SXDM_Scan_spec(
-            filename, scan_nb, verbose=verbose, path_imgs=path_imgs
-        )
+        return SXDM_Scan_spec(filename, scan_nb, verbose=verbose, path_imgs=path_imgs)
 
 
 #     if "ct" in command:

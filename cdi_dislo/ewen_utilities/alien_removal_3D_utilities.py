@@ -82,9 +82,7 @@ def log_scale_matteotype_renormalization(data, plot=False):
 ###########################################################################################################################################
 
 
-def create_intensity_threshold_mask(
-    data_log, threshold, plot=False, data=None
-):
+def create_intensity_threshold_mask(data_log, threshold, plot=False, data=None):
     """
     Create a mask using a threshold in intensity
 
@@ -168,9 +166,7 @@ def intensity_threshold_pixels(mask):
 ###########################################################################################################################################
 
 
-def pixels_clustering(
-    pixels, eps=np.sqrt(2), min_samples=8, verbose=True, plot=False
-):
+def pixels_clustering(pixels, eps=np.sqrt(2), min_samples=8, verbose=True, plot=False):
     """
     Make the clustering using sklearn.cluster.DBSCAN
 
@@ -253,14 +249,10 @@ def remove_central_peak_cluster(data, pixels, pixels_labels):
 
     """
     label_central_peak = pixels_labels[
-        np.where(
-            np.all(pixels == np.round(np.array(data.shape) / 2.0), axis=1)
-        )[0][0]
+        np.where(np.all(pixels == np.round(np.array(data.shape) / 2.0), axis=1))[0][0]
     ]
 
-    pixels, pixels_labels = filter_out_labels(
-        pixels, pixels_labels, label_central_peak
-    )
+    pixels, pixels_labels = filter_out_labels(pixels, pixels_labels, label_central_peak)
 
     return pixels, pixels_labels
 
@@ -291,9 +283,7 @@ def get_clusters_size(pixels_labels):
     return cluster_size, labels
 
 
-def keep_only_largest_clusters(
-    pixels, pixels_labels, nb_clusters_kept=10, plot=False
-):
+def keep_only_largest_clusters(pixels, pixels_labels, nb_clusters_kept=10, plot=False):
     """
     Remove smallest clusters
 
@@ -314,9 +304,7 @@ def keep_only_largest_clusters(
     labels = labels[indices_sort]
     labels_small = labels[:-nb_clusters_kept]
 
-    pixels, pixels_labels = filter_out_labels(
-        pixels, pixels_labels, labels_small
-    )
+    pixels, pixels_labels = filter_out_labels(pixels, pixels_labels, labels_small)
 
     if plot:
         plt.figure()
@@ -375,13 +363,7 @@ def compute_clusters_asymmetry(asym, pixels, pixels_labels):
     labels_asym = np.zeros(len(labels))
     for n in range(len(labels)):
         labels_asym[n] += np.nanmean(
-            asym[
-                tuple(
-                    pixels[pixels_labels == labels[n]]
-                    .astype("int")
-                    .swapaxes(0, 1)
-                )
-            ]
+            asym[tuple(pixels[pixels_labels == labels[n]].astype("int").swapaxes(0, 1))]
         )
     return labels, labels_asym
 
@@ -410,13 +392,7 @@ def compute_clusters_max(data, pixels, pixels_labels):
     labels_max_intensity = np.zeros(len(labels))
     for n in range(len(labels)):
         labels_max_intensity[n] += np.nanmax(
-            data[
-                tuple(
-                    pixels[pixels_labels == labels[n]]
-                    .astype("int")
-                    .swapaxes(0, 1)
-                )
-            ]
+            data[tuple(pixels[pixels_labels == labels[n]].astype("int").swapaxes(0, 1))]
         )
     return labels, labels_max_intensity
 
@@ -426,9 +402,7 @@ def compute_clusters_max(data, pixels, pixels_labels):
 ###########################################################################################################################################
 
 
-def plot_2d_projection_cluster(
-    data, pixels, pixels_labels, label, fig=None, ax=None
-):
+def plot_2d_projection_cluster(data, pixels, pixels_labels, label, fig=None, ax=None):
     """
     Plot 2D projection of the cluster "label"
 
@@ -453,9 +427,7 @@ def plot_2d_projection_cluster(
     return
 
 
-def plot_clusters_select_2d_projections(
-    data, pixels, pixels_labels, sorting="size"
-):
+def plot_clusters_select_2d_projections(data, pixels, pixels_labels, sorting="size"):
     """
     Plot clusters for user selection
 
@@ -482,14 +454,10 @@ def plot_clusters_select_2d_projections(
         #         data_log = log_scale_matteotype_renormalization(data)
         #         asym = compute_asymmetry_matrix(data_log)
         asym = compute_asymmetry_matrix(data)
-        labels, labels_asym = compute_clusters_asymmetry(
-            asym, pixels, pixels_labels
-        )
+        labels, labels_asym = compute_clusters_asymmetry(asym, pixels, pixels_labels)
         labels = labels[np.argsort(labels_asym)[::-1]]
     elif sorting == "max":
-        labels, labels_max_intensity = compute_clusters_max(
-            data, pixels, pixels_labels
-        )
+        labels, labels_max_intensity = compute_clusters_max(data, pixels, pixels_labels)
         labels = labels[np.argsort(labels_max_intensity)[::-1]]
     elif sorting == "size":
         cluster_size, labels = get_clusters_size(pixels_labels)
@@ -506,9 +474,7 @@ def plot_clusters_select_2d_projections(
     check_list = []
     fig, ax = plt.subplots(1, 3, figsize=(12, 4))
     for label in labels:
-        plot_2d_projection_cluster(
-            data, pixels, pixels_labels, label, fig=fig, ax=ax
-        )
+        plot_2d_projection_cluster(data, pixels, pixels_labels, label, fig=fig, ax=ax)
         fig.savefig("temp.jpg")
 
         file = open("temp.jpg", "rb")
@@ -632,9 +598,7 @@ def clustering_and_filtering(mask, data, nb_clusters_kept=10, sorting="size"):
     pixels_labels = pixels_clustering(pixels, eps=eps, min_samples=min_samples)
 
     # Filtering out central Bragg peak cluster
-    pixels, pixels_labels = remove_central_peak_cluster(
-        data, pixels, pixels_labels
-    )
+    pixels, pixels_labels = remove_central_peak_cluster(data, pixels, pixels_labels)
 
     # Remove "noise" DBSCAN label
     pixels, pixels_labels = filter_out_labels(pixels, pixels_labels, -1)
@@ -694,7 +658,5 @@ def get_clean_data(
         plot_3D_projections(
             data_original, log_scale=log_scale, fig_title="original data"
         )
-        plot_3D_projections(
-            data_clean, log_scale=log_scale, fig_title="cleaned data"
-        )
+        plot_3D_projections(data_clean, log_scale=log_scale, fig_title="cleaned data")
     return data_clean

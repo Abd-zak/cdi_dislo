@@ -95,8 +95,8 @@ visualization functions, making them more adaptable to different datasets and re
 # import matplotlib.gridspec as gridspec
 """
 
-import numpy as np
 import matplotlib
+import numpy as np
 
 
 #####################################################################################################################
@@ -221,8 +221,8 @@ def visualize_3d_data(
     - window_size (tuple): Window size for the plot (default: (800, 800)).
     - plot_title (str): Title of the plot window.
     """
-    import pyvista as pv
     import numpy as np
+    import pyvista as pv
 
     # Enable headless rendering if needed
     pv.start_xvfb()
@@ -277,9 +277,7 @@ def plot_interactive_slices(data, default_axis="z", clim=None, cmap="Viridis"):
     # Default color limits
     min_val, max_val = (data.min(), data.max()) if clim is None else clim
 
-    def update(
-        axis="z", slice_index=0, cmap=cmap, min_val=min_val, max_val=max_val
-    ):
+    def update(axis="z", slice_index=0, cmap=cmap, min_val=min_val, max_val=max_val):
         """Helper function to update the plot interactively."""
         import plotly.graph_objects as go
 
@@ -403,9 +401,10 @@ def plot_summary_difraction(
     vmin, vmax : float or None
         Color scaling passed to imshow for all three subplots (shared scaling).
     """
-    import numpy as np
-    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
     import matplotlib.pyplot as plt
+    import numpy as np
+
+    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
 
     fig, ax = plt.subplots(1, 3, figsize=(16, 4))
     plot_3D_projections(
@@ -548,9 +547,9 @@ def plot_mechanical_properties(
     - save_plot: boolean, whether to save the plot as a PNG file (default False)
     - save_directory: string, directory to save the plot (default is current directory)
     """
-    import scipy.stats as stats
     import matplotlib.pyplot as plt
     import numpy as np
+    import scipy.stats as stats
 
     # Ensure all arrays are numpy arrays and convert units
     stiffness = np.array(slopes_elastic) * 1000  # µN/nm to N/m
@@ -590,15 +589,11 @@ def plot_mechanical_properties(
     ):
         for part in unique_parts:
             mask = test_part == part
-            ax.scatter(
-                x[mask], y[mask], label=part, color=color_dict[part], s=50
-            )
+            ax.scatter(x[mask], y[mask], label=part, color=color_dict[part], s=50)
 
         if plot_fit:
             # Perform linear regression
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                x, y
-            )
+            slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
             r_squared = r_value**2  # type: ignore
 
             # Only plot the fit if R-squared is above the threshold
@@ -642,9 +637,7 @@ def plot_mechanical_properties(
     if plot_fit:
         # Print the fit parameters for each plot
         for i, (x, y, title) in enumerate(zip(x_data, y_data, titles), 1):
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                x, y
-            )
+            slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
             r_squared = r_value**2  # type: ignore
             print(f"\nFit parameters for {title}:")
             print(f"Slope: {slope:.4e}")
@@ -656,8 +649,9 @@ def plot_mechanical_properties(
 
 
 def get_color_list(nb):
-    from itertools import combinations
     import random as py_random
+    from itertools import combinations
+
     import matplotlib.colors as mcolors
     import matplotlib.pyplot as plt
     import numpy as np
@@ -673,9 +667,7 @@ def get_color_list(nb):
     custom_colors = ["#8B7D6B", "#556B2F", "#8B8386"]
 
     # Combine colors from different sources
-    colors_comb = (
-        list(tab10_colors) + list(paired_colors) + xkcd_colors + custom_colors
-    )
+    colors_comb = list(tab10_colors) + list(paired_colors) + xkcd_colors + custom_colors
 
     # Filter out light colors based on brightness threshold
     brightness_threshold = 0.6  # Adjust as needed
@@ -713,9 +705,10 @@ def get_color_list(nb):
 
 def get_x_y_of_drops_plastic(x, y, plot_debug=False):
     import warnings
+
+    import matplotlib.pyplot as plt
     import numpy as np
     from numpy import linspace, random
-    import matplotlib.pyplot as plt
 
     x_min = x.min()
     # xmax =  x.max()
@@ -777,8 +770,8 @@ def get_x_y_of_drops_plastic(x, y, plot_debug=False):
 
 
 def plot_qxqyqzI(qx_, qy_, qz_, Int, i_scan):
-    import xrayutilities as xu
     import matplotlib.pyplot as plt
+    import xrayutilities as xu
 
     # affichage donnees interpolees
     fig1 = plt.figure(1, figsize=(20, 4))
@@ -806,8 +799,8 @@ def plot_qxqyqzI(qx_, qy_, qz_, Int, i_scan):
 
 
 def plotqxqyqzi_imshow(Int, i_scan, vmax=5):
-    import xrayutilities as xu
     import matplotlib.pyplot as plt
+    import xrayutilities as xu
 
     f_s = 16
     fig2 = plt.figure(1, figsize=(20, 4))
@@ -984,9 +977,10 @@ def plot_selcted_runs_y(
     param,
     file_save,
 ):
-    from matplotlib.backends import backend_pdf as be_pdf
-    import matplotlib.pyplot as plt
     import time
+
+    import matplotlib.pyplot as plt
+    from matplotlib.backends import backend_pdf as be_pdf
 
     pdf = be_pdf.PdfPages(file_save)
     for i_scan in index_best_run_scans.keys():
@@ -1053,16 +1047,10 @@ def plot_selcted_runs_y(
         if n_sbplots_row * n_sbplots_cols != n_frames:
             empty_fig_nb = n_sbplots_row * n_sbplots_cols - n_frames
             for i_empty in range(int(empty_fig_nb)):
-                ax = plt.subplot(
-                    n_sbplots_row, n_sbplots_cols, n_frames + i_empty + 1
-                )
+                ax = plt.subplot(n_sbplots_row, n_sbplots_cols, n_frames + i_empty + 1)
                 ax.set_visible(False)
         fig.suptitle(
-            "scan: "
-            + i_scan
-            + " | comparaison of "
-            + param
-            + " for selected runs",
+            "scan: " + i_scan + " | comparaison of " + param + " for selected runs",
             fontweight="bold",
             fontsize=f_s,
             horizontalalignment="center",
@@ -1078,8 +1066,8 @@ def plot_selcted_runs_y(
 
 
 def plot_3d_array(data, step=2):
-    import numpy as np
     import matplotlib.pyplot as plt
+    import numpy as np
 
     z, y, x = np.where(data != 0)
     cdata = data[data != 0]
@@ -1152,12 +1140,8 @@ def plot_data_disp(data_, lim):
     )
     for i_frame in range(6):
         i_plot = 0
-        ax = plt.subplot(
-            n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1
-        )
-        im = ax.imshow(
-            data_[i_frame].sum(axis=2), cmap=cmap, vmin=-lim, vmax=lim
-        )
+        ax = plt.subplot(n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1)
+        im = ax.imshow(data_[i_frame].sum(axis=2), cmap=cmap, vmin=-lim, vmax=lim)
         ax.set_xlabel("Z", labelpad=5)
         ax.set_ylabel("Y", labelpad=5)
         plt.grid(None)
@@ -1165,12 +1149,8 @@ def plot_data_disp(data_, lim):
         ax.set_title("Mean X ")
         plt.axis("tight")
         i_plot = 1
-        ax = plt.subplot(
-            n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1
-        )
-        im = ax.imshow(
-            data_[i_frame].sum(axis=1), cmap=cmap, vmin=-lim, vmax=lim
-        )
+        ax = plt.subplot(n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1)
+        im = ax.imshow(data_[i_frame].sum(axis=1), cmap=cmap, vmin=-lim, vmax=lim)
         ax.set_xlabel(" Z", labelpad=5)
         ax.set_ylabel("X", labelpad=5)
         plt.grid(None)
@@ -1178,12 +1158,8 @@ def plot_data_disp(data_, lim):
         ax.set_title("Mean Y ")
         plt.axis("tight")
         i_plot = 2
-        ax = plt.subplot(
-            n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1
-        )
-        im = ax.imshow(
-            data_[i_frame].sum(axis=0), cmap=cmap, vmin=-lim, vmax=lim
-        )
+        ax = plt.subplot(n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1)
+        im = ax.imshow(data_[i_frame].sum(axis=0), cmap=cmap, vmin=-lim, vmax=lim)
         color_bar = plt.colorbar(im, ax=ax)
         ax.set_xlabel("Y", labelpad=5)
         ax.set_ylabel("X", labelpad=5)
@@ -1218,12 +1194,8 @@ def plot_data_disp_projection(data_, plan, max_v, param):
     )
     for i_frame in range(6):
         i_plot = 0
-        ax = plt.subplot(
-            n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1
-        )
-        im = ax.imshow(
-            data_[i_frame][:, :, plan], cmap=cmap, vmin=-max_v, vmax=max_v
-        )
+        ax = plt.subplot(n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1)
+        im = ax.imshow(data_[i_frame][:, :, plan], cmap=cmap, vmin=-max_v, vmax=max_v)
         ax.set_xlabel("Z", labelpad=5)
         ax.set_ylabel("Y", labelpad=5)
         plt.grid(None)
@@ -1231,12 +1203,8 @@ def plot_data_disp_projection(data_, plan, max_v, param):
         ax.set_title("Mean X ")
         plt.axis("tight")
         i_plot = 1
-        ax = plt.subplot(
-            n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1
-        )
-        im = ax.imshow(
-            data_[i_frame][:, plan], cmap=cmap, vmin=-max_v, vmax=max_v
-        )
+        ax = plt.subplot(n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1)
+        im = ax.imshow(data_[i_frame][:, plan], cmap=cmap, vmin=-max_v, vmax=max_v)
         ax.set_xlabel(" Z", labelpad=5)
         ax.set_ylabel("X", labelpad=5)
         plt.grid(None)
@@ -1244,12 +1212,8 @@ def plot_data_disp_projection(data_, plan, max_v, param):
         ax.set_title("Mean Y ")
         plt.axis("tight")
         i_plot = 2
-        ax = plt.subplot(
-            n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1
-        )
-        im = ax.imshow(
-            data_[i_frame][plan], cmap=cmap, vmin=-max_v, vmax=max_v
-        )
+        ax = plt.subplot(n_sbplots_row, n_sbplots_cols, i_frame * 3 + i_plot + 1)
+        im = ax.imshow(data_[i_frame][plan], cmap=cmap, vmin=-max_v, vmax=max_v)
         color_bar = plt.colorbar(im, ax=ax)
         ax.set_xlabel("Y", labelpad=5)
         ax.set_ylabel("X", labelpad=5)
@@ -1277,9 +1241,10 @@ def plot_selcted_runs_x(
     param,
     file_save,
 ):
-    from matplotlib.backends import backend_pdf as be_pdf
-    import matplotlib.pyplot as plt
     import time
+
+    import matplotlib.pyplot as plt
+    from matplotlib.backends import backend_pdf as be_pdf
 
     pdf = be_pdf.PdfPages(file_save)
     for i_scan in index_best_run_scans.keys():
@@ -1346,16 +1311,10 @@ def plot_selcted_runs_x(
         if n_sbplots_row * n_sbplots_cols != n_frames:
             empty_fig_nb = n_sbplots_row * n_sbplots_cols - n_frames
             for i_empty in range(int(empty_fig_nb)):
-                ax = plt.subplot(
-                    n_sbplots_row, n_sbplots_cols, n_frames + i_empty + 1
-                )
+                ax = plt.subplot(n_sbplots_row, n_sbplots_cols, n_frames + i_empty + 1)
                 ax.set_visible(False)
         fig.suptitle(
-            "scan: "
-            + i_scan
-            + " | comparaison of "
-            + param
-            + " for selected runs",
+            "scan: " + i_scan + " | comparaison of " + param + " for selected runs",
             fontweight="bold",
             fontsize=f_s,
             horizontalalignment="center",
@@ -1587,9 +1546,7 @@ def plot_combined_xyz(
                 non_zero_indices = np.where(np.array(com_row) != 0)[0]
                 com_row = np.array(com_row)[non_zero_indices]
                 scan_row = np.array(scan_row)[non_zero_indices]
-            axes[i_pt].plot(
-                scan_row, com_row, "o-", label=f"{axis_labels_i_pt}"
-            )
+            axes[i_pt].plot(scan_row, com_row, "o-", label=f"{axis_labels_i_pt}")
         if plot_norm:
             if norm_values is None:
                 norm_values_i_pt = np.sqrt(
@@ -1641,15 +1598,17 @@ def plot_combined_single_coordinate(
     f_s=16,
     rot_abs=-45,
     fig_size=(15, 7),
-    plot_marker="--",
+    marker="o",
+    line_style="--",
     marker_size=1,
     file_name_save=None,
     show_plot=True,
     dpi=150,
     filter_non_zero=True,
+    title_fig=None,
 ):
-    import numpy as np
     import matplotlib.pyplot as plt
+    import numpy as np
 
     num_pts = len(com_values)
 
@@ -1672,20 +1631,19 @@ def plot_combined_single_coordinate(
         ax.scatter(
             scan_values_filtered,
             com_values_filtered,
-            marker=plot_marker,
+            marker=marker,
             s=marker_size,
+            linestyle=line_style,
             label=f"Pt {i_pt + 1}",
         )
 
-    ax.set_xlabel("Scan", fontsize=f_s)
-    ax.set_ylabel(axis_label, fontsize=f_s)
-    ax.tick_params(labelsize=f_s * 0.5)
+    ax.set_xlabel("Scan", fontsize=f_s * 0.75)
+    ax.set_ylabel(axis_label, fontsize=f_s * 0.75)
+    ax.tick_params(labelsize=f_s * 0.75)
     ax.grid(alpha=0.01)
     ax.legend(fontsize=f_s * 0.5)
-    ax.set_title(
-        f"Evolution of {axis_label} during compression  - All Particles",
-        fontsize=f_s,
-    )
+    if title_fig is not None:
+        ax.set_title(title_fig, fontsize=f_s)
     ax.tick_params(axis="x", rotation=rot_abs)
 
     plt.tight_layout()
@@ -1700,29 +1658,23 @@ def plot_combined_single_coordinate(
 
 
 def plot_3darray_as_gif_animation(data, file_save, vmin, vmax, title_fig=""):
-    import matplotlib.pyplot as plt
     import matplotlib.animation as animation
+    import matplotlib.pyplot as plt
 
     def update(frame):
         ax[0].clear()  # Clear the previous plot for XY projection
         ax[1].clear()  # Clear the previous plot for XZ projection
         ax[2].clear()  # Clear the previous plot for YZ projection
 
-        ax[0].imshow(
-            data[:, :, frame], cmap="jet", origin="lower", vmin=-0.5, vmax=0.5
-        )
+        ax[0].imshow(data[:, :, frame], cmap="jet", origin="lower", vmin=-0.5, vmax=0.5)
         ax[0].set_title(f"XY Projection, Z={frame}")
         ax[0].axis("off")
 
-        ax[1].imshow(
-            data[:, frame, :], cmap="jet", origin="lower", vmin=-0.5, vmax=0.5
-        )
+        ax[1].imshow(data[:, frame, :], cmap="jet", origin="lower", vmin=-0.5, vmax=0.5)
         ax[1].set_title(f"XZ Projection, Y={frame}")
         ax[1].axis("off")
 
-        ax[2].imshow(
-            data[frame, :, :], cmap="jet", origin="lower", vmin=-0.5, vmax=0.5
-        )
+        ax[2].imshow(data[frame, :, :], cmap="jet", origin="lower", vmin=-0.5, vmax=0.5)
         ax[2].set_title(f"YZ Projection, X={frame}")
         ax[2].axis("off")
 
@@ -1815,6 +1767,7 @@ def summary_slice_plot_abd(
         white_interior_ticks_labels,
     )
     from cdiutils.plot.slice import plot_contour
+
     from cdi_dislo.utils.utils import zero_to_nan
 
     ANGSTROM_SYMBOL, _, PLOT_CONFIGS = set_plot_configs()
@@ -1939,15 +1892,9 @@ def summary_slice_plot_abd(
             origin="lower",
             aspect=aspect_ratios["zy"],
         )  # type: ignore
-        axes[0, i].tick_params(
-            axis="both", which="both", width=0.0, labelsize=8
-        )
-        axes[1, i].tick_params(
-            axis="both", which="both", width=0.0, labelsize=8
-        )
-        axes[2, i].tick_params(
-            axis="both", which="both", width=0.0, labelsize=8
-        )
+        axes[0, i].tick_params(axis="both", which="both", width=0.0, labelsize=8)
+        axes[1, i].tick_params(axis="both", which="both", width=0.0, labelsize=8)
+        axes[2, i].tick_params(axis="both", which="both", width=0.0, labelsize=8)
 
         if key == "amplitude":
             plot_contour(axes[0, i], support[shape[0] // 2], color="k")
@@ -1996,14 +1943,7 @@ def summary_slice_plot_abd(
         l_, _, w, _ = axes[0, i].get_position().bounds
         cax = figure.add_axes(
             [
-                l_
-                + (
-                    0.015 + 0.03 * (i - 2)
-                    if i > 1
-                    else -0.05
-                    if i == 0
-                    else -0.02
-                ),
+                l_ + (0.015 + 0.03 * (i - 2) if i > 1 else -0.05 if i == 0 else -0.02),
                 0.93,
                 w - 0.01,
                 0.03,
@@ -2087,9 +2027,60 @@ def plot_3darray_slices_as_subplots(
     )  # type: ignore
 
     # Save the animation as a gif
-    ani_xy.save(
-        file_prefix + "_xy_subplots.gif", writer="pillow", dpi=150, fps=5
-    )
+    ani_xy.save(file_prefix + "_xy_subplots.gif", writer="pillow", dpi=150, fps=5)
+    # ani_xy.save(file_prefix + '_xy_subplots.gif', writer='imagemagick', dpi=100, fps=2)
+
+    plt.close()
+
+
+def plot_3darray_slices_as_subplots_(
+    data, file_prefix, vmin, vmax, title_subplots="", title_fig="", proj=1
+):
+    """Same as plot_3darray_slices_as_subplots but with 4 subplots per row instead of 8."""
+    import matplotlib.animation as animation
+    import matplotlib.pyplot as plt
+
+    def update_xy(frame):
+        for i, ax_subplot in enumerate(ax.flat):
+            ax_subplot.clear()  # Clear the previous plot for XY projection
+            if proj == 0:
+                ax_subplot.imshow(
+                    data[i, frame, :, :],
+                    cmap="jet",
+                    origin="lower",
+                    vmin=vmin,
+                    vmax=vmax,
+                )
+            if proj == 1:
+                ax_subplot.imshow(
+                    data[i, :, frame, :],
+                    cmap="jet",
+                    origin="lower",
+                    vmin=vmin,
+                    vmax=vmax,
+                )
+            if proj == 2:
+                ax_subplot.imshow(
+                    data[i, :, :, frame],
+                    cmap="jet",
+                    origin="lower",
+                    vmin=vmin,
+                    vmax=vmax,
+                )
+
+            ax_subplot.set_title(f"Slice {frame}, Z={title_subplots[i]}")
+            ax_subplot.axis("off")
+            plt.axis("tight")
+        plt.tight_layout()
+
+    fig, ax = plt.subplots(len(data) // 2, 2, figsize=(16, 8))
+    fig.suptitle(title_fig, fontsize=16)
+
+    # Set up the animation
+    ani_xy = animation.FuncAnimation(fig, update_xy, frames=data.shape[1], interval=100)
+
+    # Save the animation as a gif
+    ani_xy.save(file_prefix + "_xy_subplots.gif", writer="pillow", dpi=150, fps=5)
     # ani_xy.save(file_prefix + '_xy_subplots.gif', writer='imagemagick', dpi=100, fps=2)
 
     plt.close()
@@ -2142,9 +2133,7 @@ def plot_single_3darray_slices_as_subplots(
     )  # type: ignore
 
     # Save the animation as a gif
-    ani_xy.save(
-        file_prefix + "_xy_subplots.gif", writer="pillow", dpi=dpi, fps=fps
-    )
+    ani_xy.save(file_prefix + "_xy_subplots.gif", writer="pillow", dpi=dpi, fps=fps)
     # ani_xy.save(file_prefix + '_xy_subplots.gif', writer='imagemagick', dpi=100, fps=2)
 
     plt.close()
@@ -2183,8 +2172,8 @@ def plot_X_vs_Y_allpart_or_onebyone(
     Returns:
         matplotlib.figure.Figure: The generated figure.
     """
-    import numpy as np
     import matplotlib.pyplot as plt
+    import numpy as np
 
     if unique_particles is None:
         unique_particles = np.unique(part_name_list)
@@ -2225,9 +2214,7 @@ def plot_X_vs_Y_allpart_or_onebyone(
             plt.legend(loc="best", ncols=3)
             plt.tight_layout()
             if save_dir_plot:
-                plt.savefig(
-                    save_dir_plot + "lattice_parameter_" + particle + ".png"
-                )
+                plt.savefig(save_dir_plot + "lattice_parameter_" + particle + ".png")
             if show_plt:
                 plt.show()
         return fig  # type: ignore
@@ -2253,8 +2240,8 @@ def plot_data_lattice_parametre_multidata(
     show_plt=True,
     save_dir_plot=None,
 ):
-    import numpy as np
     import matplotlib.pyplot as plt
+    import numpy as np
 
     # Define color map for particles
     color_map = {}
@@ -2396,10 +2383,15 @@ def plot_data_single_or_multiple(
         ValueError: If number of subtitles does not match the number of plots, or if the length of desired_order
             does not match the number of subplots.
     """
-    import numpy as np
-    from matplotlib.ticker import ScalarFormatter
+    import re
+
     import matplotlib.colors as mcolors
     import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.ticker import ScalarFormatter
+
+    def sanitize_filename(s: str) -> str:
+        return re.sub(r"[^A-Za-z0-9_.-]", "_", s)
 
     plt.rcParams.update(
         {
@@ -2464,9 +2456,7 @@ def plot_data_single_or_multiple(
     # Custom muted colors in hex format
     custom_colors = ["#8B7D6B", "#556B2F", "#8B8386"]
     # Combine colors from different sources
-    colors_comb = (
-        list(tab10_colors) + list(paired_colors) + xkcd_colors + custom_colors
-    )
+    colors_comb = list(tab10_colors) + list(paired_colors) + xkcd_colors + custom_colors
     # Filter out light colors based on brightness threshold
     brightness_threshold = 0.6  # Adjust as needed
     dark_colors = [
@@ -2530,16 +2520,20 @@ def plot_data_single_or_multiple(
     except Exception:
         print("Unit of Y lable not provided. Note the format is  ' Y unit' ")
         y_label_, unit_y = y_label, None
+    # build logical label first
     if unit_y:
         if norm:
-            y_label_for_saving = y_label_ + f"_over_{max_for_norm}{unit_y}"  # type: ignore
+            label_raw = f"{y_label_}_over_{max_for_norm}{unit_y}"
         else:
-            y_label_for_saving = y_label_ + unit_y
+            label_raw = f"{y_label_}{unit_y}"
     else:
         if norm:
-            y_label_for_saving = y_label_ + f"_over_{max_for_norm}"  # type: ignore
+            label_raw = f"{y_label_}_over_{max_for_norm}"
         else:
-            y_label_for_saving = y_label_
+            label_raw = y_label_
+
+    # sanitize ONLY for saving
+    y_label_for_saving = sanitize_filename(label_raw)
 
     # Plotting
     if all_in_one:
@@ -2547,32 +2541,20 @@ def plot_data_single_or_multiple(
             plt.figure(figsize=(figsize_UNIT[0] * 3, figsize_UNIT[1] * 3))
             for i_datasets_pos in range(3):
                 for i, data_set in enumerate(data_sets[i_datasets_pos]):
-                    ax = plt.subplot(
-                        3, num_plots, num_plots * (i_datasets_pos) + 1 + i
-                    )
+                    ax = plt.subplot(3, num_plots, num_plots * (i_datasets_pos) + 1 + i)
                     X, Y, part_name_list = data_set
                     if desired_order:
-                        X_new = np.array(
-                            [desired_order[i].index(m) for m in X]
-                        )
+                        X_new = np.array([desired_order[i].index(m) for m in X])
                         ax.set_xticks(range(len(desired_order[i])))
                         ax.set_xticklabels(desired_order[i])
                     else:
                         X_new = X
                     for particle in np.unique(part_name_list):
                         x_plot = np.array(
-                            [
-                                x
-                                for x, p in zip(X_new, part_name_list)
-                                if p == particle
-                            ]
+                            [x for x, p in zip(X_new, part_name_list) if p == particle]
                         )
                         y_plot = np.array(
-                            [
-                                y
-                                for y, p in zip(Y, part_name_list)
-                                if p == particle
-                            ]
+                            [y for y, p in zip(Y, part_name_list) if p == particle]
                         )
                         if norm:
                             y_plot /= max_for_norm  # type: ignore
@@ -2600,7 +2582,7 @@ def plot_data_single_or_multiple(
                                 + " "
                                 + y_labels[i_datasets_pos]
                                 + f"/({max_for_norm}"
-                                + f"$_{{(\mathrm{{{unit_y}}})}}$)"
+                                + rf"$_{{(\mathrm{{{unit_y}}})}}$)"
                             )  # type: ignore
                         else:
                             plt.ylabel(
@@ -2616,7 +2598,7 @@ def plot_data_single_or_multiple(
                                 y_label_
                                 + " "
                                 + y_labels[i_datasets_pos]
-                                + f"$_{{(\mathrm{{{unit_y}}})}}$"
+                                + rf"$_{{(\mathrm{{{unit_y}}})}}$"
                             )  # type: ignore
                         else:
                             plt.ylabel(
@@ -2656,18 +2638,10 @@ def plot_data_single_or_multiple(
                 else:
                     X_new = X
                 for particle in np.unique(part_name_list):
-                    x_plot = [
-                        x
-                        for x, p in zip(X_new, part_name_list)
-                        if p == particle
-                    ]
-                    y_plot = [
-                        y for y, p in zip(Y, part_name_list) if p == particle
-                    ]
+                    x_plot = [x for x, p in zip(X_new, part_name_list) if p == particle]
+                    y_plot = [y for y, p in zip(Y, part_name_list) if p == particle]
                     # Sort x_plot and y_plot together based on x_plot values
-                    sorted_pairs = sorted(
-                        zip(x_plot, y_plot), key=lambda pair: pair[0]
-                    )
+                    sorted_pairs = sorted(zip(x_plot, y_plot), key=lambda pair: pair[0])
 
                     # Unzip the sorted pairs back into separate lists
                     x_plot_sorted, y_plot_sorted = zip(*sorted_pairs)
@@ -2720,9 +2694,7 @@ def plot_data_single_or_multiple(
         if xyz_plot:
             colors = plt.cm.tab10(np.linspace(0, 0.5, 3))  # type: ignore
             for particle in np.unique(unique_particles):
-                trigger_subplots = np.zeros(
-                    num_plots, dtype=bool
-                )  # One for X, Y, Z
+                trigger_subplots = np.zeros(num_plots, dtype=bool)  # One for X, Y, Z
                 for i_datasets_pos in range(3):
                     for i, data_set in enumerate(data_sets[i_datasets_pos]):
                         X, Y, part_name_list = data_set
@@ -2749,29 +2721,17 @@ def plot_data_single_or_multiple(
                         else:
                             ax_loc = axes[i_subplots]
                         if desired_order:
-                            X_new = np.array(
-                                [desired_order[i].index(m) for m in X]
-                            )
+                            X_new = np.array([desired_order[i].index(m) for m in X])
                             ax_loc.set_xticks(range(len(desired_order[i])))
                             ax_loc.set_xticklabels(desired_order[i])
                         else:
                             X_new = X
-                        ax_loc.tick_params(
-                            axis="x", labelrotation=rotation_xtick
-                        )
+                        ax_loc.tick_params(axis="x", labelrotation=rotation_xtick)
                         x_plot = np.array(
-                            [
-                                x
-                                for x, p in zip(X_new, part_name_list)
-                                if p == particle
-                            ]
+                            [x for x, p in zip(X_new, part_name_list) if p == particle]
                         )
                         y_plot = np.array(
-                            [
-                                y
-                                for y, p in zip(Y, part_name_list)
-                                if p == particle
-                            ]
+                            [y for y, p in zip(Y, part_name_list) if p == particle]
                         )
 
                         if norm:
@@ -2794,7 +2754,7 @@ def plot_data_single_or_multiple(
                                     y_label_
                                     + " "
                                     + f"/({max_for_norm}"
-                                    + f"$_{{(\mathrm{{{unit_y}}})}}$)"
+                                    + rf"$_{{(\mathrm{{{unit_y}}})}}$)"
                                 )  # type: ignore
                             else:
                                 ax_loc.set_ylabel(
@@ -2804,15 +2764,11 @@ def plot_data_single_or_multiple(
                         else:
                             if unit_y:
                                 ax_loc.set_ylabel(
-                                    y_label_
-                                    + " "
-                                    + f"$_{{(\mathrm{{{unit_y}}})}}$"
+                                    y_label_ + " " + rf"$_{{(\mathrm{{{unit_y}}})}}$"
                                 )  # type: ignore
                             else:
                                 ax_loc.set_ylabel(y_label_)
-                        format_ticks_scientific(
-                            ax_loc, axis="y", font_size=f_s
-                        )
+                        format_ticks_scientific(ax_loc, axis="y", font_size=f_s)
 
                         ax_loc.legend(loc="best", ncols=3)
                         if a_min and a_max:
@@ -2842,29 +2798,19 @@ def plot_data_single_or_multiple(
                     plt.close()
         else:
             for particle in np.unique(unique_particles):
-                fig = plt.figure(
-                    figsize=(figsize_UNIT[0] * num_plots, figsize_UNIT[1])
-                )
+                fig = plt.figure(figsize=(figsize_UNIT[0] * num_plots, figsize_UNIT[1]))
                 i_subplots = 0
                 for i, data_set in enumerate(data_sets):
                     ax = plt.subplot(1, num_plots, i_subplots + 1)
                     X, Y, part_name_list = data_set
                     if desired_order:
-                        X_new = np.array(
-                            [desired_order[i].index(m) for m in X]
-                        )
+                        X_new = np.array([desired_order[i].index(m) for m in X])
                         ax.set_xticks(range(len(desired_order[i])))
                         ax.set_xticklabels(desired_order[i])
                     else:
                         X_new = X
-                    x_plot = [
-                        x
-                        for x, p in zip(X_new, part_name_list)
-                        if p == particle
-                    ]
-                    y_plot = [
-                        y for y, p in zip(Y, part_name_list) if p == particle
-                    ]
+                    x_plot = [x for x, p in zip(X_new, part_name_list) if p == particle]
+                    y_plot = [y for y, p in zip(Y, part_name_list) if p == particle]
                     if len(y_plot) == 0:
                         # ax.set_visible(False)
                         # ax.set_axis_off()
@@ -2951,12 +2897,12 @@ def plot_stast_evolution_id27(
     labelpad=50,
     prime_ref="",
 ):
+    import matplotlib.gridspec as gridspec
     import matplotlib.pyplot as plt
+    import numpy as np
 
     # import matplotlib.ticker as mticker
     from matplotlib.ticker import ScalarFormatter
-    import matplotlib.gridspec as gridspec
-    import numpy as np
 
     def figure_axes_desidn(ax, label_rot):
         plt.axis("tight")
@@ -2994,14 +2940,12 @@ def plot_stast_evolution_id27(
     list_to_replace, list_indices_to_replace = [], []
     uniques_sorted_presure = np.unique(pressure_allscan_list)
     for i in range(len(uniques_sorted_presure)):
-        list_indices_pre = np.where(
-            pressure_allscan_list == uniques_sorted_presure[i]
-        )[0]
+        list_indices_pre = np.where(pressure_allscan_list == uniques_sorted_presure[i])[
+            0
+        ]
         print(list_indices_pre, list_indices_pre[len(list_indices_pre) // 2])
         list_to_replace.append(x_absis[i])
-        list_indices_to_replace.append(
-            list_indices_pre[len(list_indices_pre) // 2]
-        )
+        list_indices_to_replace.append(list_indices_pre[len(list_indices_pre) // 2])
 
     # list_to_replace = [x_absis[i] for i in range(len(x_absis)) if " S0" in x_absis[i]]
     # list_indices_to_replace = [i for i in range(len(x_absis)) if " S0" in x_absis[i]]
@@ -3169,9 +3113,7 @@ def plot_stast_evolution_id27(
             float_labels, rotation=label_rot, fontsize=fontsize_ticks
         )
 
-        ax_zoom.tick_params(
-            axis="y", which="both", left=False, labelleft=False
-        )
+        ax_zoom.tick_params(axis="y", which="both", left=False, labelleft=False)
         ax_zoom.spines["top"].set_visible(False)
         ax_zoom.spines["right"].set_visible(False)
         ax_zoom.spines["left"].set_visible(False)
@@ -3281,9 +3223,7 @@ def anealing_plot_stat_multiple(
         ]
 
     if desired_order is not None:
-        unique_temps = np.array(
-            [t for t in desired_order if t in temperatures]
-        )
+        unique_temps = np.array([t for t in desired_order if t in temperatures])
         mapping = {temp: i for i, temp in enumerate(unique_temps)}
         x_numeric = np.array([mapping[t] for t in temperatures])
     else:
@@ -3476,9 +3416,9 @@ def edit_colorbar(mappable, scale="linear", numticks=10, label=None, pad=0.05):
         new image axes.
     :return: the colorbar instance
     """
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
     import matplotlib.pyplot as plt
     import matplotlib.ticker as ticker
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     last_axes = plt.gca()
     try:
@@ -3552,9 +3492,7 @@ def contour_slices(
     #########################
     if scale not in {"linear", "log"}:
         raise ValueError('scale should be either "linear" or "log"')
-    if any(
-        len(qval) != shape for qval, shape in zip(q_coordinates, array.shape)
-    ):
+    if any(len(qval) != shape for qval, shape in zip(q_coordinates, array.shape)):
         raise ValueError("Coordinates shape is not compatible with data shape")
 
     nbz, nby, nbx = array.shape
@@ -3579,9 +3517,7 @@ def contour_slices(
         sum_frames=sum_frames,
     )
     plt.ion()
-    fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(
-        nrows=2, ncols=2, figsize=(12, 9)
-    )
+    fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(nrows=2, ncols=2, figsize=(12, 9))
 
     ##########
     # axis 0 #
@@ -3606,9 +3542,7 @@ def contour_slices(
     if scale == "linear":
         plt0 = ax0.contourf(qy, qz, temp_array, levels, cmap=cmap)
     else:  # 'log'
-        plt0 = ax0.contourf(
-            qy, qz, np.log10(abs(temp_array)), levels, cmap=cmap
-        )
+        plt0 = ax0.contourf(qy, qz, np.log10(abs(temp_array)), levels, cmap=cmap)
 
     ax0.set_aspect("equal")
     ax0.set_xlabel(hor_labels[0])
@@ -3640,9 +3574,7 @@ def contour_slices(
     if scale == "linear":
         plt1 = ax1.contourf(qy, qx, temp_array, levels, cmap=cmap)
     else:  # 'log'
-        plt1 = ax1.contourf(
-            qy, qx, np.log10(abs(temp_array)), levels, cmap=cmap
-        )
+        plt1 = ax1.contourf(qy, qx, np.log10(abs(temp_array)), levels, cmap=cmap)
 
     ax1.set_aspect("equal")
     ax1.set_xlabel(hor_labels[1])
@@ -3674,9 +3606,7 @@ def contour_slices(
     if scale == "linear":
         plt2 = ax2.contourf(qz, qx, temp_array, levels, cmap=cmap)
     else:  # 'log'
-        plt2 = ax2.contourf(
-            qz, qx, np.log10(abs(temp_array)), levels, cmap=cmap
-        )
+        plt2 = ax2.contourf(qz, qx, np.log10(abs(temp_array)), levels, cmap=cmap)
 
     ax2.set_aspect("equal")
     ax2.set_xlabel(hor_labels[2])
@@ -3756,11 +3686,12 @@ def combined_plots(
 
     :return:  the figure instance
     """
-    import matplotlib as mpl
     from numbers import Real
+
+    import matplotlib as mpl
     import matplotlib.pyplot as plt
-    import numpy as np
     import matplotlib.ticker as ticker
+    import numpy as np
 
     mpl.rcParams["axes.linewidth"] = tick_width  # set the linewidth globally
     ####################
@@ -3894,9 +3825,7 @@ def combined_plots(
 
             continue
 
-        if (
-            nb_dim == 3
-        ):  # 3D, needs to be reduced to 2D by slicing or projecting
+        if nb_dim == 3:  # 3D, needs to be reduced to 2D by slicing or projecting
             invert_yaxis = bool(is_orthogonal and sum_axis == 0)
 
             slice_names, ver_labels, hor_labels = define_labels(
@@ -4020,9 +3949,7 @@ def combined_plots(
                 vmax = np.log10(abs(tmp_array).max())
                 if np.isclose(vmax, vmin):
                     vmax = vmin + 1
-            plot = axis.imshow(
-                np.log10(abs(array)), vmin=vmin, vmax=vmax, cmap=cmap
-            )
+            plot = axis.imshow(np.log10(abs(array)), vmin=vmin, vmax=vmax, cmap=cmap)
 
         axis.set_title(title + slice_name)
         if len(xlabel[idx]) != 0:
@@ -4034,19 +3961,11 @@ def combined_plots(
         else:
             axis.set_ylabel(default_ylabel)
         plt.axis("scaled")
-        axis.tick_params(
-            direction=tick_direction, length=tick_length, width=tick_width
-        )
+        axis.tick_params(direction=tick_direction, length=tick_length, width=tick_width)
         if pixel_spacing is not None:
-            axis.xaxis.set_major_locator(
-                ticker.MultipleLocator(pixel_spacing[1])
-            )
-            axis.yaxis.set_major_locator(
-                ticker.MultipleLocator(pixel_spacing[0])
-            )
-            axis.tick_params(
-                labelbottom=False, labelleft=False, top=True, right=True
-            )
+            axis.xaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[1]))
+            axis.yaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[0]))
+            axis.tick_params(labelbottom=False, labelleft=False, top=True, right=True)
         if invert_yaxis:  # Y is axis 0, need to be flipped
             axis.invert_yaxis()
         if plot_colorbar:
@@ -4119,12 +4038,13 @@ def multislices_plot(
 
     :return: fig, (ax0, ax1, ax2, ax3), (plt0, plt1, plt2) instances
     """
+    import pathlib
+    from numbers import Real
+
     import matplotlib as mpl
     import matplotlib.pyplot as plt
-    import numpy as np
     import matplotlib.ticker as ticker
-    from numbers import Real
-    import pathlib
+    import numpy as np
 
     mpl.rcParams["axes.linewidth"] = tick_width  # set the linewidth globally
     ###############
@@ -4188,14 +4108,10 @@ def multislices_plot(
 
     plt.ion()
     if ipynb_layout:
-        fig, (ax0, ax1, ax2) = plt.subplots(
-            nrows=1, ncols=3, figsize=(15, 4.5)
-        )
+        fig, (ax0, ax1, ax2) = plt.subplots(nrows=1, ncols=3, figsize=(15, 4.5))
         ax3 = None
     else:
-        fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(
-            nrows=2, ncols=2, figsize=(12, 9)
-        )
+        fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(nrows=2, ncols=2, figsize=(12, 9))
 
     ##########
     # axis 0 #
@@ -4227,24 +4143,18 @@ def multislices_plot(
                 max_value[0] = temp_array[~np.isnan(temp_array)].max()
             except ValueError:
                 max_value[0] = 1
-        plt0 = ax0.imshow(
-            temp_array, vmin=min_value[0], vmax=max_value[0], cmap=cmap
-        )
+        plt0 = ax0.imshow(temp_array, vmin=min_value[0], vmax=max_value[0], cmap=cmap)
     else:  # 'log'
         if np.isnan(min_value[0]):
             try:
-                min_value[0] = np.log10(
-                    abs(temp_array[~np.isnan(temp_array)]).min()
-                )
+                min_value[0] = np.log10(abs(temp_array[~np.isnan(temp_array)]).min())
             except ValueError:
                 min_value[0] = 0
             if np.isinf(min_value[0]):
                 min_value[0] = 0
         if np.isnan(max_value[0]):
             try:
-                max_value[0] = np.log10(
-                    abs(temp_array[~np.isnan(temp_array)]).max()
-                )
+                max_value[0] = np.log10(abs(temp_array[~np.isnan(temp_array)]).max())
             except ValueError:
                 max_value[0] = 1
         plt0 = ax0.imshow(
@@ -4263,15 +4173,11 @@ def multislices_plot(
     if plot_colorbar:
         cbar = edit_colorbar(plt0, numticks=5)
         cbar.ax.tick_params(length=tick_length, width=tick_width)
-    ax0.tick_params(
-        direction=tick_direction, length=tick_length, width=tick_width
-    )
+    ax0.tick_params(direction=tick_direction, length=tick_length, width=tick_width)
     if pixel_spacing is not None:
         ax0.xaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[2]))
         ax0.yaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[1]))
-        ax0.tick_params(
-            labelbottom=False, labelleft=False, top=True, right=True
-        )
+        ax0.tick_params(labelbottom=False, labelleft=False, top=True, right=True)
 
     ##########
     # axis 1 #
@@ -4303,24 +4209,18 @@ def multislices_plot(
                 max_value[1] = temp_array[~np.isnan(temp_array)].max()
             except ValueError:
                 max_value[1] = 1
-        plt1 = ax1.imshow(
-            temp_array, vmin=min_value[1], vmax=max_value[1], cmap=cmap
-        )
+        plt1 = ax1.imshow(temp_array, vmin=min_value[1], vmax=max_value[1], cmap=cmap)
     else:  # 'log'
         if np.isnan(min_value[1]):
             try:
-                min_value[1] = np.log10(
-                    abs(temp_array[~np.isnan(temp_array)]).min()
-                )
+                min_value[1] = np.log10(abs(temp_array[~np.isnan(temp_array)]).min())
             except ValueError:
                 min_value[1] = 0
             if np.isinf(min_value[1]):
                 min_value[1] = 0
         if np.isnan(max_value[1]):
             try:
-                max_value[1] = np.log10(
-                    abs(temp_array[~np.isnan(temp_array)]).max()
-                )
+                max_value[1] = np.log10(abs(temp_array[~np.isnan(temp_array)]).max())
             except ValueError:
                 max_value[1] = 1
         plt1 = ax1.imshow(
@@ -4337,15 +4237,11 @@ def multislices_plot(
     if plot_colorbar:
         cbar = edit_colorbar(plt1, numticks=5)
         cbar.ax.tick_params(length=tick_length, width=tick_width)
-    ax1.tick_params(
-        direction=tick_direction, length=tick_length, width=tick_width
-    )
+    ax1.tick_params(direction=tick_direction, length=tick_length, width=tick_width)
     if pixel_spacing is not None:
         ax1.xaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[2]))
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[0]))
-        ax1.tick_params(
-            labelbottom=False, labelleft=False, top=True, right=True
-        )
+        ax1.tick_params(labelbottom=False, labelleft=False, top=True, right=True)
 
     ##########
     # axis 2 #
@@ -4377,24 +4273,18 @@ def multislices_plot(
                 max_value[2] = temp_array[~np.isnan(temp_array)].max()
             except ValueError:
                 max_value[2] = 1
-        plt2 = ax2.imshow(
-            temp_array, vmin=min_value[2], vmax=max_value[2], cmap=cmap
-        )
+        plt2 = ax2.imshow(temp_array, vmin=min_value[2], vmax=max_value[2], cmap=cmap)
     else:  # 'log'
         if np.isnan(min_value[2]):
             try:
-                min_value[2] = np.log10(
-                    abs(temp_array[~np.isnan(temp_array)]).min()
-                )
+                min_value[2] = np.log10(abs(temp_array[~np.isnan(temp_array)]).min())
             except ValueError:
                 min_value[2] = 0
             if np.isinf(min_value[2]):
                 min_value[2] = 0
         if np.isnan(max_value[2]):
             try:
-                max_value[2] = np.log10(
-                    abs(temp_array[~np.isnan(temp_array)]).max()
-                )
+                max_value[2] = np.log10(abs(temp_array[~np.isnan(temp_array)]).max())
             except ValueError:
                 max_value[2] = 1
         plt2 = ax2.imshow(
@@ -4412,15 +4302,11 @@ def multislices_plot(
     if plot_colorbar:
         cbar = edit_colorbar(plt2, numticks=5)
         cbar.ax.tick_params(length=tick_length, width=tick_width)
-    ax2.tick_params(
-        direction=tick_direction, length=tick_length, width=tick_width
-    )
+    ax2.tick_params(direction=tick_direction, length=tick_length, width=tick_width)
     if pixel_spacing is not None:
         ax2.xaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[1]))
         ax2.yaxis.set_major_locator(ticker.MultipleLocator(pixel_spacing[0]))
-        ax2.tick_params(
-            labelbottom=False, labelleft=False, top=True, right=True
-        )
+        ax2.tick_params(labelbottom=False, labelleft=False, top=True, right=True)
 
     ##########
     # axis 3 #

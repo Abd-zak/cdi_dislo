@@ -20,9 +20,7 @@ from scipy.interpolate import RegularGridInterpolator
 ######################################################################################################################################
 
 
-def crop_around_Bragg_center_compute_index_cen(
-    data, qx, qy, qz, size=20, plot=False
-):
+def crop_around_Bragg_center_compute_index_cen(data, qx, qy, qz, size=20, plot=False):
     index_cen = np.round(center_of_mass(data)).astype(int)
     roi = [
         index_cen[0] - size,
@@ -84,9 +82,7 @@ def calculate_B_matrix_error(B_reciprocal, K, Q, data_shape):
     error = np.sqrt(
         np.sum((Q - Qb) ** 2.0, axis=0)
     )  # I just look at the module of the error vector.
-    error = np.reshape(
-        error, data_shape
-    )  # Need to reshape that in the 3D format
+    error = np.reshape(error, data_shape)  # Need to reshape that in the 3D format
     return error
 
 
@@ -128,9 +124,7 @@ def compute_reciprocal_space_B_matrix(file, rotation_matrix=None, plot=False):
     return B_reciprocal, K, error
 
 
-def compute_positions_inverse_matrix(
-    file_ref, rotation_matrix=None, plot=False
-):
+def compute_positions_inverse_matrix(file_ref, rotation_matrix=None, plot=False):
     shape = file_ref["qx"].shape
     B_reciprocal, K, error = compute_reciprocal_space_B_matrix(
         file_ref, rotation_matrix=rotation_matrix, plot=plot
@@ -242,9 +236,7 @@ def real_space_orthogonalization(
 
     if final_roi:
         roi = automatic_object_roi(obj_ortho, plot=False)
-        obj_ortho = obj_ortho[
-            roi[0] : roi[1], roi[2] : roi[3], roi[4] : roi[5]
-        ]
+        obj_ortho = obj_ortho[roi[0] : roi[1], roi[2] : roi[3], roi[4] : roi[5]]
 
     if plot:
         plot_2D_slices_middle(obj, fig_title="before orthogonalization", fw=3)

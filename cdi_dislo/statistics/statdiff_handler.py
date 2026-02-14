@@ -61,255 +61,171 @@ Suggestions for Improvements:
 # from scipy.stats import norm
 # import xrayutilities as xu
 
-
 #####################################################################################################################
-# Gaussian profile
-def gaussian(x, A, x0, sigma):
-    import numpy as np
+# def plot_single_data_distr(data, i_scan):
+#     # from scipy.stats import norm
+#     import matplotlib.pyplot as plt
+#     import numpy as np
+#     import xrayutilities as xu
 
-    return A * np.exp(-((x - x0) ** 2) / (2 * sigma**2))
+#     data_0 = xu.maplog(data.sum(axis=0).flatten())
+#     # data_0=data_0[data_0!=0]
+#     mean_0 = np.mean(data_0)  # norm.mean(dddata)
+#     std_0 = np.std(data_0)  # norm.std(dddata)
+#     fwhm_0 = 2 * std_0 * np.sqrt(2 * np.log(2))
+#     # intensity_at_fwhm_0 = norm.pdf(mean_0 - fwhm_0 / 2)
+#     barycenter_0 = np.mean(data_0)
+#     # intensity_at_barycenter_0 = norm.pdf(barycenter_0)
 
+#     data_1 = xu.maplog(data.sum(axis=1).flatten())
+#     # data_1=data_1[data_1!=0]
+#     mean_1 = np.mean(data_1)  # norm.mean(dddata)
+#     std_1 = np.std(data_1)  # norm.std(dddata)
+#     fwhm_1 = 2 * std_1 * np.sqrt(2 * np.log(2))
+#     # intensity_at_fwhm_1 = norm.pdf(mean_1 - fwhm_1 / 2)
+#     barycenter_1 = np.mean(data_1)
+#     # intensity_at_barycenter_1 = norm.pdf(barycenter_1)
 
-# Lorentzian profile
-def lorentzian(x, A, x0, gamma):
-    return A / (1 + ((x - x0) / gamma) ** 2)
+#     data_2 = xu.maplog(data.sum(axis=2).flatten())
+#     # data_2=data_2[data_2!=0]
+#     mean_2 = np.mean(data_2)  # norm.mean(dddata)
+#     std_2 = np.std(data_2)  # norm.std(dddata)
+#     fwhm_2 = 2 * std_2 * np.sqrt(2 * np.log(2))
+#     # intensity_at_fwhm_2 = norm.pdf(mean_2 - fwhm_2 / 2)
+#     barycenter_2 = np.mean(data_2)
+#     # intensity_at_barycenter_2 = norm.pdf(barycenter_2)
 
+#     f_s = 16
+#     fig2 = plt.figure(1, figsize=(20, 4))
+#     ax = plt.subplot(1, 3, 1)
+#     plt.hist(data_0, bins=100, density=True)
+#     plt.xlabel("Norm Intensity [0]", fontsize=f_s)
+#     plt.ylabel("", fontsize=f_s)
+#     plt.axvline(mean_0 - fwhm_0 / 2, color="red", linestyle="dashed")
+#     plt.axvline(mean_0 + fwhm_0 / 2, color="red", linestyle="dashed")
+#     plt.axvline(barycenter_0, color="blue", linestyle="dashed", label="mean")  # type: ignore
+#     plt.legend()
+#     # plt.yscale('log')
+#     plt.axis("tight")
+#     ax.tick_params(labelsize=f_s)
+#     plt.grid(alpha=0.01)
 
-# Pseudo-Voigt profile
-def pseudo_voigt(x, A, x0, sigma, gamma, alpha):
-    """Returns the pseudo-Voigt distribution function for the given parameters.
-
-    Args:
-        x: A NumPy array of values to evaluate the function at.
-        eta: The mixing ratio of the Gaussian and Lorentzian distributions.
-        sigma: The standard deviation of the Gaussian distribution.
-        gamma: The half-width at half-maximum (HWHM) of the Lorentzian distribution.
-
-    Returns:
-       A NumPy array of the values of the pseudo-Voigt distribution function at the given values of x.
-    """
-    import numpy as np
-
-    gaussian = np.exp(-((x - x0) ** 2) / (2 * sigma**2))
-    lorentzian = 1 / (1 + ((x - x0) / gamma) ** 2)
-    return A * (1 - alpha) * gaussian + A * alpha * lorentzian
-
-
-# Pearson VII profile
-def pearson_vii(x, A, x0, gamma, m):
-    import numpy as np
-
-    gamma_safe = np.maximum(gamma, 1e-10)
-    x_diff = (x - x0) / gamma_safe
-    x_diff_sq = x_diff**2
-
-    threshold = 1e6  # define a threshold for "large"
-
-    # Masks
-    mask_safe = x_diff_sq < threshold
-    mask_large = ~mask_safe
-
-    denom = np.empty_like(x_diff_sq)
-
-    # Safe branch: moderate x_diff
-    denom[mask_safe] = np.exp(m * np.log1p(x_diff_sq[mask_safe]))
-
-    # Approximate branch: huge x_diff
-    # We must be careful: extremely large x_diff_sq can still cause overflows in x_diff_sq**m
-    with np.errstate(over="ignore"):  # Silence overflow temporarily
-        denom[mask_large] = x_diff_sq[mask_large] ** m
-
-    # Final protection against infinities/zero
-    denom = np.maximum(denom, 1e-300)
-    denom = np.where(np.isfinite(denom), denom, np.finfo(float).max)
-
-    return A / denom
-
-
-def fwhm_calculation_geom_methode2(x_data, y_fit):
-    import numpy as np
-    from scipy.signal import find_peaks
-
-    peaks, _ = find_peaks(y_fit)
-    half_max = np.max(y_fit) / 2
-    indices_higher_than_hm = np.where(y_fit >= half_max)[0]
-    left_peak = indices_higher_than_hm[0]
-    right_peak = indices_higher_than_hm[-1]
-
-    fwhm = x_data[right_peak] - x_data[left_peak]
-    return fwhm
+#     ax = plt.subplot(1, 3, 2)
+#     plt.hist(data_1, bins=100, density=True)
+#     plt.xlabel("Norm Intensity [1]", fontsize=f_s)
+#     plt.axvline(mean_1 - fwhm_1 / 2, color="red", linestyle="dashed")
+#     plt.axvline(mean_1 + fwhm_1 / 2, color="red", linestyle="dashed")
+#     plt.axvline(barycenter_1, color="blue", linestyle="dashed", label="mean")  # type: ignore
+#     plt.legend()
+#     # plt.yscale('log')
+#     plt.axis("tight")
+#     plt.grid(alpha=0.01)
+#     ax.tick_params(labelsize=f_s)
+#     ax = plt.subplot(1, 3, 3)
+#     plt.hist(data_2, bins=100, density=True)
+#     plt.axvline(mean_2 - fwhm_2 / 2, color="red", linestyle="dashed")
+#     plt.axvline(mean_2 + fwhm_2 / 2, color="red", linestyle="dashed")
+#     plt.axvline(barycenter_2, color="blue", linestyle="dashed", label="mean")  # type: ignore
+#     plt.xlabel("Norm Intensity[2]", fontsize=f_s)
+#     # plt.yscale('log')
+#     plt.axis("tight")
+#     ax.tick_params(labelsize=f_s)
+#     plt.grid(alpha=0.01)
+#     plt.legend()
+#     fig2.suptitle(r"Scan " + str(i_scan), fontsize=f_s)
+#     plt.show()
+#     return fig2
 
 
-#####################################################################################################################
-def plot_single_data_distr(data, i_scan):
-    # from scipy.stats import norm
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import xrayutilities as xu
+# def plot_Int(data, i_scan):
+#     from scipy.optimize import curve_fit
+#     import matplotlib.pyplot as plt
+#     import numpy as np
 
-    data_0 = xu.maplog(data.sum(axis=0).flatten())
-    # data_0=data_0[data_0!=0]
-    mean_0 = np.mean(data_0)  # norm.mean(dddata)
-    std_0 = np.std(data_0)  # norm.std(dddata)
-    fwhm_0 = 2 * std_0 * np.sqrt(2 * np.log(2))
-    # intensity_at_fwhm_0 = norm.pdf(mean_0 - fwhm_0 / 2)
-    barycenter_0 = np.mean(data_0)
-    # intensity_at_barycenter_0 = norm.pdf(barycenter_0)
+#     data_sum_xy = (data.sum(axis=(0, 1))).astype(int)
+#     z = np.arange(0, len(data_sum_xy))
+#     data_sum_xz = (data.sum(axis=(0, 2))).astype(int)
+#     y = np.arange(0, len(data_sum_xz))
+#     data_sum_yz = (data.sum(axis=(2, 1))).astype(int)
+#     x = np.arange(0, len(data_sum_yz))
+#     f_s = 18
+#     ax = plt.subplot(1, 1, 1)
+#     plt.plot(z, data_sum_xy, "o", label="z dir")
+#     plt.plot(y, data_sum_xz, "o", label="y dir")
+#     plt.plot(x, data_sum_yz, "o", label="x dir")
+#     plt.title(
+#         "Sum of intensity in each direction for scan: " + str(i_scan),
+#         fontsize=f_s,
+#     )
+#     plt.ylabel("Intensity", fontsize=f_s)
+#     plt.xlabel("(x,y,z)", fontsize=f_s)
+#     try:
+#         popt_xy, pcov_xy = curve_fit(gaussian, z, data_sum_xy)
+#         fwhm_xy = np.abs(2 * popt_xy[2] * np.sqrt(2 * np.log(2)))
+#         fitted_data_sum_xy = gaussian(z, popt_xy[0], popt_xy[1], popt_xy[2])
+#         mean_xy = popt_xy[1]
+#         plt.plot(z, fitted_data_sum_xy, label="Fitted  z dir")
+#         plt.axvline(mean_xy, color="r", linestyle="--", label="FWHM Bounds")
+#     except Exception:
+#         fwhm_xy, fitted_data_sum_xy, mean_xy = 0, 0, 0
+#     try:
+#         popt_xz, pcov_xz = curve_fit(gaussian, y, data_sum_xz)
+#         fwhm_xz = np.abs(2 * popt_xz[2] * np.sqrt(2 * np.log(2)))
+#         fitted_data_sum_xz = gaussian(y, popt_xz[0], popt_xz[1], popt_xz[2])
+#         mean_xz = popt_xz[1]
+#         plt.plot(y, fitted_data_sum_xz, label="Fitted  y dir")
+#         plt.axvline(mean_xz, color="r", linestyle="--", label="FWHM Bounds")
+#     except Exception:
+#         fwhm_xz, fitted_data_sum_xz, mean_xz = 0, 0, 0
+#     try:
+#         popt_yz, pcov_yz = curve_fit(gaussian, x, data_sum_yz)
+#         fwhm_yz = np.abs(2 * popt_yz[2] * np.sqrt(2 * np.log(2)))
+#         fitted_data_sum_yz = gaussian(x, popt_yz[0], popt_yz[1], popt_yz[2])
+#         mean_yz = popt_yz[1]
+#         plt.plot(x, fitted_data_sum_yz, label="Fitted x dir")
+#         plt.axvline(mean_yz, color="r", linestyle="--", label="FWHM Bounds")
+#     except Exception:
+#         fwhm_yz, fitted_data_sum_yz, mean_yz = 0, 0, 0
 
-    data_1 = xu.maplog(data.sum(axis=1).flatten())
-    # data_1=data_1[data_1!=0]
-    mean_1 = np.mean(data_1)  # norm.mean(dddata)
-    std_1 = np.std(data_1)  # norm.std(dddata)
-    fwhm_1 = 2 * std_1 * np.sqrt(2 * np.log(2))
-    # intensity_at_fwhm_1 = norm.pdf(mean_1 - fwhm_1 / 2)
-    barycenter_1 = np.mean(data_1)
-    # intensity_at_barycenter_1 = norm.pdf(barycenter_1)
-
-    data_2 = xu.maplog(data.sum(axis=2).flatten())
-    # data_2=data_2[data_2!=0]
-    mean_2 = np.mean(data_2)  # norm.mean(dddata)
-    std_2 = np.std(data_2)  # norm.std(dddata)
-    fwhm_2 = 2 * std_2 * np.sqrt(2 * np.log(2))
-    # intensity_at_fwhm_2 = norm.pdf(mean_2 - fwhm_2 / 2)
-    barycenter_2 = np.mean(data_2)
-    # intensity_at_barycenter_2 = norm.pdf(barycenter_2)
-
-    f_s = 16
-    fig2 = plt.figure(1, figsize=(20, 4))
-    ax = plt.subplot(1, 3, 1)
-    plt.hist(data_0, bins=100, density=True)
-    plt.xlabel("Norm Intensity [0]", fontsize=f_s)
-    plt.ylabel("", fontsize=f_s)
-    plt.axvline(mean_0 - fwhm_0 / 2, color="red", linestyle="dashed")
-    plt.axvline(mean_0 + fwhm_0 / 2, color="red", linestyle="dashed")
-    plt.axvline(barycenter_0, color="blue", linestyle="dashed", label="mean")  # type: ignore
-    plt.legend()
-    # plt.yscale('log')
-    plt.axis("tight")
-    ax.tick_params(labelsize=f_s)
-    plt.grid(alpha=0.01)
-
-    ax = plt.subplot(1, 3, 2)
-    plt.hist(data_1, bins=100, density=True)
-    plt.xlabel("Norm Intensity [1]", fontsize=f_s)
-    plt.axvline(mean_1 - fwhm_1 / 2, color="red", linestyle="dashed")
-    plt.axvline(mean_1 + fwhm_1 / 2, color="red", linestyle="dashed")
-    plt.axvline(barycenter_1, color="blue", linestyle="dashed", label="mean")  # type: ignore
-    plt.legend()
-    # plt.yscale('log')
-    plt.axis("tight")
-    plt.grid(alpha=0.01)
-    ax.tick_params(labelsize=f_s)
-    ax = plt.subplot(1, 3, 3)
-    plt.hist(data_2, bins=100, density=True)
-    plt.axvline(mean_2 - fwhm_2 / 2, color="red", linestyle="dashed")
-    plt.axvline(mean_2 + fwhm_2 / 2, color="red", linestyle="dashed")
-    plt.axvline(barycenter_2, color="blue", linestyle="dashed", label="mean")  # type: ignore
-    plt.xlabel("Norm Intensity[2]", fontsize=f_s)
-    # plt.yscale('log')
-    plt.axis("tight")
-    ax.tick_params(labelsize=f_s)
-    plt.grid(alpha=0.01)
-    plt.legend()
-    fig2.suptitle(r"Scan " + str(i_scan), fontsize=f_s)
-    plt.show()
-    return fig2
+#     plt.legend(fontsize=f_s)
+#     # plt.yscale('log')
+#     plt.axis("tight")
+#     ax.tick_params(labelsize=f_s)
+#     plt.grid(alpha=0.01)
+#     # plt.xlim(50,300)
+#     fwhm_ = np.array([fwhm_yz, fwhm_xz, fwhm_xy])
+#     return fwhm_
 
 
-def plot_Int(data, i_scan):
-    from scipy.optimize import curve_fit
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    data_sum_xy = (data.sum(axis=(0, 1))).astype(int)
-    z = np.arange(0, len(data_sum_xy))
-    data_sum_xz = (data.sum(axis=(0, 2))).astype(int)
-    y = np.arange(0, len(data_sum_xz))
-    data_sum_yz = (data.sum(axis=(2, 1))).astype(int)
-    x = np.arange(0, len(data_sum_yz))
-    f_s = 18
-    ax = plt.subplot(1, 1, 1)
-    plt.plot(z, data_sum_xy, "o", label="z dir")
-    plt.plot(y, data_sum_xz, "o", label="y dir")
-    plt.plot(x, data_sum_yz, "o", label="x dir")
-    plt.title(
-        "Sum of intensity in each direction for scan: " + str(i_scan),
-        fontsize=f_s,
-    )
-    plt.ylabel("Intensity", fontsize=f_s)
-    plt.xlabel("(x,y,z)", fontsize=f_s)
-    try:
-        popt_xy, pcov_xy = curve_fit(gaussian, z, data_sum_xy)
-        fwhm_xy = np.abs(2 * popt_xy[2] * np.sqrt(2 * np.log(2)))
-        fitted_data_sum_xy = gaussian(z, popt_xy[0], popt_xy[1], popt_xy[2])
-        mean_xy = popt_xy[1]
-        plt.plot(z, fitted_data_sum_xy, label="Fitted  z dir")
-        plt.axvline(mean_xy, color="r", linestyle="--", label="FWHM Bounds")
-    except Exception:
-        fwhm_xy, fitted_data_sum_xy, mean_xy = 0, 0, 0
-    try:
-        popt_xz, pcov_xz = curve_fit(gaussian, y, data_sum_xz)
-        fwhm_xz = np.abs(2 * popt_xz[2] * np.sqrt(2 * np.log(2)))
-        fitted_data_sum_xz = gaussian(y, popt_xz[0], popt_xz[1], popt_xz[2])
-        mean_xz = popt_xz[1]
-        plt.plot(y, fitted_data_sum_xz, label="Fitted  y dir")
-        plt.axvline(mean_xz, color="r", linestyle="--", label="FWHM Bounds")
-    except Exception:
-        fwhm_xz, fitted_data_sum_xz, mean_xz = 0, 0, 0
-    try:
-        popt_yz, pcov_yz = curve_fit(gaussian, x, data_sum_yz)
-        fwhm_yz = np.abs(2 * popt_yz[2] * np.sqrt(2 * np.log(2)))
-        fitted_data_sum_yz = gaussian(x, popt_yz[0], popt_yz[1], popt_yz[2])
-        mean_yz = popt_yz[1]
-        plt.plot(x, fitted_data_sum_yz, label="Fitted x dir")
-        plt.axvline(mean_yz, color="r", linestyle="--", label="FWHM Bounds")
-    except Exception:
-        fwhm_yz, fitted_data_sum_yz, mean_yz = 0, 0, 0
-
-    plt.legend(fontsize=f_s)
-    # plt.yscale('log')
-    plt.axis("tight")
-    ax.tick_params(labelsize=f_s)
-    plt.grid(alpha=0.01)
-    # plt.xlim(50,300)
-    fwhm_ = np.array([fwhm_yz, fwhm_xz, fwhm_xy])
-    return fwhm_
+# def voigt(x, A, x0, sigma_g, gamma, alpha):
+#     return (1 - alpha) * gaussian(x, A, x0, sigma_g) + alpha * lorentzian(
+#         x, A, x0, gamma
+#     )
 
 
-# Voigt profile
-def voigt(x, A, x0, sigma_g, gamma, alpha):
-    return A * (1 - alpha) * gaussian(x, A, x0, sigma_g) + alpha * lorentzian(
-        x, A, x0, gamma
-    )
+# def exp_broadened_gaussian(x, A, x0, sigma, beta):
+#     import numpy as np
+
+#     return (
+#         A
+#         * np.exp(-beta * (x - x0))
+#         * np.exp(-((x - x0) ** 2) / (2 * sigma**2))
+#     )
 
 
-# Exponentially Broadened Gaussian profile
-def exp_broadened_gaussian(x, A, x0, sigma, beta):
-    import numpy as np
+# def doniach_sunjic(x, I0, gamma, beta, alpha):
+#     import numpy as np
 
-    return (
-        A
-        * np.exp(-beta * (x - x0))
-        * np.exp(-((x - x0) ** 2) / (2 * sigma**2))
-    )
-
-
-# Doniach-Sunjic profile
-def doniach_sunjic(x, I0, gamma, beta, alpha):
-    import numpy as np
-
-    term1 = I0 * (1 + (x / gamma) ** 2) ** (-beta)
-    term2 = alpha * I0 * np.exp(-(x / gamma))
-    return term1 + term2
+#     term1 = I0 * (1 + (x / gamma) ** 2) ** (-beta)
+#     term2 = alpha * I0 * np.exp(-(x / gamma))
+#     return term1 + term2
 
 
 # Skewed Lorentzian profile
 def skewed_lorentzian(x, A, x0, gamma, delta):
     import numpy as np
 
-    term1 = (1 / (np.pi * gamma)) * (
-        gamma**2 / ((x - x0 - delta) ** 2 + gamma**2)
-    )
+    term1 = (1 / (np.pi * gamma)) * (gamma**2 / ((x - x0 - delta) ** 2 + gamma**2))
     return A * term1
 
 
@@ -361,47 +277,47 @@ def fwhm_calculation_geom_methode1(x_data, y_fit):
 
 
 # Fitting and evaluation
-def fit_best_profile(x_data, y_data, x_data_fit):
-    from scipy.optimize import curve_fit
-    import numpy as np
+# def fit_best_profile(x_data, y_data, x_data_fit):
+#     import numpy as np
+#     from scipy.optimize import curve_fit
 
-    profiles = [
-        (gaussian, "Gaussian", [np.max(y_data), np.argmax(y_data), 5]),
-        (lorentzian, "Lorentzian", [np.max(y_data), np.argmax(y_data), 5]),
-        #  (voigt, "Voigt", [np.max(y_data), np.argmax(y_data), 10, 5, 0.5]),
-        (pearson_vii, "Pearson VII", [np.max(y_data), 6, 0.5, 3]),
-        (
-            pseudo_voigt,
-            "Pseudo-Voigt",
-            [np.max(y_data), np.argmax(y_data), 10, 5, 0.15],
-        ),
-    ]
+#     profiles = [
+#         (gaussian, "Gaussian", [np.max(y_data), np.argmax(y_data), 5]),
+#         (lorentzian, "Lorentzian", [np.max(y_data), np.argmax(y_data), 5]),
+#         #  (voigt, "Voigt", [np.max(y_data), np.argmax(y_data), 10, 5, 0.5]),
+#         (pearson_vii, "Pearson VII", [np.max(y_data), 6, 0.5, 3]),
+#         (
+#             pseudo_voigt,
+#             "Pseudo-Voigt",
+#             [np.max(y_data), np.argmax(y_data), 10, 5, 0.15],
+#         ),
+#     ]
 
-    best_r_squared = -1
-    best_profile = None
-    for profile, name, initial_guess in profiles:
-        np.random.seed(0)
-        popt, _ = curve_fit(
-            profile,
-            x_data,
-            y_data + 0.25 * np.random.normal(size=len(x_data)),
-            p0=initial_guess,
-            maxfev=4000000,
-        )
-        y_fit = profile(x_data_fit, *popt)
-        sse = np.sum((y_data - profile(x_data, *popt)) ** 2)
-        # mean = popt[1]  # Peak position as mean
-        # width = 2 * popt[2]  # FWHM as width
-        # half_max = popt[0] / 2
-        # Calculate FWHM based on the fit parameters
-        fwhm = find_fwhm_all(x_data_fit, y_fit)
-        r_squared = 1 - sse / np.sum((y_data - np.mean(y_data)) ** 2)
-        if r_squared > best_r_squared:
-            best_r_squared = r_squared
+#     best_r_squared = -1
+#     best_profile = None
+#     for profile, name, initial_guess in profiles:
+#         np.random.seed(0)
+#         popt, _ = curve_fit(
+#             profile,
+#             x_data,
+#             y_data + 0.25 * np.random.normal(size=len(x_data)),
+#             p0=initial_guess,
+#             maxfev=4000000,
+#         )
+#         y_fit = profile(x_data_fit, *popt)
+#         sse = np.sum((y_data - profile(x_data, *popt)) ** 2)
+#         # mean = popt[1]  # Peak position as mean
+#         # width = 2 * popt[2]  # FWHM as width
+#         # half_max = popt[0] / 2
+#         # Calculate FWHM based on the fit parameters
+#         fwhm = find_fwhm_all(x_data_fit, y_fit)
+#         r_squared = 1 - sse / np.sum((y_data - np.mean(y_data)) ** 2)
+#         if r_squared > best_r_squared:
+#             best_r_squared = r_squared
 
-            best_profile = (name, popt, r_squared, y_fit, np.abs(fwhm))
+#             best_profile = (name, popt, r_squared, y_fit, np.abs(fwhm))
 
-    return best_profile
+#     return best_profile
 
 
 def pseudo_voigt_fwhm_Scherrer(lambda_, FWHM, theta, k=0.9):
@@ -418,7 +334,8 @@ def pseudo_voigt_fwhm_Scherrer(lambda_, FWHM, theta, k=0.9):
     """
     import numpy as np
 
-    fact = (k * lambda_) / np.cos(np.cos(theta * np.pi / 180))
+    theta_rad = theta * np.pi / 180
+    fact = (k * lambda_) / np.cos(theta_rad)
     return fact / (FWHM)
 
 
@@ -442,105 +359,6 @@ def theta_bragg_pt(lambda_, h, k, l_idx, a0=3.924):
     )  # Spacing between the (111) planes of platinum in Angstroms.
 
     return np.arcsin(lambda_ / (2 * d)) * 180 / np.pi
-
-
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-def find_fwhm_all(x_data_fit, y_fit, name="Pseudo-Voit", popt=None):
-    """
-    Compute the Full-Width at Half Maximum (FWHM) of a given peak function.
-
-    This function attempts to determine the FWHM using multiple approaches:
-    1. **Geometric Method (Primary Method)**:
-       - Finds the two points where the intensity is at half the peak maximum.
-       - Uses `fwhm_calculation_geom_methode2` to estimate the width.
-    2. **Alternative Geometric Method**:
-       - If the first method fails, it uses numerical differentiation (`np.sign(y_fit - half_max)`)
-         to locate the half-max points and compute FWHM.
-    3. **Analytical Method (If a Fitted Model Exists)**:
-       - If a specific peak model (`Gaussian`, `Lorentzian`, `Pseudo-Voigt`) was fitted,
-         it computes FWHM based on the model parameters:
-         - **Gaussian:** `FWHM = 2.355 * sigma`
-         - **Lorentzian:** `FWHM = 2 * gamma`
-         - **Pseudo-Voigt:** Uses `pseudo_voigt_fwhm(sigma, gamma, alpha)`
-    4. **Fallback Case**:
-       - If all methods fail, it returns `0` as a default.
-
-    Parameters:
-    -----------
-    x_data_fit : numpy.ndarray
-        The x-axis values of the fitted data (e.g., pixel or spatial coordinates).
-    y_fit : numpy.ndarray
-        The corresponding y-axis values (intensity or function values).
-
-    Returns:
-    --------
-    fwhm : float
-        The computed Full-Width at Half Maximum (FWHM). Returns `0` if no valid FWHM is found.
-
-    Notes:
-    ------
-    - The function prioritizes **geometric methods** for generality.
-    - If a **named peak profile is fitted**, it prefers analytical solutions.
-    - Ensures robustness by trying multiple methods before defaulting to `0`.
-
-    Example:
-    --------
-    >>> x = np.linspace(-10, 10, 100)
-    >>> y = np.exp(-x**2 / 2)  # Gaussian-like peak
-    >>> fwhm = find_fwhm_all(x, y)
-    >>> print(f"FWHM: {fwhm:.3f}")
-
-    """
-    import numpy as np
-
-    try:
-        fwhm = fwhm_calculation_geom_methode2(x_data_fit, y_fit)
-        # print(name+"first methode")
-    except Exception:
-        # print("not working")
-        try:
-            half_max = np.max(y_fit) / 2
-            idx = np.argwhere(np.diff(np.sign(y_fit - half_max))).flatten()
-            fwhm = x_data_fit[idx[-1]] - x_data_fit[idx[0]]
-        except Exception:
-            fwhm = 0
-    return fwhm
-
-
-# -------------------------------------------------------------------------------------------------------------
-def integral_fwhm(x, y, method="trapz"):
-    """
-    Compute the Integral Full-Width at Half Maximum (Integral FWHM).
-
-    Parameters
-    ----------
-    x : numpy.ndarray
-        The x-axis values (e.g., pixel positions or spatial coordinates).
-    y : numpy.ndarray
-        The corresponding y-axis values (intensity or function values).
-    method : str, optional
-        Integration method: 'trapz' (default) or 'simps'.
-
-    Returns
-    -------
-    float
-        The Integral FWHM value.
-    """
-    import numpy as np
-
-    if method == "trapz":
-        integral_intensity = np.trapz(y, x)  # Trapezoidal integration
-    elif method == "simps":
-        from scipy.integrate import simpson
-
-        integral_intensity = simpson(y, x)  # Simpson's rule
-    else:
-        raise ValueError("method must be 'trapz' or 'simps'")
-
-    peak_max = np.max(y)
-    return integral_intensity / peak_max if peak_max != 0 else 0.0
 
 
 def fwhm_integral_1(x, y):
@@ -580,116 +398,6 @@ def fwhm_integral_1(x, y):
     return np.trapz(y_fwhm, x_fwhm)
 
 
-# -------------------------------------------------------------------------------------------------------------
-def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
-    """
-    Fit the best peak profile (Gaussian, Lorentzian, Pearson VII, Pseudo-Voigt)
-    to noisy data and compute both standard FWHM and Integral FWHM.
-
-    Parameters:
-    -----------
-    x_data : numpy.ndarray
-        The x-axis values (e.g., spatial coordinates, pixel positions).
-    y_data : numpy.ndarray
-        The corresponding y-axis intensity values.
-    x_data_fit : numpy.ndarray
-        The x-axis values for evaluating the fitted profile.
-    noise_levels : list or numpy.ndarray, optional
-        List of noise levels to iterate over (default: np.arange(0.01, 0.5, 0.01)).
-
-    Returns:
-    --------
-    best_profile : tuple
-        (profile_name, popt, r_squared, y_fit, fwhm, integral_fwhm)
-        - profile_name : str : Name of the best fitting function.
-        - popt : numpy.ndarray : Optimized parameters for the best fit.
-        - r_squared : float : R-squared value for fit quality.
-        - y_fit : numpy.ndarray : Best fitted data values.
-        - fwhm : float : Full-Width at Half Maximum (geometric method).
-        - integral_fwhm : float : Integral Full-Width at Half Maximum.
-    """
-    from scipy.optimize import curve_fit
-    from sklearn.metrics import r2_score
-    import numpy as np
-
-    if noise_levels is None:
-        noise_levels = np.arange(0.01, 0.5, 0.01)
-
-    profiles = [
-        (gaussian, "Gaussian", [np.max(y_data), np.argmax(y_data), 5]),
-        (lorentzian, "Lorentzian", [np.max(y_data), np.argmax(y_data), 5]),
-        (pearson_vii, "Pearson VII", [np.max(y_data), 6, 0.5, 3]),
-        (
-            pseudo_voigt,
-            "Pseudo-Voigt",
-            [np.max(y_data), np.argmax(y_data), 10, 5, 0.15],
-        ),
-    ]
-
-    best_r_squared = -1
-    best_profile = None
-
-    # Loop over noise levels
-    for noise_level in noise_levels:
-        # Add Gaussian noise to data
-        noisy_y_data = y_data + np.random.normal(
-            scale=noise_level, size=len(y_data)
-        )
-
-        # Loop over peak profiles
-        for profile_func, profile_name, initial_guess in profiles:
-            try:
-                # Fit the profile to noisy data
-                popt, _ = curve_fit(
-                    profile_func,
-                    x_data,
-                    noisy_y_data,
-                    p0=initial_guess,
-                    maxfev=5000,
-                )
-
-                # Evaluate fit quality
-                y_fit = profile_func(x_data_fit, *popt)
-                y_fit_ = profile_func(x_data, *popt)
-                r_squared = r2_score(noisy_y_data, y_fit_)
-
-                # Compute Standard FWHM using geometric method or model fitting
-                fwhm = find_fwhm_all(x_data_fit, y_fit)
-
-                # Compute Integral FWHM
-                integral_fwhm_value = integral_fwhm(x_data_fit, y_fit)
-
-                # Update best fit if current fit has higher R²
-                if r_squared > best_r_squared:
-                    best_r_squared = r_squared
-                    best_profile = (
-                        profile_name,
-                        popt,
-                        r_squared,
-                        y_fit,
-                        fwhm,
-                        integral_fwhm_value,
-                    )
-
-            except Exception:
-                continue
-
-    return best_profile
-
-
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------------------
 def get_plot_fwhm_and_skewness_kurtosis(
     data,
@@ -801,17 +509,23 @@ def get_plot_fwhm_and_skewness_kurtosis(
     >>> get_plot_fwhm_and_skewness_kurtosis(data, center_peak=True, save_fig="output.png")
     """
     # === Required Imports ===
-    from IPython.display import display
-    import numpy as np
+    try:
+        from IPython.display import display  # type: ignore
+    except Exception:  # pragma: no cover
+
+        def display(x):  # type: ignore
+            print(x)
+
     import matplotlib.pyplot as plt
+    import numpy as np
     from matplotlib import gridspec
-    from matplotlib.table import Table
     from matplotlib import ticker as mticker
-    from scipy.stats import skew, kurtosis
-    from tabulate import tabulate
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
     from matplotlib.colors import LogNorm
+    from matplotlib.table import Table
     from matplotlib.ticker import MaxNLocator
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    from scipy.stats import kurtosis, skew
+    from tabulate import tabulate
 
     def MIR_Colormap():
         cdict = {
@@ -847,9 +561,7 @@ def get_plot_fwhm_and_skewness_kurtosis(
 
     my_cmap = MIR_Colormap()
 
-    def fit_best_profile_with_noise(
-        x_data, y_data, x_data_fit, noise_levels=None
-    ):
+    def fit_best_profile_with_noise(x_data, y_data, x_data_fit, noise_levels=None):
         """
         Fit the best peak profile (Gaussian, Lorentzian, Pearson VII, Pseudo-Voigt)
         to noisy data and compute both standard FWHM and Integral FWHM.
@@ -876,9 +588,9 @@ def get_plot_fwhm_and_skewness_kurtosis(
             - fwhm : float : Full-Width at Half Maximum (geometric method).
             - integral_fwhm : float : Integral Full-Width at Half Maximum.
         """
+        import numpy as np
         from scipy.optimize import curve_fit
         from sklearn.metrics import r2_score
-        import numpy as np
 
         if noise_levels is None:
             noise_levels = np.arange(0.01, 0.5, 0.01)
@@ -988,9 +700,7 @@ def get_plot_fwhm_and_skewness_kurtosis(
         # Figure width in inches
         fig_width_in = fig_width_pt * inches_per_pt
         # Figure height in inches
-        fig_height_in = (
-            fig_width_in * golden_ratio * (subplots[0] / subplots[1])
-        )
+        fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
 
         return (fig_width_in, fig_height_in)
 
@@ -1084,7 +794,7 @@ def get_plot_fwhm_and_skewness_kurtosis(
 
         gaussian = np.exp(-((x - x0) ** 2) / (2 * sigma**2))
         lorentzian = 1 / (1 + ((x - x0) / gamma) ** 2)
-        return A * (1 - alpha) * gaussian + A * alpha * lorentzian
+        return (1 - alpha) * gaussian + A * alpha * lorentzian
 
     # Pearson VII profile
     def pearson_vii(x, A, x0, gamma, m):
@@ -1117,8 +827,8 @@ def get_plot_fwhm_and_skewness_kurtosis(
         return A / denom
 
     def fwhm_calculation_geom_methode2(x_data, y_fit):
-        from scipy.signal import find_peaks
         import numpy as np
+        from scipy.signal import find_peaks
 
         peaks, _ = find_peaks(y_fit)
         half_max = np.max(y_fit) / 2
@@ -1177,9 +887,7 @@ def get_plot_fwhm_and_skewness_kurtosis(
                 ax.xaxis.get_offset_text().set_fontsize(fontsize)
                 ax.xaxis.get_offset_text().set_weight("normal")
                 ax.figure.canvas.draw()
-                offset_x = (
-                    ax.xaxis.get_offset_text().get_text().replace("−", "-")
-                )
+                offset_x = ax.xaxis.get_offset_text().get_text().replace("−", "-")
                 if "e" in offset_x:
                     exponent = int(offset_x.split("e")[-1])
                     exponents["x"] = exponent  # type: ignore
@@ -1192,9 +900,7 @@ def get_plot_fwhm_and_skewness_kurtosis(
                 ax.yaxis.get_offset_text().set_fontsize(fontsize)
                 ax.yaxis.get_offset_text().set_weight("normal")
                 ax.figure.canvas.draw()
-                offset_y = (
-                    ax.yaxis.get_offset_text().get_text().replace("−", "-")
-                )
+                offset_y = ax.yaxis.get_offset_text().get_text().replace("−", "-")
                 if "e" in offset_y:
                     exponent = int(offset_y.split("e")[-1])
                     exponents["y"] = exponent  # type: ignore
@@ -1224,11 +930,7 @@ def get_plot_fwhm_and_skewness_kurtosis(
         )
 
         for n in range(3):
-            img = (
-                np.nanmax(data, axis=n)
-                if max_projection
-                else np.nansum(data, axis=n)
-            )
+            img = np.nanmax(data, axis=n) if max_projection else np.nansum(data, axis=n)
 
             if step_qxqyqz is not None:
                 shape = img.shape
@@ -1365,337 +1067,334 @@ def get_plot_fwhm_and_skewness_kurtosis(
 
     ##########################################################################################################################
     # === Main Function ===
-    plt.style.use("grayscale")
-    plt.rcParams["font.weight"] = "bold"
-    plt.rcParams["axes.labelweight"] = "bold"
-    plt.rcParams["axes.titleweight"] = "bold"
-    plt.rcParams.update(
-        {
-            "lines.linewidth": linewidth,  # Global line width
-            "lines.markersize": marker_size,  # Global marker size
-            "axes.labelsize": f_s,  # Label font size
-            "axes.titlesize": f_s,  # Title font size
-            "xtick.labelsize": f_s,  # Tick label size
-            "ytick.labelsize": f_s,
-            "legend.fontsize": f_s,
-            "font.weight": "bold",
-            "axes.labelweight": "bold",
-            "axes.titleweight": "bold",
-            "figure.dpi": 150,  # Save quality
-        }
-    )
-    step_x_fit = 0.25
-    color_list = ("#1f77b4", "#2ca02c", "#ff7f0e")
-    directions = ["X", "Y", "Z"]
-    background_degree = 1  # Adjust the degree of the polynomial as needed
-    first_and_last_pixel = [0, -1]
-    if plot:
-        figsize = get_figure_size(scale=3, subplots=subplots)
-        figure = plt.figure(figsize=figsize, dpi=150)
-        figure.set_constrained_layout(True)  # type: ignore # Preferred for automatic handling
-        # Define the grid layout with one row for the large subplot and three subplots in the second row
-        gs = gridspec.GridSpec(
-            nrows=4,
-            ncols=3,
-            wspace=wspace_gridspec,
-            hspace=hspace_gridspec,
-            figure=figure,
+    with plt.rc_context():
+        plt.style.use("grayscale")
+        plt.rcParams["font.weight"] = "bold"
+        plt.rcParams["axes.labelweight"] = "bold"
+        plt.rcParams["axes.titleweight"] = "bold"
+        plt.rcParams.update(
+            {
+                "lines.linewidth": linewidth,  # Global line width
+                "lines.markersize": marker_size,  # Global marker size
+                "axes.labelsize": f_s,  # Label font size
+                "axes.titlesize": f_s,  # Title font size
+                "xtick.labelsize": f_s,  # Tick label size
+                "ytick.labelsize": f_s,
+                "legend.fontsize": f_s,
+                "font.weight": "bold",
+                "axes.labelweight": "bold",
+                "axes.titleweight": "bold",
+                "figure.dpi": 150,  # Save quality
+            }
         )
-        ax_table = figure.add_subplot(gs[0, :])
-        ax_table.axis("off")  # This axis will hold only the table
-        ax = figure.add_subplot(gs[1:3, :])  # Main plot
-        ax1 = figure.add_subplot(gs[3, 0])
-        ax2 = figure.add_subplot(gs[3, 1])
-        ax3 = figure.add_subplot(gs[3, 2])
-
-        plot_3D_projections(
-            data,
-            ax=[ax1, ax2, ax3],
-            fig=figure,
-            log_scale=True,
-            cmap=my_cmap,
-            vmin=vmin,
-            vmax=vmax,
-            colorbar=True,
-            tight_layout=False,
-            step_qxqyqz=step_qxqyqz,
-            fontsize=f_s,
-        )
-        ax1.axis("tight")
-        ax2.axis("tight")
-        ax3.axis("tight")
-
-        unit_label = (
-            r"$(\mathrm{\AA}^{-1})$" if step_qxqyqz else "$_{(pixels)}$"
-        )
-
-        ax.set_title(plot_title, pad=20)
-        ax.set_ylabel(
-            "Integrated Intensity $_{(a.u.)}$", fontsize=f_s, fontweight="bold"
-        )
-        ax.set_xlabel(
-            f"($Q_x,Q_y,Q_z$) {unit_label}", fontsize=f_s, fontweight="bold"
-        )
-        apply_sci_format(ax, fontsize=f_s)
-    # figure.tight_layout()
-    axes = [(1, 2), (0, 2), (0, 1)]
-    data_sum_all = [
-        data.sum(axis=axis) for axis in axes
-    ]  # Vectorized summation
-    X_data_all = [
-        np.arange(len(d)) for d in data_sum_all
-    ]  # Avoid recomputation
-    X_fit_all = [
-        np.linspace(0, len(d), int(len(d) / step_x_fit)) for d in data_sum_all
-    ]  # More robust
-    peak_positions = [np.argmax(d) for d in data_sum_all]
-    h_len = (
-        np.min(
-            np.min(peak_positions),
-            np.min(len(d) - p for d, p in zip(data_sum_all, peak_positions)),
-        )
-        - 1
-    )  # type: ignore
-    if center_peak:
-        data_sum_all = [
-            d[np.max(0, peak - h_len) : peak + h_len]
-            for d, peak in zip(data_sum_all, peak_positions)
-        ]
-        X_data_all = [np.arange(len(d)) for d in data_sum_all]
-        X_fit_all = [
-            np.linspace(0, len(d), int(len(d) / step_x_fit))
-            for d in data_sum_all
-        ]
-    if eliminate_linear_background:
-        background_coefficients_all = [
-            np.polyfit(
-                X_data_all[d][first_and_last_pixel],
-                data_sum_all[d][first_and_last_pixel],
-                background_degree,
-            )
-            for d in range(len(data_sum_all))
-        ]
-        background_fit_all = [
-            np.polyval(background_coefficients_all[d], X_data_all[d])
-            for d in range(len(data_sum_all))
-        ]
-        data_sum_all = [
-            data_sum_all[d] - background_fit_all[d]
-            for d in range(len(data_sum_all))
-        ]
-    skewness_xyz = np.array([skew(d) for d in data_sum_all])
-    kurtosis_xyz = np.array([kurtosis(d) for d in data_sum_all])
-    fits = [
-        fit_best_profile_with_noise(
-            X_data_all[i], data_sum_all[i], X_fit_all[i]
-        )
-        for i in range(len(data_sum_all))
-    ]
-    names, popt_xyz, rsquared_xyz, fitted_data, fwhm_xyz, fwhm_integral_xyz = (
-        zip(*fits)
-    )
-    # Apply unit scaling if step_qxqyqz is provided
-    if step_qxqyqz is not None:
-        for i in range(3):
-            X_data_all[i] = X_data_all[i].astype(float) * step_qxqyqz[i]
-            X_fit_all[i] = X_fit_all[i].astype(float) * step_qxqyqz[i]
-        fwhm_xyz = [f * step for f, step in zip(fwhm_xyz, step_qxqyqz)]
-        fwhm_integral_xyz = [
-            f * step for f, step in zip(fwhm_integral_xyz, step_qxqyqz)
-        ]
-    if plot and log_distribution:
-        ax.set_yscale("log")  # type: ignore
-    for i in range(len(data_sum_all)):
-        if i == 0:
-            _, direction = (1, 2), "X"
-        if i == 1:
-            _, direction = (0, 2), "Y"
-        if i == 2:
-            _, direction = (0, 1), "Z"
-        popt = popt_xyz[i]
-        try:
-            print(f"fit along {direction} results :")  # type: ignore
-            display(
-                f"A {popt[0]} {direction}0 {popt[1]} sigma {popt[2]} gamma  {popt[3]}  eta {popt[4]} "
-            )  # type: ignore
-        except Exception:
-            print("Not pseudo-voigt")
-        if plot:
-            fit_safe = np.clip(fitted_data[i], 1e-12, None)
-            scatter_safe = np.clip(data_sum_all[i], 1e-12, None)
-            ax.scatter(
-                X_data_all[i], scatter_safe, s=marker_size, color=color_list[i]
-            )  # type: ignore
-            ax.plot(
-                X_fit_all[i],
-                fit_safe,
-                color=color_list[i],
-                alpha=alpha_fit,
-                label=f"Fit {direction} {names[i]}",
-            )  # type: ignore
-    if plot:
-        data_sum_fit_max = np.array(
-            [np.max(fit) for fit in fitted_data]
-        )  # Get max values for each fitted dataset
-        data_sum_fit_max_max = (
-            data_sum_fit_max.max()
-        )  # Overall max value for normalization
-        # ax.set_ylim(0,2 * data_sum_fit_max_max)  # 20% headroom above the tallest peak
-        for i, (fit, color, popt) in enumerate(
-            zip(fitted_data, color_list, popt_xyz)
-        ):
-            try:
-                half_max_norm = (
-                    0.51 * data_sum_fit_max[i] / data_sum_fit_max_max
-                )
-            except ZeroDivisionError:
-                half_max_norm = 0.5  # Fallback to mid-range if fit is flat
-            step = step_qxqyqz[i] if step_qxqyqz is not None else 1.0
-
-            center_scaled = (
-                popt_xyz[i][1] * step
-            )  # popt[1] is in pixels → convert if needed
-            fwhm_scaled = fwhm_xyz[
-                i
-            ]  # already scaled if you applied step_qxqyqz
-
-            fwhm_line_m = center_scaled - fwhm_scaled / 2
-            fwhm_line_p = center_scaled + fwhm_scaled / 2
-
-            ax.axvline(
-                x=fwhm_line_m,
-                color=color,
-                linestyle="--",
-                ymin=0,
-                ymax=half_max_norm,
-            )  # type: ignore
-            ax.axvline(
-                x=fwhm_line_p,
-                color=color,
-                linestyle="--",
-                ymin=0,
-                ymax=half_max_norm,
-            )  # type: ignore
-
-        ax.tick_params(labelsize=f_s)  # type: ignore
-        ax.grid(alpha=0.01)  # type: ignore
-        ax.legend(loc="best")  # type: ignore
-    if plot:
-        # Stack FWHM and Integral FWHM values
-        fwhm_xyz = np.array(fwhm_xyz)
-        fwhm_integral_xyz = np.array(fwhm_integral_xyz)
-
-        fwhm_values = np.concatenate([fwhm_xyz, fwhm_integral_xyz])
-        exponents = np.floor(
-            np.log10(np.abs(fwhm_values[np.nonzero(fwhm_values)]))
-        ).astype(int)
-
-        # Choose exponent closest to zero
-        chosen_exp = exponents[np.abs(exponents).argmin()]
-        scale_factor = 10 ** (-chosen_exp)
-
-        # Format values scaled by this exponent
-        scaled_fwhm = fwhm_xyz * scale_factor
-        scaled_fwhm_integral = fwhm_integral_xyz * scale_factor
-
-        # Replace original values in table row construction
-        rounded_values = np.column_stack(
-            (
-                np.round(scaled_fwhm, 2),
-                np.round(scaled_fwhm_integral, 2),
-                np.round(skewness_xyz, 1),
-                np.round(kurtosis_xyz, 1),
-                np.round(rsquared_xyz, 1),
-            )
-        )
-
-        # Now format unit string with common exponent
-        unit_str = (
-            f"$\\times 10^{{{chosen_exp}}}\\;\\mathrm{{\\AA}}^{{-1}}$"
-            if step_qxqyqz
-            else "$_{(pixels)}$"
-        )
-        # Determine units
+        step_x_fit = 0.25
+        unit_str = r"$(\mathrm{\AA}^{-1})$" if step_qxqyqz else "$_{(pixels)}$"
+        color_list = ("#1f77b4", "#2ca02c", "#ff7f0e")
         directions = ["X", "Y", "Z"]
-        # Build table data for plot
-        table_data = [
-            [
-                "Direction",
-                f"FWHM\n{unit_str}",
-                f"Integral FWHM\n{unit_str}",
-                "Skewness",
-                "Kurtosis",
-                "R-squared",
+        background_degree = 1  # Adjust the degree of the polynomial as needed
+        first_and_last_pixel = [0, -1]
+        if plot:
+            figsize = get_figure_size(scale=3, subplots=subplots)
+            figure = plt.figure(figsize=figsize, dpi=150)
+            figure.set_constrained_layout(True)  # type: ignore # Preferred for automatic handling
+            # Define the grid layout with one row for the large subplot and three subplots in the second row
+            gs = gridspec.GridSpec(
+                nrows=4,
+                ncols=3,
+                wspace=wspace_gridspec,
+                hspace=hspace_gridspec,
+                figure=figure,
+            )
+            ax_table = figure.add_subplot(gs[0, :])
+            ax_table.axis("off")  # This axis will hold only the table
+            ax = figure.add_subplot(gs[1:3, :])  # Main plot
+            ax1 = figure.add_subplot(gs[3, 0])
+            ax2 = figure.add_subplot(gs[3, 1])
+            ax3 = figure.add_subplot(gs[3, 2])
+
+            plot_3D_projections(
+                data,
+                ax=[ax1, ax2, ax3],
+                fig=figure,
+                log_scale=True,
+                cmap=my_cmap,
+                vmin=vmin,
+                vmax=vmax,
+                colorbar=True,
+                tight_layout=False,
+                step_qxqyqz=step_qxqyqz,
+                fontsize=f_s,
+            )
+            ax1.axis("tight")
+            ax2.axis("tight")
+            ax3.axis("tight")
+
+            unit_label = r"$(\mathrm{\AA}^{-1})$" if step_qxqyqz else "$_{(pixels)}$"
+
+            ax.set_title(plot_title, pad=20)
+            ax.set_ylabel(
+                "Integrated Intensity $_{(a.u.)}$",
+                fontsize=f_s,
+                fontweight="bold",
+            )
+            ax.set_xlabel(
+                f"($Q_x,Q_y,Q_z$) {unit_label}",
+                fontsize=f_s,
+                fontweight="bold",
+            )
+            apply_sci_format(ax, fontsize=f_s)
+        # figure.tight_layout()
+        axes = [(1, 2), (0, 2), (0, 1)]
+        data_sum_all = [data.sum(axis=axis) for axis in axes]  # Vectorized summation
+        X_data_all = [np.arange(len(d)) for d in data_sum_all]  # Avoid recomputation
+        X_fit_all = [
+            np.linspace(0, len(d), int(len(d) / step_x_fit)) for d in data_sum_all
+        ]  # More robust
+        peak_positions = np.array([np.argmax(d) for d in data_sum_all], dtype=int)
+        left_room = int(peak_positions.min())
+        right_room = int(
+            min(len(d) - int(p) for d, p in zip(data_sum_all, peak_positions))
+        )
+        h_len = max(min(left_room, right_room) - 1, 0)
+        if center_peak:
+            data_sum_all = [
+                d[np.maximum(0, peak - h_len) : peak + h_len]
+                for d, peak in zip(data_sum_all, peak_positions)
             ]
-        ] + [
-            [directions[i]] + list(map(str, rounded_values[i]))
-            for i in range(3)
-        ]
-
-        # Create matplotlib table on ax_table
-        table = Table(ax_table, loc="upper left")  # type: ignore
-        table.auto_set_font_size(False)
-        table.set_fontsize(f_s_table)
-        table.scale(scale_table[0], scale_table[1])
-
-        for i, row in enumerate(table_data):
-            for j, cell in enumerate(row):
-                table.add_cell(
-                    i,
-                    j,
-                    width=1 / len(row),
-                    height=0.3,
-                    text=str(cell),
-                    facecolor="darkblue",
-                    loc="center",
-                    edgecolor="darkblue",
+            X_data_all = [np.arange(len(d)) for d in data_sum_all]
+            X_fit_all = [
+                np.linspace(0, len(d), int(len(d) / step_x_fit)) for d in data_sum_all
+            ]
+        if eliminate_linear_background:
+            background_coefficients_all = [
+                np.polyfit(
+                    X_data_all[d][first_and_last_pixel],
+                    data_sum_all[d][first_and_last_pixel],
+                    background_degree,
                 )
-                text = table[i, j].get_text()
-                text.set_fontsize(f_s_table)
-                text.set_color("white")
-                text.set_weight("bold")  # type: ignore # type: ignore
+                for d in range(len(data_sum_all))
+            ]
+            background_fit_all = [
+                np.polyval(background_coefficients_all[d], X_data_all[d])
+                for d in range(len(data_sum_all))
+            ]
+            data_sum_all = [
+                data_sum_all[d] - background_fit_all[d]
+                for d in range(len(data_sum_all))
+            ]
+        skewness_xyz = np.array([skew(d) for d in data_sum_all])
+        kurtosis_xyz = np.array([kurtosis(d) for d in data_sum_all])
+        fits = [
+            fit_best_profile_with_noise(X_data_all[i], data_sum_all[i], X_fit_all[i])
+            for i in range(len(data_sum_all))
+        ]
+        (
+            names,
+            popt_xyz,
+            rsquared_xyz,
+            fitted_data,
+            fwhm_xyz,
+            fwhm_integral_xyz,
+        ) = zip(*fits)
+        # Apply unit scaling if step_qxqyqz is provided
+        if step_qxqyqz is not None:
+            for i in range(3):
+                X_data_all[i] = X_data_all[i].astype(float) * step_qxqyqz[i]
+                X_fit_all[i] = X_fit_all[i].astype(float) * step_qxqyqz[i]
+            fwhm_xyz = [f * step for f, step in zip(fwhm_xyz, step_qxqyqz)]
+            fwhm_integral_xyz = [
+                f * step for f, step in zip(fwhm_integral_xyz, step_qxqyqz)
+            ]
+        if plot and log_distribution:
+            ax.set_yscale("log")  # type: ignore
+        for i in range(len(data_sum_all)):
+            if i == 0:
+                _, direction = (1, 2), "X"
+            if i == 1:
+                _, direction = (0, 2), "Y"
+            if i == 2:
+                _, direction = (0, 1), "Z"
+            popt = popt_xyz[i]
+            try:
+                print(f"fit along {direction} results :")  # type: ignore
+                display(
+                    f"A {popt[0]} {direction}0 {popt[1]} sigma {popt[2]} gamma  {popt[3]}  eta {popt[4]} "
+                )  # type: ignore
+            except Exception:
+                print("Not pseudo-voigt")
+            if plot:
+                fit_safe = np.clip(fitted_data[i], 1e-12, None)
+                scatter_safe = np.clip(data_sum_all[i], 1e-12, None)
+                ax.scatter(
+                    X_data_all[i],
+                    scatter_safe,
+                    s=marker_size,
+                    color=color_list[i],
+                )  # type: ignore
+                ax.plot(
+                    X_fit_all[i],
+                    fit_safe,
+                    color=color_list[i],
+                    alpha=alpha_fit,
+                    label=f"Fit {direction} {names[i]}",
+                )  # type: ignore
+        if plot:
+            data_sum_fit_max = np.array(
+                [np.max(fit) for fit in fitted_data]
+            )  # Get max values for each fitted dataset
+            data_sum_fit_max_max = (
+                data_sum_fit_max.max()
+            )  # Overall max value for normalization
+            # ax.set_ylim(0,2 * data_sum_fit_max_max)  # 20% headroom above the tallest peak
+            for i, (fit, color, popt) in enumerate(
+                zip(fitted_data, color_list, popt_xyz)
+            ):
+                try:
+                    half_max_norm = 0.51 * data_sum_fit_max[i] / data_sum_fit_max_max
+                except ZeroDivisionError:
+                    half_max_norm = 0.5  # Fallback to mid-range if fit is flat
+                step = step_qxqyqz[i] if step_qxqyqz is not None else 1.0
 
-        # Add table to axis
-        ax_table.add_table(table)  # type: ignore # type: ignore
-        ax_table.axis("off")  # type: ignore # type: ignore
-    # Print summary table in console
-    console_table = [
-        ["Metric", "X", "Y", "Z"],
-        [f"FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_xyz],  # type: ignore
-        [f"Integral FWHM {unit_str}"]
-        + [f"{x:.4f}" for x in fwhm_integral_xyz],  # type: ignore
-        ["Skewness"] + [f"{x:.4f}" for x in skewness_xyz],
-        ["Kurtosis"] + [f"{x:.4f}" for x in kurtosis_xyz],
-        ["R-squared"] + [f"{x:.4f}" for x in rsquared_xyz],
-    ]
-    print(tabulate(console_table, headers="firstrow", tablefmt="grid"))
-    if plot:
-        for ax_obj in figure.get_axes():  # type: ignore
-            ax_obj.tick_params(labelsize=f_s)  # only label size allowed
-            for label in ax_obj.get_xticklabels() + ax_obj.get_yticklabels():
-                label.set_fontweight("bold")
-            ax_obj.title.set_fontsize(f_s)
-            ax_obj.xaxis.label.set_size(f_s)  # type: ignore
-            ax_obj.yaxis.label.set_size(f_s)  # type: ignore
-            legend = ax_obj.get_legend()
-            if legend:
-                for text in legend.get_texts():
-                    text.set_weight("bold")  # type: ignore
-                    text.set_fontsize(f_s)
-    if plot:
-        y_max = np.max([np.max(fit) for fit in fitted_data])
-        x_max = np.max([np.max(fit) for fit in X_data_all])
-        ax.set_ylim(0, y_padding_factor * y_max)  # type: ignore # Set bottom to 0, top with headroom
-        ax.set_xlim(0, y_padding_factor * x_max)  # type: ignore # Set bottom to 0, top with headroom
-    if tight_layout:
-        figure.tight_layout()  # type: ignore
-    if save_fig:
-        figure.savefig(save_fig)  # type: ignore
-        # plt.savefig(save_fig)
-        print(f"saving figure to : {save_fig}")
-    if plot:
-        if plot_show:
-            plt.show()
-        else:
-            plt.close()
+                center_scaled = (
+                    popt_xyz[i][1] * step
+                )  # popt[1] is in pixels → convert if needed
+                fwhm_scaled = fwhm_xyz[i]  # already scaled if you applied step_qxqyqz
+
+                fwhm_line_m = center_scaled - fwhm_scaled / 2
+                fwhm_line_p = center_scaled + fwhm_scaled / 2
+
+                ax.axvline(
+                    x=fwhm_line_m,
+                    color=color,
+                    linestyle="--",
+                    ymin=0,
+                    ymax=half_max_norm,
+                )  # type: ignore
+                ax.axvline(
+                    x=fwhm_line_p,
+                    color=color,
+                    linestyle="--",
+                    ymin=0,
+                    ymax=half_max_norm,
+                )  # type: ignore
+
+            ax.tick_params(labelsize=f_s)  # type: ignore
+            ax.grid(alpha=0.01)  # type: ignore
+            ax.legend(loc="best")  # type: ignore
+        if plot:
+            # Stack FWHM and Integral FWHM values
+            fwhm_xyz = np.array(fwhm_xyz)
+            fwhm_integral_xyz = np.array(fwhm_integral_xyz)
+
+            fwhm_values = np.concatenate([fwhm_xyz, fwhm_integral_xyz])
+            exponents = np.floor(
+                np.log10(np.abs(fwhm_values[np.nonzero(fwhm_values)]))
+            ).astype(int)
+
+            # Choose exponent closest to zero
+            chosen_exp = exponents[np.abs(exponents).argmin()]
+            scale_factor = 10 ** (-chosen_exp)
+
+            # Format values scaled by this exponent
+            scaled_fwhm = fwhm_xyz * scale_factor
+            scaled_fwhm_integral = fwhm_integral_xyz * scale_factor
+
+            # Replace original values in table row construction
+            rounded_values = np.column_stack(
+                (
+                    np.round(scaled_fwhm, 2),
+                    np.round(scaled_fwhm_integral, 2),
+                    np.round(skewness_xyz, 1),
+                    np.round(kurtosis_xyz, 1),
+                    np.round(rsquared_xyz, 1),
+                )
+            )
+
+            # Now format unit string with common exponent
+            unit_str = (
+                f"$\\times 10^{{{chosen_exp}}}\\;\\mathrm{{\\AA}}^{{-1}}$"
+                if step_qxqyqz
+                else "$_{(pixels)}$"
+            )
+            # Determine units
+            directions = ["X", "Y", "Z"]
+            # Build table data for plot
+            table_data = [
+                [
+                    "Direction",
+                    f"FWHM\n{unit_str}",
+                    f"Integral FWHM\n{unit_str}",
+                    "Skewness",
+                    "Kurtosis",
+                    "R-squared",
+                ]
+            ] + [[directions[i]] + list(map(str, rounded_values[i])) for i in range(3)]
+
+            # Create matplotlib table on ax_table
+            table = Table(ax_table, loc="upper left")  # type: ignore
+            table.auto_set_font_size(False)
+            table.set_fontsize(f_s_table)
+            table.scale(scale_table[0], scale_table[1])
+
+            for i, row in enumerate(table_data):
+                for j, cell in enumerate(row):
+                    table.add_cell(
+                        i,
+                        j,
+                        width=1 / len(row),
+                        height=0.3,
+                        text=str(cell),
+                        facecolor="darkblue",
+                        loc="center",
+                        edgecolor="darkblue",
+                    )
+                    text = table[i, j].get_text()
+                    text.set_fontsize(f_s_table)
+                    text.set_color("white")
+                    text.set_weight("bold")  # type: ignore # type: ignore
+
+            # Add table to axis
+            ax_table.add_table(table)  # type: ignore # type: ignore
+            ax_table.axis("off")  # type: ignore # type: ignore
+        # Print summary table in console
+        console_table = [
+            ["Metric", "X", "Y", "Z"],
+            [f"FWHM {unit_str}"] + [f"{x:.4f}" for x in fwhm_xyz],  # type: ignore
+            [f"Integral FWHM {unit_str}"]
+            + [f"{x:.4f}" for x in fwhm_integral_xyz],  # type: ignore
+            ["Skewness"] + [f"{x:.4f}" for x in skewness_xyz],
+            ["Kurtosis"] + [f"{x:.4f}" for x in kurtosis_xyz],
+            ["R-squared"] + [f"{x:.4f}" for x in rsquared_xyz],
+        ]
+        print(tabulate(console_table, headers="firstrow", tablefmt="grid"))
+        if plot:
+            for ax_obj in figure.get_axes():  # type: ignore
+                ax_obj.tick_params(labelsize=f_s)  # only label size allowed
+                for label in ax_obj.get_xticklabels() + ax_obj.get_yticklabels():
+                    label.set_fontweight("bold")
+                ax_obj.title.set_fontsize(f_s)
+                ax_obj.xaxis.label.set_size(f_s)  # type: ignore
+                ax_obj.yaxis.label.set_size(f_s)  # type: ignore
+                legend = ax_obj.get_legend()
+                if legend:
+                    for text in legend.get_texts():
+                        text.set_weight("bold")  # type: ignore
+                        text.set_fontsize(f_s)
+        if plot:
+            y_max = np.max([np.max(fit) for fit in fitted_data])
+            x_max = np.max([np.max(fit) for fit in X_data_all])
+            ax.set_ylim(0, y_padding_factor * y_max)  # type: ignore # Set bottom to 0, top with headroom
+            ax.set_xlim(0, y_padding_factor * x_max)  # type: ignore # Set bottom to 0, top with headroom
+        if tight_layout:
+            figure.tight_layout()  # type: ignore
+        if save_fig:
+            figure.savefig(save_fig)  # type: ignore
+            # plt.savefig(save_fig)
+            print(f"saving figure to : {save_fig}")
+        if plot:
+            if plot_show:
+                plt.show()
+            else:
+                plt.close()
+
     return fwhm_xyz, fwhm_integral_xyz, skewness_xyz, kurtosis_xyz

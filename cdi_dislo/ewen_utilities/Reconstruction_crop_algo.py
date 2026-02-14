@@ -68,13 +68,9 @@ def crop_scale_function(
         params = default_cdi_parameters()
 
     if data_centering:
-        data, centering_offsets = center_the_center_of_mass(
-            data, return_offsets=True
-        )
+        data, centering_offsets = center_the_center_of_mass(data, return_offsets=True)
         if mask is not None:
-            mask = np.roll(
-                mask, centering_offsets, axis=range(len(mask.shape))
-            )
+            mask = np.roll(mask, centering_offsets, axis=range(len(mask.shape)))
         print("centering_offsets : ", centering_offsets)
 
     # Sorry but I need to force some parameters
@@ -124,9 +120,7 @@ def crop_scale_function(
                 )
             )
         if n != 0:
-            obj_inter = interpolate_object(
-                obj_crop, data_crop.shape, plot=plot
-            )
+            obj_inter = interpolate_object(obj_crop, data_crop.shape, plot=plot)
             support_inter = interpolate_object(
                 support_crop, data_crop.shape, plot=False
             )
@@ -155,9 +149,7 @@ def crop_scale_function(
                 plot_3D_projections,
             )
 
-            plot_3D_projections(
-                data, fig_title="no cropping"
-            )
+            plot_3D_projections(data, fig_title="no cropping")
         if data.ndim == 2:
             plot_2d_intensity_data(data)
 
@@ -178,9 +170,7 @@ def crop_scale_function(
     return obj, llk, support, return_dict
 
 
-def save_reconstruction_crop_algo(
-    file_dict, obj, llk, support, n_reconstruction
-):
+def save_reconstruction_crop_algo(file_dict, obj, llk, support, n_reconstruction):
     """
     Save the final object automatically.
     Not an important function> You could do that in another way if you want.
@@ -201,13 +191,9 @@ def save_reconstruction_crop_algo(
     check_path_create("Reconstructions_CropAlgo")
     check_path_create(path_save)
 
-    savename = path_save + "reconstruction{}_{}".format(
-        ortho_string, n_reconstruction
-    )
+    savename = path_save + "reconstruction{}_{}".format(ortho_string, n_reconstruction)
 
-    np.savez_compressed(
-        savename, obj=obj, support=support, llk=llk, **file_dict
-    )
+    np.savez_compressed(savename, obj=obj, support=support, llk=llk, **file_dict)
     return
 
 
@@ -253,9 +239,7 @@ def make_several_reconstructions_crop_algo(
     for n_reconstruction in range(Nb_reconstruction):
         if plot:
             plt.figure()
-            plt.title(
-                "Reconstruction {}".format(n_reconstruction), fontsize=20
-            )
+            plt.title("Reconstruction {}".format(n_reconstruction), fontsize=20)
         nb_try = 0
         while 1:
             try:
@@ -288,7 +272,7 @@ def make_several_reconstructions_crop_algo(
                 )
                 print("\n\nsucessfull reconstruction\n\n")
                 break
-            except Exception :
+            except Exception:
                 print("\n\nfailed reconstruction\n\n")
                 nb_try += 1
                 pass

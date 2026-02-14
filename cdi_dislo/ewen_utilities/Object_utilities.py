@@ -275,9 +275,7 @@ def compute_oversampling_ratio(obj, threshold_module=0.3, plot=False):
     support = module > threshold_module * np.max(module)
 
     indices_support = np.where(support == 1)
-    size_per_dim = np.max(indices_support, axis=1) - np.min(
-        indices_support, axis=1
-    )
+    size_per_dim = np.max(indices_support, axis=1) - np.min(indices_support, axis=1)
     oversampling = np.divide(np.array(support.shape), size_per_dim)
 
     if plot:
@@ -301,9 +299,7 @@ def pad_to_higher_oversampling(obj, oversampling_final):
     padding = []
     for axe in range(obj.ndim):
         size = obj.shape[axe]
-        final_size = int(
-            np.ceil(size * oversampling_final[axe] / oversampling[axe])
-        )
+        final_size = int(np.ceil(size * oversampling_final[axe] / oversampling[axe]))
         pad = int(np.ceil((final_size - size) / 2.0))
         padding.append([pad, pad])
     obj_pad = np.pad(obj, padding)

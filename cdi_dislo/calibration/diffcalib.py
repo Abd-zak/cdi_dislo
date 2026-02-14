@@ -1,9 +1,10 @@
-from typing import Tuple, List, Union, Optional
+from typing import List, Optional, Tuple, Union
 
 # from cdi_dislo.geometry.ortho_handler  import get_lattice_parametre
 # import matplotlib.pyplot as plt
 # from scipy.optimize import curve_fit
-# import numpy as np
+import numpy as np
+
 # from scipy.ndimage import center_of_mass as C_O_M
 # from cdi_dislo.plotting.plotutilities import plot_summary_difraction
 # from cdi_dislo.utils.utils import crop_3darray_pos
@@ -16,7 +17,6 @@ from typing import Tuple, List, Union, Optional
 # from cdi_dislo.utils.utils import zero_to_nan
 # from xrayutilities                  import lam2en
 # from sklearn.metrics import r2_score
-# import math
 
 
 # ANSI colors for terminal output
@@ -66,20 +66,27 @@ def set_plot_style() -> None:
 ######################################### diffraction analysis utility    ###########################################
 #####################################################################################################################
 def get_max_coords(data):
-    import numpy as np
-
     return np.unravel_index(np.argmax(data, axis=None), data.shape)
 
 
-def extract_coefficient_and_exponent(number):
-    import numpy as np
-    import math
+def extract_coefficient_and_exponent(x: float) -> tuple[float, int]:
+    if x == 0:
+        return 0.0, 0
 
-    # Extract the exponent
-    exponent = int(math.log10(np.abs(number)))
-    # Calculate the coefficient
-    coefficient = number / (10**exponent)
-    return coefficient, exponent
+    ax = abs(x)
+    exp = int(np.floor(np.log10(ax)))  # critical: floor, not truncation
+    coeff = x / (10.0**exp)
+
+    # Ensure coeff is in [1, 10) in magnitude (numerical safety)
+    # (can be off by 1 due to floating errors near powers of 10)
+    if abs(coeff) >= 10.0:
+        coeff /= 10.0
+        exp += 1
+    elif abs(coeff) < 1.0:
+        coeff *= 10.0
+        exp -= 1
+
+    return coeff, exp
 
 
 #####################################################################################################################
@@ -96,7 +103,7 @@ def get_prediction_from_theo_sapphire_lattice(T_celsius, plot=False):
         predict_at_T_poly (float): Prediction at given temperature using adjusted polynomial fit.
         coefficients (array): Polynomial coefficients.
     """
-    import numpy as np
+
     import matplotlib.pyplot as plt
     from sklearn.metrics import r2_score
 
@@ -247,7 +254,6 @@ def GET_theta_lambda_energy_latticeconstant_reference(
     results, temp_experimental, experiment_name
 ):
     from xrayutilities import lam2en
-    import numpy as np
 
     signe_delta, signe_gamma = 1, 1
     deg = np.pi / 180
@@ -272,9 +278,7 @@ def GET_theta_lambda_energy_latticeconstant_reference(
     com_z_ = com_z - cchy
 
     delta = delta_scan - signe_delta * com_y_ / fact
-    gamma = gamma_scan + signe_gamma * com_z_ / (
-        fact * np.cos(delta_scan * deg)
-    )
+    gamma = gamma_scan + signe_gamma * com_z_ / (fact * np.cos(delta_scan * deg))
     cos2o = np.cos(delta * deg) * np.cos(gamma * deg)
     theta = np.arccos(cos2o) * 0.5
 
@@ -308,7 +312,6 @@ def calculate_epsilon_and_prediction(
     a0=12.991,
     experiment="",
 ):
-    import numpy as np
     import matplotlib.pyplot as plt
     from scipy.optimize import curve_fit
 
@@ -328,15 +331,11 @@ def calculate_epsilon_and_prediction(
                         for ii in range(fit_order + 1)
                     ]
                     roots = np.roots(result)
-                    real_roots = [
-                        root.real for root in roots if np.isreal(root)
-                    ]
+                    real_roots = [root.real for root in roots if np.isreal(root)]
                     if real_roots:
                         T_predict.append(max(real_roots))
         else:
-            raise ValueError(
-                "Fit order should be an integer between 1 and 6 or 'exp'"
-            )
+            raise ValueError("Fit order should be an integer between 1 and 6 or 'exp'")
         return np.array(T_predict)
 
     # Define the fitting function based on the order
@@ -376,9 +375,7 @@ def calculate_epsilon_and_prediction(
         elif fit_order == 5:
 
             def func_def(T_, a, b, c, d, e, f):  # pyright: ignore[reportRedeclaration]
-                return (
-                    a * T_**5 + b * T_**4 + c * T_**3 + d * T_**2 + e * T_ + f
-                )
+                return a * T_**5 + b * T_**4 + c * T_**3 + d * T_**2 + e * T_ + f
 
             fit_degree = "5th"
         elif fit_order == 6:
@@ -398,9 +395,7 @@ def calculate_epsilon_and_prediction(
         else:
             raise ValueError("Fit order should be between 1 and 6 or 'exp'")
     else:
-        raise ValueError(
-            "Fit order should be an integer between 1 and 6 or 'exp'"
-        )
+        raise ValueError("Fit order should be an integer between 1 and 6 or 'exp'")
 
     def func_def_theosapphire(T_, a, b, c, d, e):
         return a * T_**4 + b * T_**3 + c * T_**2 + d * T_ + e
@@ -490,10 +485,8 @@ def calculate_epsilon_and_prediction(
     T_exp_predict = np.array(
         T_data_exp
     )  # get_temperatureprediction_fromdeformation_and_fitparametre (results_sapphire_d_spacing,popt)
-    T_theo_predict = (
-        get_temperatureprediction_fromdeformation_and_fitparametre(
-            results_sapphire_d_spacing, popt_def, 4
-        )
+    T_theo_predict = get_temperatureprediction_fromdeformation_and_fitparametre(
+        results_sapphire_d_spacing, popt_def, 4
     )
     T_data_exp = T_theo_predict
 
@@ -507,9 +500,7 @@ def calculate_epsilon_and_prediction(
     curve_fit_theo_par = func_def_theosapphire(T_data_plot, *popt_def)
 
     # Calculate epsilon values
-    epsilon_curve_fit_exp_par = np.round(
-        100 * ((curve_fit_exp_par - a0) / a0), 2
-    )
+    epsilon_curve_fit_exp_par = np.round(100 * ((curve_fit_exp_par - a0) / a0), 2)
     epsilon_results_sapphire_d_spacing = np.round(
         100 * ((results_sapphire_d_spacing - a0) / a0), 2
     )
@@ -525,21 +516,18 @@ def calculate_epsilon_and_prediction(
         plt.grid(alpha=0.25)
         plt.xlabel(r"$T_{\mathrm{exp}(°C)}$", fontsize=24)
         plt.ylabel(
-            "$ΔT_{(°C/K)} = T_{\mathrm{exp}} - T_{\mathrm{theo}}$", fontsize=24
+            r"$ΔT_{(°C/K)} = T_{\mathrm{exp}} - T_{\mathrm{theo}}$",
+            fontsize=24,
         )
         plt.xticks(fontsize=12)
         plt.yticks(fontsize=12)
-        plt.title(
-            "Temperature Deviation between Experimental and Theoretical Values"
-        )
+        plt.title("Temperature Deviation between Experimental and Theoretical Values")
 
         # Second subplot: Lattice Parameter (a) Values
         plt.subplot(3, 1, 2)
         plt.plot(T_data_plot, curve_fit_exp_par, "-", label="fit exp")
         plt.plot(T_data_exp, results_sapphire_d_spacing, "o", label="data exp")
-        plt.plot(
-            T_data_plot, curve_fit_theo_par, "r-", alpha=0.5, label="fit theo"
-        )
+        plt.plot(T_data_plot, curve_fit_theo_par, "r-", alpha=0.5, label="fit theo")
         plt.plot(
             T_data_sapphire,
             def_theo_sapphire,
@@ -743,9 +731,7 @@ def calculate_epsilon_and_prediction(
 
         # Third subplot: Epsilon values
         plt.subplot(3, 1, 3)
-        plt.plot(
-            T_data_plot, epsilon_curve_fit_exp_par, label="epsilon fit exp"
-        )
+        plt.plot(T_data_plot, epsilon_curve_fit_exp_par, label="epsilon fit exp")
         plt.plot(
             T_data_exp,
             epsilon_results_sapphire_d_spacing,
@@ -817,7 +803,6 @@ def calculate_epsilon_and_prediction_2nd_degree(
     a0=12.991,
     experiment="",
 ):
-    import numpy as np
     import matplotlib.pyplot as plt
     from scipy.optimize import curve_fit
 
@@ -977,9 +962,7 @@ def calculate_epsilon_and_prediction_2nd_degree(
         # Third subplot: Delta T values
         plt.subplot(3, 1, 3)
         delta_T = Avril_2023_T_exp_predict - T_data_exp
-        plt.plot(
-            T_data_exp, delta_T, "o-", label=r"$\Delta T = T_{fit} - T_{exp}$"
-        )
+        plt.plot(T_data_exp, delta_T, "o-", label=r"$\Delta T = T_{fit} - T_{exp}$")
         plt.axhline(0, color="gray", linestyle="--")
         plt.xlabel(r"$T_{(°C)}$", fontsize=14)
         plt.ylabel(r"$\Delta T_{(°C)}$", fontsize=14)
@@ -1079,9 +1062,7 @@ def plot_temperature_and_lattice(
 
     # Plot temperature difference
     ax2 = fig.add_subplot(gs[1, :])
-    ax2.plot(
-        nov_2022_best_delta_temp, label="Exp - Theo", color="red", marker="o"
-    )
+    ax2.plot(nov_2022_best_delta_temp, label="Exp - Theo", color="red", marker="o")
     ax2.set_ylabel("Temperature Difference (°C)")
     ax2.set_title("Temperature Difference (Experimental - Theoretical)")
     ax2.legend()
@@ -1098,12 +1079,8 @@ def plot_temperature_and_lattice(
 
     # Plot Lattice Parameter vs Temperature
     ax4 = fig.add_subplot(gs[3, :])
-    ax4.scatter(
-        nov_2022_best_T_exp, nov_2022_C_, label="Experimental", color="blue"
-    )
-    ax4.scatter(
-        nov_2022_best_T_theo, nov_2022_C_, label="Theoretical", color="red"
-    )
+    ax4.scatter(nov_2022_best_T_exp, nov_2022_C_, label="Experimental", color="blue")
+    ax4.scatter(nov_2022_best_T_theo, nov_2022_C_, label="Theoretical", color="red")
     ax4.set_xlabel("Temperature (°C)")
     ax4.set_ylabel("Lattice Parameter (Å)")
     ax4.set_title("Sapphire Lattice Parameter vs Temperature")
@@ -1129,12 +1106,10 @@ def adjust_temp_scan(T_theo_predicted, temp_scan_float, temp_scan):
     Returns:
     array: Adjusted temp_scan array
     """
-    import numpy as np
 
     value_to_modify = np.unique(temp_scan_float).astype(int)
     value_to_replaceby = [
-        T_theo_predicted[np.where(temp_scan_float == i)[0][0]]
-        for i in value_to_modify
+        T_theo_predicted[np.where(temp_scan_float == i)[0][0]] for i in value_to_modify
     ]
 
     temp_scan_new = np.array(temp_scan)
@@ -1142,24 +1117,16 @@ def adjust_temp_scan(T_theo_predicted, temp_scan_float, temp_scan):
     for old_val, new_val in zip(value_to_modify, value_to_replaceby):
         print(f"Replacing {old_val} with {new_val}")
         temp_scan_new = np.array(
-            [
-                elem.replace(str(old_val), str(new_val))
-                for elem in temp_scan_new
-            ]
+            [elem.replace(str(old_val), str(new_val)) for elem in temp_scan_new]
         )
         temp_scan_new = np.array(
-            [
-                elem.replace(f"{old_val} RT", f"{new_val} RT")
-                for elem in temp_scan_new
-            ]
+            [elem.replace(f"{old_val} RT", f"{new_val} RT") for elem in temp_scan_new]
         )
 
     return temp_scan_new
 
 
-def fit_temperature_model(
-    T_exp, Ttheo, degree=1, debug_plot=None, plot_range=None
-):
+def fit_temperature_model(T_exp, Ttheo, degree=1, debug_plot=None, plot_range=None):
     """
     Fit a polynomial model to temperature data and optionally create a debug plot.
 
@@ -1173,7 +1140,7 @@ def fit_temperature_model(
     Returns:
     dict: A dictionary containing the polynomial function, coefficients, unique T_exp with mean Ttheo
     """
-    import numpy as np
+
     import matplotlib.pyplot as plt
 
     T_exp = np.array(T_exp)
@@ -1198,9 +1165,7 @@ def fit_temperature_model(
     if debug_plot:
         plt.figure(figsize=(10, 6))
         plt.scatter(T_exp, Ttheo, alpha=0.5, label="Original Data")
-        plt.scatter(
-            unique_T_exp, mean_T_theo, color="red", s=100, label="Mean Values"
-        )
+        plt.scatter(unique_T_exp, mean_T_theo, color="red", s=100, label="Mean Values")
 
         # Generate points for smooth curve
         if plot_range is None:
@@ -1274,34 +1239,28 @@ def process_scan_data_COM_CRISTAL_2022(
     """
     import glob
     import os
+
     import h5py
-    import numpy as np
-    import pandas as pd
     import matplotlib.pyplot as plt
-    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
+    import pandas as pd
     from scipy.ndimage import center_of_mass as C_O_M
+
+    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
     from cdi_dislo.plotting.plotutilities import (
         plot_summary_difraction,
     )
-    from cdi_dislo.utils.utils import zero_to_nan
-    from cdi_dislo.utils.utils import crop_3darray_pos
+    from cdi_dislo.utils.utils import crop_3darray_pos, zero_to_nan
 
     os.makedirs(path_results_saveplots, exist_ok=True)
-    os.makedirs(
-        os.path.join(path_results_saveplots, "original"), exist_ok=True
-    )
+    os.makedirs(os.path.join(path_results_saveplots, "original"), exist_ok=True)
     os.makedirs(os.path.join(path_results_saveplots, "cropped"), exist_ok=True)
 
     scan_list = glob.glob(path_master + "*/*.nxs")
     scan_list.sort()
     scan_list_det = np.array([str(int(i[-8:-4])) for i in scan_list])
-    scan_list_det_datah5 = np.array(
-        ["exp_" + str(i[-8:-4]) for i in scan_list]
-    )
+    scan_list_det_datah5 = np.array(["exp_" + str(i[-8:-4]) for i in scan_list])
     file_name = glob.glob(path_results_code + "*.csv")[0]
-    particles_scans = pd.read_csv(
-        file_name, delimiter=";", encoding="unicode_escape"
-    )
+    particles_scans = pd.read_csv(file_name, delimiter=";", encoding="unicode_escape")
     df = particles_scans.T
     df.columns = df.iloc[0]
     df = df.drop(df.index[0])
@@ -1311,9 +1270,7 @@ def process_scan_data_COM_CRISTAL_2022(
     particle_list_B12S1P1 = particle_list_B12S1P1[1:]
     list_scan_part_B12S1P1 = {}
     for i_part in particle_list_B12S1P1:
-        list_s = str(
-            [i for i in list(particles_scans[i_part]) if str(i) != "-"]
-        )
+        list_s = str([i for i in list(particles_scans[i_part]) if str(i) != "-"])
         list_s = (
             list_s.strip("[]")
             .strip("'")
@@ -1341,9 +1298,7 @@ def process_scan_data_COM_CRISTAL_2022(
             i_temp: np.array(list_s).astype(str),
         }
 
-    mask = np.load(path_master + "mask_hotpixels_nov2022_cristal_ter.npz")[
-        "data"
-    ]
+    mask = np.load(path_master + "mask_hotpixels_nov2022_cristal_ter.npz")["data"]
 
     res = []
     intensity_all = []
@@ -1362,7 +1317,9 @@ def process_scan_data_COM_CRISTAL_2022(
         except Exception:
             scan_exist = False
         if scan_exist:
-            part_name = particle_list_B12S1P1[indice_part]  # pyright: ignore[reportPossiblyUnboundVariable]
+            part_name = particle_list_B12S1P1[
+                indice_part
+            ]  # pyright: ignore[reportPossiblyUnboundVariable]
             check_scan_temp = [
                 scan_list_det[i] in list_scan_temp_B12S1P1[i_temp]
                 for i_temp in list_scan_temp_B12S1P1
@@ -1382,23 +1339,31 @@ def process_scan_data_COM_CRISTAL_2022(
                 pref_key + i
                 for i in (h5py.File(filename)[pref_key]).keys()
                 if (len(h5py.File(filename)[pref_key][i].shape) == 3)
-            ][0]  # pyright: ignore[reportIndexIssue, reportAttributeAccessIssue]
+            ][
+                0
+            ]  # pyright: ignore[reportIndexIssue, reportAttributeAccessIssue]
             key_pos = scan_list_det_datah5[i] + "/CRISTAL/Diffractometer/"
             key_gamma = [
                 key_pos + i
                 for i in (h5py.File(filename)[key_pos]).keys()
                 if ("gamma" in i)
-            ][0] + "/position"  # pyright: ignore[reportAttributeAccessIssue]
+            ][
+                0
+            ] + "/position"  # pyright: ignore[reportAttributeAccessIssue]
             key_delta = [
                 key_pos + i
                 for i in (h5py.File(filename)[key_pos]).keys()
                 if ("delta" in i)
-            ][0] + "/position"  # pyright: ignore[reportAttributeAccessIssue]
+            ][
+                0
+            ] + "/position"  # pyright: ignore[reportAttributeAccessIssue]
             key_omega = [
                 pref_key + i
                 for i in (h5py.File(filename)[pref_key]).keys()
                 if ("actuator_1_1" in i)
-            ][0]  # pyright: ignore[reportAttributeAccessIssue]
+            ][
+                0
+            ]  # pyright: ignore[reportAttributeAccessIssue]
 
             if scan_list_det[i] in ("668", "671", "703", "945"):
                 hkl = [0, 0, 2]
@@ -1414,15 +1379,10 @@ def process_scan_data_COM_CRISTAL_2022(
             )  # pyright: ignore[reportIndexIssue]
             data_original = f[key_path][()]  # pyright: ignore[reportIndexIssue]
             data_original = np.array(
-                [
-                    data_original[i] * (1 - mask)
-                    for i in range(len(data_original))
-                ]
+                [data_original[i] * (1 - mask) for i in range(len(data_original))]
             )  # pyright: ignore[reportArgumentType, reportIndexIssue]
             shape_data = np.array([i for i in data_original.shape])
-            pic = data_original[
-                int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)
-            ]
+            pic = data_original[int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)]
             max_x, max_y, max_z = np.unravel_index(
                 np.argmax(pic, axis=None), data_original.shape
             )
@@ -1455,11 +1415,7 @@ def process_scan_data_COM_CRISTAL_2022(
                 continue
             if part_name != "D7":
                 if (data_original_copy.max() == 118100) and (
-                    len(
-                        np.where(
-                            data_original_copy == data_original_copy.max()
-                        )[0]
-                    )
+                    len(np.where(data_original_copy == data_original_copy.max())[0])
                     >= 15
                 ):
                     continue
@@ -1478,17 +1434,13 @@ def process_scan_data_COM_CRISTAL_2022(
                 fig_title=fig_title,
             )
             plt.savefig(
-                os.path.join(
-                    path_results_saveplots, f"{fig_title}_3D_projections.png"
-                )
+                os.path.join(path_results_saveplots, f"{fig_title}_3D_projections.png")
             )
             plt.close()
 
             com_ = [np.round(i) for i in C_O_M(data_original_copy)]
             max_coords = get_max_coords(data_original_copy)
-            data_cropped = crop_3darray_pos(
-                data_original, output_shape=output_shape
-            )
+            data_cropped = crop_3darray_pos(data_original, output_shape=output_shape)
             max_crop = get_max_coords(data_cropped)
             com_crop = [np.round(i) for i in C_O_M(data_cropped)]
 
@@ -1580,29 +1532,26 @@ def process_scan_data_COM_id1_avril_2023(
     """
     import glob
     import os
+
     import h5py
-    import numpy as np
-    import pandas as pd
     import matplotlib.pyplot as plt
-    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
+    import pandas as pd
     from scipy.ndimage import center_of_mass as C_O_M
+
+    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
     from cdi_dislo.plotting.plotutilities import (
         plot_summary_difraction,
     )
-    from cdi_dislo.utils.utils import zero_to_nan
-    from cdi_dislo.utils.utils import crop_3darray_pos
+    from cdi_dislo.utils.utils import crop_3darray_pos, zero_to_nan
 
     os.makedirs(path_results_saveplots, exist_ok=True)
-    os.makedirs(
-        os.path.join(path_results_saveplots, "original"), exist_ok=True
-    )
+    os.makedirs(os.path.join(path_results_saveplots, "original"), exist_ok=True)
     os.makedirs(os.path.join(path_results_saveplots, "cropped"), exist_ok=True)
 
     data_location = [
         path_master + "B12_S1P1_0001/B12-S1P1_0001.h5",
         path_master + "B12_S1P1_BCDI/B12-S1P1_BCDI.h5",
-        path_master
-        + "B12-S1P1_B12_B1P1_BCDI_1_0002/B12-S1P1_B12_B1P1_BCDI_1_0002.h5",
+        path_master + "B12-S1P1_B12_B1P1_BCDI_1_0002/B12-S1P1_B12_B1P1_BCDI_1_0002.h5",
         path_master + "B12_S1P1_B12_B1P1_BCDI_3/B12-S1P1_B12_B1P1_BCDI_3.h5",
     ]
     dataset_name = [
@@ -1614,9 +1563,7 @@ def process_scan_data_COM_id1_avril_2023(
 
     scan_dict_all = []
     for i_sample, location in enumerate(data_location):
-        print(
-            "********************************************************************"
-        )
+        print("********************************************************************")
         print("DataSet : " + dataset_name[i_sample][:-3])
         f = h5py.File(location)
         all_scans_not_filtrerd = np.array([i for i in dict(f).keys()])
@@ -1655,9 +1602,7 @@ def process_scan_data_COM_id1_avril_2023(
         scan_dict_all.append(scans_eta_1d_scan_nmpoints)
 
     file_name = glob.glob(path_results_code + "*.csv")[0]
-    particles_scans = pd.read_csv(
-        file_name, delimiter=";", encoding="unicode_escape"
-    )
+    particles_scans = pd.read_csv(file_name, delimiter=";", encoding="unicode_escape")
     df = particles_scans.T
     df.columns = df.iloc[0]
     df = df.drop(df.index[0])
@@ -1668,9 +1613,7 @@ def process_scan_data_COM_id1_avril_2023(
     particle_list_B12S1P1 = [i for i in particles_scans.keys()][2:]
     list_scan_part_B12S1P1 = {}
     for i_part in particle_list_B12S1P1:
-        list_s = str(
-            [i for i in list(particles_scans[i_part]) if str(i) != "-"]
-        )
+        list_s = str([i for i in list(particles_scans[i_part]) if str(i) != "-"])
         list_s = (
             list_s.strip("[]")
             .strip("'")
@@ -1700,8 +1643,7 @@ def process_scan_data_COM_id1_avril_2023(
         check_dataset = [data_set_sel in i_part for i_part in data_et_csv]
         indice_dataset = list(np.where(check_dataset)[0])
         temp_scanlist_sel = [
-            list_scan_temp_B12S1P1[temp_list_B12S1P1[i]]
-            for i in indice_dataset
+            list_scan_temp_B12S1P1[temp_list_B12S1P1[i]] for i in indice_dataset
         ]
         temp_sel = [temp_list_B12S1P1[i] for i in indice_dataset]
         f = h5py.File(data_location[i_dataset])
@@ -1745,15 +1687,11 @@ def process_scan_data_COM_id1_avril_2023(
                     if (len(f[pref_key][i].shape) == 3)
                 ][0]
                 key_pos = filename + ".1/instrument/positioners/"
-                key_nu = [
-                    key_pos + i for i in f[key_pos].keys() if ("nu" in i)
-                ][0]
-                key_delta = [
-                    key_pos + i for i in f[key_pos].keys() if ("delta" in i)
-                ][0]
-                key_eta = [
-                    pref_key + i for i in f[pref_key].keys() if ("eta" in i)
-                ][0]
+                key_nu = [key_pos + i for i in f[key_pos].keys() if ("nu" in i)][0]
+                key_delta = [key_pos + i for i in f[key_pos].keys() if ("delta" in i)][
+                    0
+                ]
+                key_eta = [pref_key + i for i in f[pref_key].keys() if ("eta" in i)][0]
 
                 delta, nu, eta = (
                     np.array(f[key_delta][()]).mean(),
@@ -1763,9 +1701,7 @@ def process_scan_data_COM_id1_avril_2023(
 
                 data_original = f[key_path][()]
                 shape_data = np.array([i for i in data_original.shape])
-                pic = data_original[
-                    int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)
-                ]
+                pic = data_original[int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)]
                 max_x, max_y, max_z = np.unravel_index(
                     np.argmax(pic, axis=None), data_original.shape
                 )
@@ -1887,22 +1823,20 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
     """
     import glob
     import os
+
     import h5py
-    import numpy as np
-    import pandas as pd
     import matplotlib.pyplot as plt
-    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
+    import pandas as pd
     from scipy.ndimage import center_of_mass as C_O_M
+
+    from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
     from cdi_dislo.plotting.plotutilities import (
         plot_summary_difraction,
     )
-    from cdi_dislo.utils.utils import zero_to_nan
-    from cdi_dislo.utils.utils import crop_3darray_pos
+    from cdi_dislo.utils.utils import crop_3darray_pos, zero_to_nan
 
     os.makedirs(path_results_saveplots, exist_ok=True)
-    os.makedirs(
-        os.path.join(path_results_saveplots, "original"), exist_ok=True
-    )
+    os.makedirs(os.path.join(path_results_saveplots, "original"), exist_ok=True)
     os.makedirs(os.path.join(path_results_saveplots, "cropped"), exist_ok=True)
 
     data_location = [
@@ -1919,9 +1853,7 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
     particle_list_TS = [i for i in particles_scans_TS.keys()]
     list_scan_part_TS = {}
     for i_part in particle_list_TS:
-        list_s = str(
-            [i for i in list(particles_scans_TS[i_part]) if str(i) != "nan"]
-        )
+        list_s = str([i for i in list(particles_scans_TS[i_part]) if str(i) != "nan"])
         list_s = (
             list_s.strip("[]")
             .strip("'")
@@ -1939,9 +1871,7 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
     particle_list_P1 = [i for i in particles_scans_P1.keys()]
     list_scan_part_P1 = {}
     for i_part in particle_list_P1:
-        list_s = str(
-            [i for i in list(particles_scans_P1[i_part]) if str(i) != "nan"]
-        )
+        list_s = str([i for i in list(particles_scans_P1[i_part]) if str(i) != "nan"])
         list_s = (
             list_s.strip("[]")
             .strip("'")
@@ -1955,16 +1885,13 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
     scan_list = [
         i
         for i in glob.glob(
-            dataset_name[i_sample][: dataset_name[i_sample].find("0001/") + 5]
-            + "sca*"
+            dataset_name[i_sample][: dataset_name[i_sample].find("0001/") + 5] + "sca*"
         )
     ]
     scan_list.sort()
     # scan_list_fol = np.array([i[-4:] for i in scan_list])
     scan_list_det = np.array([str(int(i[-4:])) for i in scan_list])
-    scan_list_det_datah5 = np.array(
-        [str(int(i[-4:])) + ".1" for i in scan_list]
-    )
+    scan_list_det_datah5 = np.array([str(int(i[-4:])) + ".1" for i in scan_list])
 
     print("Working on data : ", data_location[i_sample])
     f = h5py.File(data_location[i_sample])
@@ -2001,10 +1928,10 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
             print(f[scan_list_det_datah5[i]]["title"][()].decode())
             key_path = scan_list_det_datah5[i] + "/measurement/mpx1x4"
             data_original = f[key_path][()]
-            shape_data = np.array([i for i in data_original.shape])  # pyright: ignore[reportAttributeAccessIssue]
-            pic = data_original[
-                int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)
-            ]
+            shape_data = np.array(
+                [i for i in data_original.shape]
+            )  # pyright: ignore[reportAttributeAccessIssue]
+            pic = data_original[int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)]
             max_x, max_y, max_z = np.unravel_index(
                 np.argmax(pic, axis=None), data_original.shape
             )
@@ -2027,9 +1954,7 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
                 fig_title=fig_title,
             )
             plt.savefig(
-                os.path.join(
-                    path_results_saveplots, f"{fig_title}_3D_projections.png"
-                )
+                os.path.join(path_results_saveplots, f"{fig_title}_3D_projections.png")
             )
             plt.close()
 
@@ -2038,9 +1963,7 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
             com_ = [np.round(i) for i in C_O_M(data_original_copy)]
 
             # Crop data
-            data_cropped = crop_3darray_pos(
-                data_original, output_shape=output_shape
-            )
+            data_cropped = crop_3darray_pos(data_original, output_shape=output_shape)
             max_crop = get_max_coords(data_cropped)
             com_crop = [np.round(i) for i in C_O_M(data_cropped)]
 
@@ -2062,7 +1985,8 @@ def process_bcdi_data_B12S1P1_id1_Jan_2024(
                 zero_to_nan(data_cropped),
                 com_crop,
                 max_crop,
-                path_save=path_results_saveplots + "cropped/",  # pyright: ignore[reportArgumentType]
+                path_save=path_results_saveplots
+                + "cropped/",  # pyright: ignore[reportArgumentType]
                 fig_title=fig_title,
                 fig_save_=f"{fig_title}_crop.png",
                 f_s=f_s,
@@ -2106,9 +2030,7 @@ def process_scan_data_COM_id1_june_2024(
     check_a_scan: Optional[str] = None,
     check_a_particle: Optional[str] = None,
     output_shape=(200, 200, 200),
-) -> Tuple[
-    List[List[Union[str, int, float]]], List[Tuple[str, str, str, str]]
-]:
+) -> Tuple[List[List[Union[str, int, float]]], List[Tuple[str, str, str, str]]]:
     """
     Process scan data for Center of Mass (COM) analysis from ID1 beamline, collected in June 2024.
 
@@ -2128,8 +2050,9 @@ def process_scan_data_COM_id1_june_2024(
             - A list of errors encountered during processing.
     """
     import os
+
     import h5py
-    import numpy as np
+
     from cdi_dislo.plotting.plotutilities import (
         plot_summary_difraction,
     )
@@ -2148,6 +2071,7 @@ def process_scan_data_COM_id1_june_2024(
         """Helper function to process a single scan."""
 
         from scipy.ndimage import center_of_mass as C_O_M
+
         from cdi_dislo.utils.utils import (
             crop_3darray_pos,
         )
@@ -2157,8 +2081,7 @@ def process_scan_data_COM_id1_june_2024(
 
         # Extract position data
         delta, nu, eta = [
-            np.array(f_scan[f"{key_pos}{pos}"][()])
-            for pos in ["delta", "nu", "eta"]
+            np.array(f_scan[f"{key_pos}{pos}"][()]) for pos in ["delta", "nu", "eta"]
         ]
         thx, thy, thz = [
             np.array(f_scan[f"{key_pos}{pos}"][()]).mean()
@@ -2182,9 +2105,7 @@ def process_scan_data_COM_id1_june_2024(
 
         max_coords = get_max_coords(data_copy)
         com = [int(round(i)) for i in C_O_M(data_copy)]
-        data_cropped = crop_3darray_pos(
-            data_original, output_shape=output_shape
-        )
+        data_cropped = crop_3darray_pos(data_original, output_shape=output_shape)
         max_crop = get_max_coords(data_cropped)
         com_crop = [np.round(i) for i in C_O_M(data_cropped)]
 
@@ -2237,8 +2158,7 @@ def process_scan_data_COM_id1_june_2024(
         skip_conditions = [
             part_name in ("II-D7", "II-B8", "II-D9"),
             scan == "53" and part_name == "B12S1P1_0002",
-            part_name == "II-D8"
-            and scan in ("11", "14", "21", "104", "228", "159"),
+            part_name == "II-D8" and scan in ("11", "14", "21", "104", "228", "159"),
             part_name == "II-E8"
             and scan
             in (
@@ -2254,8 +2174,7 @@ def process_scan_data_COM_id1_june_2024(
                 "428",
                 "438",
             ),
-            part_name == "II-G10"
-            and scan in ("68", "80", "143", "144", "173", "216"),
+            part_name == "II-G10" and scan in ("68", "80", "143", "144", "173", "216"),
             part_name == "VII-A6" and scan in ("93", "94", "97", "99"),
             part_name == "VII-A7" and scan in ("132", "296", "323", "321"),
             part_name == "VII-A9" and scan in ("59", "100", "139"),
@@ -2279,9 +2198,7 @@ def process_scan_data_COM_id1_june_2024(
             )
             data_original_copy[:, :, :370] = data_original[:, :, :370]
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
 
         if ((part_name == "II-D8") and (int(scan) >= 87)) or (
@@ -2294,9 +2211,7 @@ def process_scan_data_COM_id1_june_2024(
                 return_second_cluster=False,
             )
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
         elif ((part_name == "II-G10") and (int(scan) == 67)) or (
             (part_name == "VII-A7") and (int(scan) == 88)
@@ -2308,13 +2223,9 @@ def process_scan_data_COM_id1_june_2024(
                 return_second_cluster=True,
             )
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
-        elif ((part_name == "VII-A7") and (int(scan) >= 254)) and (
-            int(scan) < 321
-        ):
+        elif ((part_name == "VII-A7") and (int(scan) >= 254)) and (int(scan) < 321):
             print(scan)
             masked_data, data_original_copy, dilated_mask = mask_clusters(
                 data_original,
@@ -2323,9 +2234,7 @@ def process_scan_data_COM_id1_june_2024(
                 return_second_cluster=False,
             )
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
         elif (part_name == "VII-A7") and (int(scan) >= 321):
             print(scan)
@@ -2336,13 +2245,9 @@ def process_scan_data_COM_id1_june_2024(
                 return_second_cluster=False,
             )
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
-        elif ((part_name == "VII-A9") and (int(scan) >= 139)) and (
-            int(scan) < 258
-        ):
+        elif ((part_name == "VII-A9") and (int(scan) >= 139)) and (int(scan) < 258):
             print(scan)
             masked_data, data_original_copy, dilated_mask = mask_clusters(
                 data_original,
@@ -2351,17 +2256,11 @@ def process_scan_data_COM_id1_june_2024(
                 return_second_cluster=False,
             )
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
         elif (
             ((part_name == "VII-A9") and (int(scan) == 59))
-            or (
-                (part_name == "VII-A9")
-                and (int(scan) >= 100)
-                and (int(scan) < 139)
-            )
+            or ((part_name == "VII-A9") and (int(scan) >= 100) and (int(scan) < 139))
             or ((part_name == "VII-A9") and (int(scan) == 333))
         ):
             masked_data, data_original_copy, dilated_mask = mask_clusters(
@@ -2371,9 +2270,7 @@ def process_scan_data_COM_id1_june_2024(
                 return_second_cluster=False,
             )
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
         elif ((part_name == "VII-A9") and (int(scan) == 79)) or (
             (part_name == "VII-A9") and (int(scan) == 404)
@@ -2385,18 +2282,14 @@ def process_scan_data_COM_id1_june_2024(
                 return_second_cluster=True,
             )
             pic = data_original_copy
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             # max_ = [max_x, max_y, max_z]
         else:
             pic = data_original_copy[
                 int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)
             ]
 
-            max_x, max_y, max_z = np.unravel_index(
-                np.argmax(pic, axis=None), pic.shape
-            )
+            max_x, max_y, max_z = np.unravel_index(np.argmax(pic, axis=None), pic.shape)
             max_x += int(shape_data[0] * 0.3)
             # max_ = [max_x, max_y, max_z]
             half_w = 80
@@ -2411,9 +2304,7 @@ def process_scan_data_COM_id1_june_2024(
 
     def apply_default_mask(data_original, shape_data, len__):
         """Apply default masking to the data."""
-        data_copy = data_original[
-            int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)
-        ]
+        data_copy = data_original[int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)]
         max_x, max_y, max_z = get_max_coords(data_copy)
         max_x += int(shape_data[0] * 0.3)
         data_copy = np.array(data_original)
@@ -2429,9 +2320,7 @@ def process_scan_data_COM_id1_june_2024(
     master_file = os.path.join(path_master, "ihhc4033_id01.h5")
     # Create directories
     os.makedirs(path_results_saveplots, exist_ok=True)
-    os.makedirs(
-        os.path.join(path_results_saveplots, "original"), exist_ok=True
-    )
+    os.makedirs(os.path.join(path_results_saveplots, "original"), exist_ok=True)
     os.makedirs(os.path.join(path_results_saveplots, "cropped"), exist_ok=True)
 
     # Setup data
@@ -2629,11 +2518,11 @@ def process_scan_data_COM_id1_june_2024(
     )
 
     data_set_scan_key_name_list = [
-        f"{datasets[0]}_{scan}.1"
-        if i < 18
-        else f"{datasets[1]}_{scan}.1"
-        if i == 18
-        else f"{datasets[2]}_{scan}.1"
+        (
+            f"{datasets[0]}_{scan}.1"
+            if i < 18
+            else f"{datasets[1]}_{scan}.1" if i == 18 else f"{datasets[2]}_{scan}.1"
+        )
         for i, scan in enumerate(list_scans__)
     ]
 
@@ -2653,9 +2542,7 @@ def process_scan_data_COM_id1_june_2024(
             if should_skip_scan(part_name, scan):
                 continue
 
-            print(
-                f"scan : {scan} | temperature : {temp} | particle: {part_name}"
-            )
+            print(f"scan : {scan} | temperature : {temp} | particle: {part_name}")
 
             try:
                 result, data_cropped = process_single_scan(
@@ -2682,8 +2569,8 @@ def process_scan_data_COM_id1_june_2024(
 def process_scan_id1_june_2024(
     f_scan, part_name, scan, temp, plot_original=None, plot_crop=None
 ):
-    import numpy as np
     from scipy.ndimage import center_of_mass as C_O_M
+
     from cdi_dislo.plotting.plotutilities import (
         plot_summary_difraction,
     )
@@ -2708,16 +2595,13 @@ def process_scan_id1_june_2024(
 
     # Extract position data
     delta, nu, eta = [
-        np.array(f_scan[f"{key_pos}{pos}"][()])
-        for pos in ["delta", "nu", "eta"]
+        np.array(f_scan[f"{key_pos}{pos}"][()]) for pos in ["delta", "nu", "eta"]
     ]
     thx, thy, thz = [
-        np.array(f_scan[f"{key_pos}{pos}"][()]).mean()
-        for pos in ["thx", "thy", "thz"]
+        np.array(f_scan[f"{key_pos}{pos}"][()]).mean() for pos in ["thx", "thy", "thz"]
     ]
     pix, piy, piz = [
-        np.array(f_scan[f"{key_pos}{pos}"][()]).mean()
-        for pos in ["pix", "piy", "piz"]
+        np.array(f_scan[f"{key_pos}{pos}"][()]).mean() for pos in ["pix", "piy", "piz"]
     ]
 
     pos_x, pos_y, pos_z = thx - pix / 1000, thy - piy / 1000, thz - piz / 1000
@@ -2772,9 +2656,7 @@ def process_scan_id1_june_2024(
             data_copy[:, max_y + half_w :, :] = 0
             data_copy[:, :, max_z + half_w :] = 0
     else:
-        data_copy = data_original[
-            int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)
-        ]
+        data_copy = data_original[int(shape_data[0] * 0.3) : int(shape_data[0] * 0.7)]
         max_x, max_y, max_z = get_max_coords(data_copy)
         max_x += int(shape_data[0] * 0.3)
         half_w = 80
@@ -2879,12 +2761,12 @@ def optimize_energy_value_and_calibrate_temperature(
     - best_T_exp: Experimental temperature data for the best energy
     - best_T_theo: Theoretical temperature predictions for the best energy
     """
+    import matplotlib.pyplot as plt
+    from scipy.optimize import curve_fit
+
     from cdi_dislo.geometry.ortho_handler import (
         get_lattice_parametre,
     )
-    import matplotlib.pyplot as plt
-    from scipy.optimize import curve_fit
-    import numpy as np
 
     energy_values = np.linspace(
         original_energy - energy_range,
@@ -2925,9 +2807,7 @@ def optimize_energy_value_and_calibrate_temperature(
 
             # Define a function for thermal expansion
             def thermal_expansion(T, a0, alpha):
-                return a0 * (
-                    1 + alpha * (T - 20)
-                )  # 20°C is the reference temperature
+                return a0 * (1 + alpha * (T - 20))  # 20°C is the reference temperature
 
             # Fit the data
             params, _ = curve_fit(
@@ -2953,9 +2833,7 @@ def optimize_energy_value_and_calibrate_temperature(
                     )
                 metric = np.abs(delta_temp[specific_index])
             else:
-                raise ValueError(
-                    "Invalid minimize_method. Choose 'sum' or 'index'."
-                )
+                raise ValueError("Invalid minimize_method. Choose 'sum' or 'index'.")
 
             metrics.append(metric)
             all_delta_temps.append(delta_temp)
@@ -3012,9 +2890,7 @@ def optimize_energy_value_and_calibrate_temperature(
         # Third subplot: Energy optimization
         plt.subplot(3, 1, 3)
         plt.plot(energy_values, metrics, "-o")
-        plt.axvline(
-            best_energy, color="red", linestyle="--", label="Optimized Energy"
-        )
+        plt.axvline(best_energy, color="red", linestyle="--", label="Optimized Energy")
         plt.xlabel("Energy (keV)", fontsize=14)
         plt.ylabel("Optimization Metric", fontsize=14)
         plt.grid(alpha=0.25)

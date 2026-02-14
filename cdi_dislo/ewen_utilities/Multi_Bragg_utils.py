@@ -62,15 +62,11 @@ def realign_object_list(
         obj_list = force_same_shape(obj_list, verbose=verbose)
 
     obj_ref = np.copy(obj_list[ref_index])
-    support_ref = create_support(
-        obj_ref, threshold_module, fill_support=fill_support
-    )
+    support_ref = create_support(obj_ref, threshold_module, fill_support=fill_support)
 
     obj_list_shift = np.zeros(obj_list.shape).astype("complex128")
     for n, obj in enumerate(obj_list):
-        support = create_support(
-            obj, threshold_module, fill_support=fill_support
-        )
+        support = create_support(obj, threshold_module, fill_support=fill_support)
         shift, error, diffphase = phase_cross_correlation(support_ref, support)
 
         if integer_shift:
@@ -107,18 +103,12 @@ def realign_amp_phase_list(
         )
 
     amp_ref = np.copy(amp_list[ref_index])
-    support_ref = create_support(
-        amp_ref, threshold_module, fill_support=fill_support
-    )
+    support_ref = create_support(amp_ref, threshold_module, fill_support=fill_support)
 
     amp_list_shift = np.zeros(amp_list.shape)
     phase_list_shift = np.zeros(phase_list.shape)
-    for n, amp, phase in zip(
-        range(amp_list_shift.shape[0]), amp_list, phase_list
-    ):
-        support = create_support(
-            amp, threshold_module, fill_support=fill_support
-        )
+    for n, amp, phase in zip(range(amp_list_shift.shape[0]), amp_list, phase_list):
+        support = create_support(amp, threshold_module, fill_support=fill_support)
         shift, error, diffphase = phase_cross_correlation(support_ref, support)
 
         #         amp_list_shift[n] += scipy.ndimage.shift(amp, shift)

@@ -4,7 +4,6 @@ import pylab as plt
 import gif
 
 
-
 from PIL import Image
 from matplotlib.colors import LogNorm
 import warnings
@@ -256,9 +255,7 @@ def make_gif_module_phase_strain_tilt(
         )
         for index in range(max(module_ortho.shape))
     ]
-    gif.save(
-        frames, name + ".gif", duration=duration, unit="s", between="startend"
-    )
+    gif.save(frames, name + ".gif", duration=duration, unit="s", between="startend")
     print("gif saved in : ", name + ".gif")
     return
 
@@ -274,9 +271,7 @@ from skimage import measure
 def gif_one_rotation(verts, faces, angle):
     fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(111, projection="3d")
-    ax.plot_trisurf(
-        verts[:, 0], verts[:, 1], faces, verts[:, 2], cmap="gray", lw=1
-    )
+    ax.plot_trisurf(verts[:, 0], verts[:, 1], faces, verts[:, 2], cmap="gray", lw=1)
     # Hide grid lines
     ax.grid(False)
 
@@ -303,9 +298,7 @@ def make_gif_pixels_3d(
     )
     angle_list = np.linspace(0, 360, nb_angles)
     frames = [gif_one_rotation(verts, faces, angle) for angle in angle_list]
-    gif.save(
-        frames, name + ".gif", duration=duration, unit="s", between="startend"
-    )
+    gif.save(frames, name + ".gif", duration=duration, unit="s", between="startend")
     print("gif saved in : ", name + ".gif")
 
     return
@@ -425,12 +418,8 @@ def schematic_Bragg_planes_figure(
         cbar.set_label("strain (%)", size=20 * fw / 6)
 
     if not close_roi:
-        ax.set_xlim(
-            0, displacement_slice.shape[1] * voxel_sizes_slice[1] * 0.1
-        )
-        ax.set_ylim(
-            0, displacement_slice.shape[0] * voxel_sizes_slice[0] * 0.1
-        )
+        ax.set_xlim(0, displacement_slice.shape[1] * voxel_sizes_slice[1] * 0.1)
+        ax.set_ylim(0, displacement_slice.shape[0] * voxel_sizes_slice[0] * 0.1)
 
     ax.invert_yaxis()
 
@@ -501,9 +490,7 @@ def make_gif_schematic_Bragg_planes(
         )
         for slice_index in range(max(displacement.shape[:2]))
     ]
-    gif.save(
-        frames, name + ".gif", duration=duration, unit="s", between="startend"
-    )
+    gif.save(frames, name + ".gif", duration=duration, unit="s", between="startend")
     print("gif saved in : ", name + ".gif")
     return
 
@@ -537,9 +524,7 @@ def make_gif_array3d(
         Gif_one_image(array, n, fw=fw, log_scale=log_scale)
         for n in range(array.shape[0])
     ]
-    gif.save(
-        frames, name + ".gif", duration=duration, unit="s", between="startend"
-    )
+    gif.save(frames, name + ".gif", duration=duration, unit="s", between="startend")
     print("gif saved in : ", name + ".gif")
     return
 
@@ -547,7 +532,6 @@ def make_gif_array3d(
 ######################################################################################################################################
 #################################             Gif from a list of images                ###############################################
 ######################################################################################################################################
-
 
 
 @gif.frame
@@ -562,8 +546,6 @@ def Gif_one_image(file, fw=6):
 
 def make_gif_list_images(files, name="gif_default_name", duration=10, fw=6):
     frames = [Gif_one_image(file, fw=fw) for file in files]
-    gif.save(
-        frames, name + ".gif", duration=duration, unit="s", between="startend"
-    )
+    gif.save(frames, name + ".gif", duration=duration, unit="s", between="startend")
     print("gif saved in : ", name + ".gif")
     return

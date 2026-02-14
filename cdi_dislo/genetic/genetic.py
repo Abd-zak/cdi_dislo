@@ -63,16 +63,16 @@ including multiple reconstructions, object sorting based on sharpness, and genet
    - Enhance **plotting functions** with overlays or annotations for better visualization of results.
 """
 
+import time
+
+import numpy as np
+
+from cdi_dislo.ewen_utilities.Object_utilities import center_object_list
 from cdi_dislo.ewen_utilities.plot_utilities import plot_2D_slices_middle
-from cdi_dislo.ewen_utilities.Reconstruction import CDI_one_reconstruction
 from cdi_dislo.ewen_utilities.PostProcessing import (
     force_same_complex_conjugate_object_list,
 )
-from cdi_dislo.ewen_utilities.Object_utilities import center_object_list
-
-
-import numpy as np
-import time
+from cdi_dislo.ewen_utilities.Reconstruction import CDI_one_reconstruction
 
 #####################################################################################################################
 #####################################################################################################################
@@ -112,9 +112,7 @@ def make_several_reconstruction(
         fail = True
         while fail:
             try:
-                obj, llk, support, return_dict = CDI_one_reconstruction(
-                    data, params
-                )
+                obj, llk, support, return_dict = CDI_one_reconstruction(data, params)
                 obj_list_new[n] += obj
                 support_list_new[n] += support
                 fail = False

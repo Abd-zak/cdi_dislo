@@ -1,46 +1,54 @@
+from __future__ import annotations
+
 import importlib
 import pkgutil
-# Do not import everything by default. Handlers should import only the
-# specific packages they need, e.g. `from cdi_dislo import common_imports as ci`.
-# This avoids polluting the package namespace and reduces costly startup imports.
+from importlib.metadata import PackageNotFoundError, version
+from typing import List
 
-# Get the package name dynamically
-package_name = __name__
+try:
+    __version__ = version("cdi_dislo")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
-# List all submodules dynamically
-__all__ = []
+__all__ = ["__version__", "list_submodules", "import_submodules"]
 
 
-def recursive_import(package_path, package_name):
+def list_submodules(recursive: bool = False) -> List[str]:
     """
-    Recursively import all submodules and add them to __all__.
+    Return submodules available under cdi_dislo.
+
+    Parameters
+    ----------
+    recursive : bool
+        If True, walk subpackages recursively.
+
+    Returns
+    -------
+    list of fully qualified module names (strings)
     """
-    submodules = []
-    for finder, module_name, ispkg in pkgutil.walk_packages(
-        package_path, prefix=f"{package_name}."
-    ):
-        try:
-            importlib.import_module(module_name)
-            submodules.append(
-                module_name.split(".")[-1]
-            )  # Add only the last part of module name
-        except ModuleNotFoundError as e:
-            print(
-                f"⚠️ ModuleNotFoundError: Could not import {module_name}: {e}"
-            )
-        except ImportError as e:
-            print(f"⚠️ ImportError: Could not import {module_name}: {e}")
-        except Exception as e:
-            print(f"⚠️ Unexpected Error: Failed to import {module_name}: {e}")
+    modules: List[str] = []
 
-    return submodules
+    if recursive:
+        for _, name, _ in pkgutil.walk_packages(__path__, prefix=f"{__name__}."):
+            modules.append(name)
+    else:
+        for m in pkgutil.iter_modules(__path__):
+            modules.append(f"{__name__}.{m.name}")
+
+    return sorted(modules)
 
 
-# Run recursive import and populate __all__
-__all__ = recursive_import(__path__, package_name)
+def import_submodules(recursive: bool = False) -> List[str]:
+    """
+    Import submodules (debug helper).
 
-# Ensure no duplicates in __all__
-__all__ = list(set(__all__))
+    Returns list of successfully imported module names.
+    Raises on import errors (does not silently swallow failures).
+    """
+    imported: List[str] = []
 
-# Print confirmation (for debugging)
-print(f"✅ Fully loaded modules in {package_name}: {__all__}")
+    for module in list_submodules(recursive=recursive):
+        importlib.import_module(module)
+        imported.append(module)
+
+    return imported

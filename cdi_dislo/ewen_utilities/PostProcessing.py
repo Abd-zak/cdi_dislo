@@ -86,9 +86,7 @@ def compute_module_max_position_metric(obj, bins=None):
 
     module, phase = get_cropped_module_phase(obj)
     module[module < 0.01 * np.max(module)] = np.nan
-    hist, bins_pos = np.histogram(
-        module[np.logical_not(np.isnan(module))], bins=bins
-    )
+    hist, bins_pos = np.histogram(module[np.logical_not(np.isnan(module))], bins=bins)
     x = bins_pos[:-1] + (bins_pos[1:] - bins_pos[:-1]) / 2.0
     metric = np.nanmax(module) - x[hist.argmax()]
     return metric
@@ -110,16 +108,12 @@ def compute_module_histogram_peak_width(obj, plot=False):
     right_gaussian_part = np.where(x >= x[max_index], fitted_counts, 0)
 
     # find the closest indexes
-    right_HM_index = np.argmin(
-        np.abs(right_gaussian_part - fitted_counts.max() / 2)
-    )
+    right_HM_index = np.argmin(np.abs(right_gaussian_part - fitted_counts.max() / 2))
 
     left_gaussian_part = np.where(x < x[max_index], fitted_counts, 0)
 
     #     left_HM_index = max_index - (right_HM_index - max_index)
-    left_HM_index = np.argmin(
-        np.abs(left_gaussian_part - fitted_counts.max() / 2)
-    )
+    left_HM_index = np.argmin(np.abs(left_gaussian_part - fitted_counts.max() / 2))
 
     fwhm = x[right_HM_index] - x[left_HM_index]
     #     sigma_estimate = fwhm / 2*np.sqrt(2*np.log(2))
@@ -263,9 +257,7 @@ def force_same_complex_conjugate_object_list(obj_list):
 
 
 # Other option. Make combination of mode decomposition and select the index having largest 1st mode
-def automatic_conj_index_finding(
-    file_list, index_best_recon, conj_index_start=0
-):
+def automatic_conj_index_finding(file_list, index_best_recon, conj_index_start=0):
     conj_index = [conj_index_start]
     obj_ref = np.load(file_list[index_best_recon[0]])["obj"]
     if conj_index_start == 1:
@@ -284,9 +276,7 @@ def automatic_conj_index_finding(
             obj_list = center_object_list(obj_list)
             obj_ref, weights = mode_decomposition(obj_list)
             mode1.append(100 * weights[0])
-            print(
-                f"object {n} conj_index {conjugate} : {round(1e2 * weights[0])} %"
-            )
+            print(f"object {n} conj_index {conjugate} : {round(1e2 * weights[0])} %")
             conjugate += 1
 
         conj_index.append(np.argmax(mode1))
@@ -322,9 +312,7 @@ def mode_decomposition(obj_list, plot=False):
         if obj_modes[0].ndim == 3:
             fig, ax = plt.subplots(Nb_modes, 3, figsize=(4 * Nb_modes, 8))
             for n in range(Nb_modes):
-                plot_2D_slices_middle_only_module(
-                    obj_modes[n], ax=ax[n], fig=fig
-                )
+                plot_2D_slices_middle_only_module(obj_modes[n], ax=ax[n], fig=fig)
                 ax[n, 0].set_ylabel(
                     "mode {}\n{}%".format(n, round(100 * weights[n], 1)),
                     fontsize=20,
@@ -438,9 +426,7 @@ def remove_phase_ramp(
 
         if obj.ndim == 3:
             fig, ax = plt.subplots(4, 3, figsize=(3 * 4, 3 * 3))
-            plot_2D_slices_middle_only_module(
-                obj, fig=fig, ax=ax[0], crop=crop
-            )
+            plot_2D_slices_middle_only_module(obj, fig=fig, ax=ax[0], crop=crop)
             plot_2D_slices_middle_only_phase(
                 obj,
                 fig=fig,
@@ -492,9 +478,7 @@ def FT_remove_large_ramp(obj, offsets=None, plot=False):
         plot_3D_projections(I_recon)
 
     if offsets is None:
-        I_recon, offsets = center_the_center_of_mass(
-            I_recon, return_offsets=True
-        )
+        I_recon, offsets = center_the_center_of_mass(I_recon, return_offsets=True)
     else:
         I_recon = np.roll(I_recon, offsets, axis=range(I_recon.ndim))
 
@@ -607,9 +591,7 @@ def apodize(obj, window_type="blackman", plot=False):
     if window_type == "blackman":
         window = blackman_window(shape)
     else:
-        raise ValueError(
-            "only 'blackman' available for window_type right now..."
-        )
+        raise ValueError("only 'blackman' available for window_type right now...")
 
     Fexp = ifftshift(fftn(fftshift(obj)))
     Fexp_max = np.abs(Fexp).max()
@@ -622,9 +604,7 @@ def apodize(obj, window_type="blackman", plot=False):
         if obj_apodized.ndim == 3:
             plot_2D_slices_middle(obj_apodized, fig_title="apodized object")
         if obj_apodized.ndim == 2:
-            plot_object_module_phase_2d(
-                obj_apodized, fig_title="apodized object"
-            )
+            plot_object_module_phase_2d(obj_apodized, fig_title="apodized object")
     return obj_apodized
 
 

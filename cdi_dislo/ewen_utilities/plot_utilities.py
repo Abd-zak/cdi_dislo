@@ -51,9 +51,7 @@ def MIR_Colormap():
             (1.0, 0.0, 0.0),
         ),
     }
-    my_cmap = matplotlib.colors.LinearSegmentedColormap(
-        "my_colormap", cdict, 256
-    )
+    my_cmap = matplotlib.colors.LinearSegmentedColormap("my_colormap", cdict, 256)
     return my_cmap
 
 
@@ -105,9 +103,7 @@ def plotly_scatter3D_clusters(
     if Nb_pixels_partial is not None:
         if len(pixels) < Nb_pixels_partial:
             Nb_pixels_partial = len(pixels)
-        rand_indices = np.random.choice(
-            np.arange(pixels.shape[0]), Nb_pixels_partial
-        )
+        rand_indices = np.random.choice(np.arange(pixels.shape[0]), Nb_pixels_partial)
         pixels_partial = pixels[rand_indices]
         pixels_labels_partial = pixels_labels[rand_indices]
 
@@ -215,9 +211,7 @@ def plot_subplot_colorbar(array, fig, ax, extent=None, cmap="turbo"):
 ######################################################################################################################################
 
 
-def plot_3D_slice(
-    data, mask=None, ax=None, fig=None, cmap=None, log_scale=False
-):
+def plot_3D_slice(data, mask=None, ax=None, fig=None, cmap=None, log_scale=False):
     """
     Same as plot_3D_projections but with only slices at the center of the data array instead of projections along axis.
     """
@@ -302,9 +296,7 @@ def plot_3D_projections(
                 )
         else:
             plots.append(
-                ax[n].matshow(
-                    img, cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax
-                )
+                ax[n].matshow(img, cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax)
             )
 
         if mask is not None:
@@ -423,9 +415,7 @@ def plot_2D_slices_middle_one_array3D(
         fig, ax = plt.subplots(1, 3, figsize=(3 * fw, fw))
 
     if voxel_sizes is not None:
-        voxel_sizes = 0.1 * np.array(
-            voxel_sizes
-        )  # Put the voxel_sizes in nanometers
+        voxel_sizes = 0.1 * np.array(voxel_sizes)  # Put the voxel_sizes in nanometers
         extent = [
             [
                 0,
@@ -654,9 +644,7 @@ def plot_2D_slices_middle(
         return
 
 
-def plot_2D_slices_middle_object_list(
-    obj_list, llk_list=None, crop=False, fw=3
-):
+def plot_2D_slices_middle_object_list(obj_list, llk_list=None, crop=False, fw=3):
     nb_obj = len(obj_list)
 
     for n in range(nb_obj):
@@ -819,9 +807,7 @@ def plot_object_module_phase_2d(
     if llk is not None:
         fig.suptitle("llk : {}".format(llk), fontsize=15)
 
-    img2 = ax[1].matshow(
-        phase, cmap="hsv", vmin=vmin, vmax=vmax, extent=extent
-    )
+    img2 = ax[1].matshow(phase, cmap="hsv", vmin=vmin, vmax=vmax, extent=extent)
     ax[1].set_title("phase", fontsize=20)
 
     for ii, img in enumerate([img1, img2]):
@@ -909,9 +895,7 @@ def plot_support_projection(obj, threshold_module=0.3, fw=3):
         ax[axis].matshow(projection, cmap="gray_r", aspect="auto")
         ax[axis].set_xlabel(xlabels[axis], fontsize=15 * fw / 3.0)
         ax[axis].set_ylabel(ylabels[axis], fontsize=15 * fw / 3.0)
-        ax[axis].set_title(
-            f"projection along axis {axis}", fontsize=12 * fw / 3.0
-        )
+        ax[axis].set_title(f"projection along axis {axis}", fontsize=12 * fw / 3.0)
     fig.tight_layout()
     return
 
@@ -933,9 +917,7 @@ def final_figure(
 ):
     fig, ax = plt.subplots(3, 3, figsize=(fw * 3, fw * 3))
 
-    roi = automatic_object_roi(
-        module_ortho, threshold=threshold, factor=factor
-    )
+    roi = automatic_object_roi(module_ortho, threshold=threshold, factor=factor)
 
     plot_2D_slices_middle_one_array3D(
         module_ortho[roi[0] : roi[1], roi[2] : roi[3], roi[4] : roi[5]],
@@ -995,9 +977,7 @@ def final_figure_version2(
 ):
     fig, ax = plt.subplots(3, 5, figsize=(fw * 5, fw * 3))
 
-    roi = automatic_object_roi(
-        module_ortho, threshold=threshold, factor=factor
-    )
+    roi = automatic_object_roi(module_ortho, threshold=threshold, factor=factor)
     xlabel = ["Z (nm)", "Z (nm)", "Y (nm)"]
     ylabel = ["Y", "X", "X"]
 
@@ -1088,9 +1068,7 @@ def final_figure_version3(
     fig, ax = plt.subplots(3, 4, figsize=(fw * 4, fw * 3))
 
     if make_roi:
-        roi = automatic_object_roi(
-            module_ortho, threshold=threshold, factor=factor
-        )
+        roi = automatic_object_roi(module_ortho, threshold=threshold, factor=factor)
     else:
         roi = [None, None, None, None, None, None]
     xlabel = ["Z (nm)", "Z (nm)", "Y (nm)"]
@@ -1178,9 +1156,7 @@ def final_figure_version4(
     fig, ax = plt.subplots(3, 5, figsize=(fw * 5, fw * 3))
 
     if make_roi:
-        roi = automatic_object_roi(
-            module_ortho, threshold=threshold, factor=factor
-        )
+        roi = automatic_object_roi(module_ortho, threshold=threshold, factor=factor)
     else:
         roi = [None, None, None, None, None, None]
     xlabel = ["Z (nm)", "Z (nm)", "Y (nm)"]
@@ -1488,12 +1464,8 @@ def schematic_Bragg_planes_figure(
         cbar.set_label("strain (%)", size=20 * fw / 6)
 
     if not close_roi:
-        ax.set_xlim(
-            0, displacement_slice.shape[1] * voxel_sizes_slice[1] * 0.1
-        )
-        ax.set_ylim(
-            0, displacement_slice.shape[0] * voxel_sizes_slice[0] * 0.1
-        )
+        ax.set_xlim(0, displacement_slice.shape[1] * voxel_sizes_slice[1] * 0.1)
+        ax.set_ylim(0, displacement_slice.shape[0] * voxel_sizes_slice[0] * 0.1)
 
     ax.invert_yaxis()
 
@@ -1589,12 +1561,8 @@ def final_figure_2d(
 
     fig, ax = plt.subplots(2, 3, figsize=(fw * 3.3, fw * 2))
 
-    plot_global_2d(
-        module, fig=fig, ax=ax[0, 0], cmap="gray_r", voxel_sizes=voxel_sizes
-    )
-    plot_global_2d(
-        phase, fig=fig, ax=ax[0, 1], cmap="hsv", voxel_sizes=voxel_sizes
-    )
+    plot_global_2d(module, fig=fig, ax=ax[0, 0], cmap="gray_r", voxel_sizes=voxel_sizes)
+    plot_global_2d(phase, fig=fig, ax=ax[0, 1], cmap="hsv", voxel_sizes=voxel_sizes)
     plot_symmetric_colorscale_2d(
         1e2 * strain,
         fig=fig,
@@ -1630,7 +1598,7 @@ def final_figure_2d(
     ax[0, 0].set_title("module (a.u.)", fontsize=15 * fw / 3)
     ax[0, 1].set_title("phase (rad)", fontsize=15 * fw / 3)
     ax[0, 2].set_title("strain (%)", fontsize=15 * fw / 3)
-    ax[1, 0].set_title("d-spacing ($\AA$)", fontsize=15 * fw / 3)
+    ax[1, 0].set_title(r"d-spacing ($\AA$)", fontsize=15 * fw / 3)
     ax[1, 1].set_title("tilt (degrees)", fontsize=15 * fw / 3)
 
     for axe in ax.flatten():
@@ -1715,9 +1683,7 @@ def plot_surface_projections(
     cbar = fig.colorbar(imgs[-1], cax=cax, orientation="vertical")
     cbar.ax.tick_params(labelsize=20 * fw / 4.0)
     cbar.ax.locator_params(nbins=5)
-    cbar.set_label(
-        "strain (%)", rotation=270, fontsize=30 * fw / 4.0, labelpad=15
-    )
+    cbar.set_label("strain (%)", rotation=270, fontsize=30 * fw / 4.0, labelpad=15)
 
     for axe in ax.flatten():
         axe.locator_params(nbins=4)
@@ -1763,12 +1729,8 @@ def interactive_3d_object(obj, threshold_module=None, axis=0):
     shape = module.shape
 
     fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-    im0 = ax[0].matshow(
-        module.take(indices=shape[axis] // 2, axis=axis), cmap="gray_r"
-    )
-    im1 = ax[1].matshow(
-        phase.take(indices=shape[axis] // 2, axis=axis), cmap="hsv"
-    )
+    im0 = ax[0].matshow(module.take(indices=shape[axis] // 2, axis=axis), cmap="gray_r")
+    im1 = ax[1].matshow(phase.take(indices=shape[axis] // 2, axis=axis), cmap="hsv")
 
     @interact(w=(0, shape[axis] - 1))
     def update(w=0):
@@ -1798,9 +1760,7 @@ def interactive_3d_array(
         vmin = -vmax
 
     if voxel_sizes is not None:
-        voxel_sizes = 0.1 * np.array(
-            voxel_sizes
-        )  # Put the voxel_sizes in nanometers
+        voxel_sizes = 0.1 * np.array(voxel_sizes)  # Put the voxel_sizes in nanometers
         extent = [
             [
                 0,

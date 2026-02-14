@@ -104,20 +104,17 @@ and handling BCDI (Bragg Coherent Diffraction Imaging) reconstructions. It inclu
 ###########################################################################################################
 """
 
-import numpy as np
-from decimal import Decimal, getcontext
-import re
-from scipy.ndimage import center_of_mass as C_O_M
-from cdiutils.utils import CroppingHandler
-
+# import numpy as np
 import logging
+import re
 import time
+from decimal import Decimal, getcontext
+
+import numpy as np
+from cdiutils.utils import CroppingHandler
+from scipy.ndimage import center_of_mass as C_O_M
 
 
-#####################################################################################################################
-#####################################################################################################################
-# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 # 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 def save_vti_from_dictdata(
     dict_data, filename_save, voxel_sizes, amplitude_threshold=0.01
@@ -180,6 +177,7 @@ def fill_up_support(support, plot=False):
     Modify the support by filling any hole inside.
     """
     import numpy as np
+
     from cdi_dislo.ewen_utilities.plot_utilities import (
         plot_2D_slices_middle_one_array3D,
     )
@@ -234,11 +232,11 @@ def zero_to_nan(data: np.ndarray, boolean_values: bool = False) -> np.ndarray:
 
 
 # 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
-# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 def extract_coefficient_and_exponent(number):
     """Extracts the coefficient and exponent from a given number."""
     import math
+
+    import numpy as np
 
     if number == 0:
         return 0, 0
@@ -269,9 +267,7 @@ def transform_miller_indices(miller_list):
     return np.array(transformed_list).astype(float)
 
 
-def generate_burgers_directions(
-    m, G, hkl_max=5, sort_by_hkl=True, angle_vector=None
-):
+def generate_burgers_directions(m, G, hkl_max=5, sort_by_hkl=True, angle_vector=None):
     """
     Generate all possible primitive Burgers vector directions [h, k, l] and their negatives [-h, -k, -l]
     for a given reciprocal lattice vector G, a specific integer m, removing redundant cases where b is
@@ -287,8 +283,9 @@ def generate_burgers_directions(
     Returns:
         list: List of tuples (direction, angle) where direction is [h, k, l] and angle is in degrees.
     """
-    from math import gcd, degrees
     from functools import reduce
+    from math import degrees, gcd
+
     import numpy as np
 
     if m == 0:
@@ -303,13 +300,14 @@ def generate_burgers_directions(
 
     def calculate_angle(v1, v2):
         """Compute the angle between two vectors in degrees."""
-        dot_product = np.sum(v1[i] * v2[i] for i in range(len(v1)))  # type: ignore
-        magnitude_v1 = np.sqrt(np.sum(x**2 for x in v1))  # type: ignore
-        magnitude_v2 = np.sqrt(np.sum(x**2 for x in v2))  # type: ignore
+        v1 = np.asarray(v1, dtype=float)
+        v2 = np.asarray(v2, dtype=float)
+
+        dot_product = float(np.dot(v1, v2))
+        magnitude_v1 = float(np.linalg.norm(v1))
+        magnitude_v2 = float(np.linalg.norm(v2))
         cos_theta = dot_product / (magnitude_v1 * magnitude_v2)
-        cos_theta = np.max(
-            -1.0, np.min(1.0, cos_theta)
-        )  # Ensure cos_theta is within [-1, 1]
+        cos_theta = np.clip(cos_theta, -1.0, 1.0)  # Ensure cos_theta is within [-1, 1]
         return degrees(np.arccos(cos_theta))
 
     valid_directions = []
@@ -435,6 +433,8 @@ def check_array_empty(array__):
     Returns:
     - bool: True if the array is empty, False otherwise.
     """
+    import numpy as np
+
     if np.array(array__).size == 0:
         return True
     else:
@@ -463,19 +463,15 @@ def array_to_dict(array):
 
 
 def check_type(var):
+    import numpy as np
+
     if isinstance(var, (list, tuple, np.ndarray)):
         if len(var) > 0:
             # Determine the type of elements
-            all_int = all(
-                [isinstance(item, (int, np.integer)) for item in var]
-            )
-            all_float = all(
-                [isinstance(item, (float, np.floating)) for item in var]
-            )
+            all_int = all([isinstance(item, (int, np.integer)) for item in var])
+            all_float = all([isinstance(item, (float, np.floating)) for item in var])
             all_str = all([isinstance(item, (str, np.str_)) for item in var])
-            all_bool = all(
-                [isinstance(item, (bool, np.bool_)) for item in var]
-            )
+            all_bool = all([isinstance(item, (bool, np.bool_)) for item in var])
 
             if isinstance(var, np.ndarray):
                 container_type = "array"
@@ -508,6 +504,7 @@ def check_type(var):
 
 def normalize_methods(methods):
     from collections.abc import Iterable
+
     import numpy as np
 
     out = []
@@ -555,9 +552,7 @@ class DualOutput:
         self.log_only = log_only  # If True, output only to the log file
 
     def write(self, message):
-        if (
-            self.log_only
-        ):  # Output only to the last stream (assumed to be the log file)
+        if self.log_only:  # Output only to the last stream (assumed to be the log file)
             self.streams[-1].write(message)
             self.streams[-1].flush()
         else:  # Output to all streams
@@ -593,9 +588,7 @@ class Float(float):
 
     def _operate(self, other, operation):
         getcontext().prec = 4
-        other_value = (
-            other.value if isinstance(other, Float) else Decimal(str(other))
-        )
+        other_value = other.value if isinstance(other, Float) else Decimal(str(other))
         result = operation(self.value, other_value)
         return float(result)
 
@@ -621,6 +614,8 @@ def get_numbers_from_string(string):
 
 
 def std_data(data):
+    import numpy as np
+
     data = data.flatten()
     data = data[data != 0]
     mean_d = np.sum(data) / len(data)
@@ -628,24 +623,21 @@ def std_data(data):
     return std
 
 
-#####################################################################################################################
-#####################################################################################################################
-############################################      Rotation utility ##################################################
-#####################################################################################################################
-#####################################################################################################################
+# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀  Rotation utility 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 def build_rotation_matrix_from_axes(
     angle_x=0, angle_y=0, angle_z=0, degrees=True, order="xyz"
 ):
+    import numpy as np
     from scipy.spatial.transform import Rotation as R
 
     """
     Builds a composite rotation matrix from sequential rotations around X, Y, Z axes.
-    
     Parameters:
         angle_x, angle_y, angle_z (float): Rotation angles (degrees or radians)
         degrees (bool): Whether the input angles are in degrees (default: True)
         order (str): Order of application, e.g., 'xyz', 'zyx', etc.
-    
     Returns:
         (3, 3) ndarray: Final rotation matrix.
     """
@@ -682,6 +674,7 @@ def alignment_euler_angles(source_vec, target_vec, order="xyz", degrees=True):
         angles (tuple): Rotation angles in the given order.
         rotation_matrix (ndarray): The rotation matrix that aligns the vectors.
     """
+    import numpy as np
     from scipy.spatial.transform import Rotation as R
 
     source_vec = np.array(source_vec, dtype=float)
@@ -701,6 +694,7 @@ def alignment_euler_angles(source_vec, target_vec, order="xyz", degrees=True):
 # Function to apply centered affine transformation
 def centered_affine_transform(data, transformation_matrix, order=1):
     """Applies a centered orthogonal transformation to a 3D array."""
+    import numpy as np
     from scipy.ndimage import map_coordinates
 
     # Validation checks (keep from previous version)
@@ -730,6 +724,8 @@ def centered_affine_transform(data, transformation_matrix, order=1):
 # Function to create a rotation matrix from angles
 def rotation_matrix_from_angles(angle_x, angle_y, angle_z):
     """Compute the 3D rotation matrix from given Euler angles (in degrees)."""
+    import numpy as np
+
     angle_x, angle_y, angle_z = np.radians([angle_x, angle_y, angle_z])
 
     # Rotation matrices
@@ -762,11 +758,9 @@ def rotation_matrix_from_angles(angle_x, angle_y, angle_z):
     return R
 
 
-#####################################################################################################################
-#####################################################################################################################
-############################################crop & general utility ##################################################
-#####################################################################################################################
-#####################################################################################################################
+# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀 crop & general utility 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 def remove_bordersurface_mask(mask, order=2):
     """
     Docstring for remove_bordersurface_mask
@@ -775,6 +769,8 @@ def remove_bordersurface_mask(mask, order=2):
     :param mask:    Description
     :param order: Description
     """
+    import numpy as np
+
     from cdi_dislo.geometry.ortho_handler import (
         get_displacement_gradient,
     )
@@ -783,9 +779,7 @@ def remove_bordersurface_mask(mask, order=2):
         np.max(
             nan_to_zero(
                 np.abs(
-                    np.array(
-                        get_displacement_gradient((mask), voxel_size=(1, 1, 1))
-                    )
+                    np.array(get_displacement_gradient((mask), voxel_size=(1, 1, 1)))
                 )
             ),
             axis=0,
@@ -809,8 +803,7 @@ def remove_bordersurface_mask(mask, order=2):
             != 0
         )
         mask = (
-            ((graadient_modes_mask) * (graadient_graadient_modes_mask) - mask)
-            < 0
+            ((graadient_modes_mask) * (graadient_graadient_modes_mask) - mask) < 0
         ).astype(float)
     else:
         # print("order is one")
@@ -856,7 +849,8 @@ def crop_data_and_update_coordinates(
     x, y, z, data, finalshape, pos="com", k_add=20, verbose=True
 ):
     """
-    Crop 3D data around a specified position and update the spatial coordinates accordingly."""
+    Crop 3D data around a specified position and update the spatial coordinates accordingly.
+    """
     import numpy as np
 
     # Get the original data shape
@@ -869,13 +863,9 @@ def crop_data_and_update_coordinates(
             pos_pad = ("max",)
         elif pos == "com":
             pos_pad = ("com",)
-    elif (type_of_methods == "array of float") or (
-        type_of_methods == "array of int"
-    ):
+    elif (type_of_methods == "array of float") or (type_of_methods == "array of int"):
         pos_pad = (tuple(pos),)
-    elif (type_of_methods == "list of float") or (
-        type_of_methods == "list of int"
-    ):
+    elif (type_of_methods == "list of float") or (type_of_methods == "list of int"):
         pos_pad = (tuple(pos),)
     elif "mixed" in type_of_methods:
         if ("list" in type_of_methods) or ("array" in type_of_methods):
@@ -888,8 +878,7 @@ def crop_data_and_update_coordinates(
     # Calculate padding
     pad_before = finalshape // 2 - pos  # type: ignore
     pad_after = (
-        np.maximum((pos + finalshape // 2 + finalshape % 2) - orig_shape, 0)
-        + k_add
+        np.maximum((pos + finalshape // 2 + finalshape % 2) - orig_shape, 0) + k_add
     )  # type: ignore
     pad_after = [i if i > 0 else 0 for i in pad_after]
     pad_before = [i if i > 0 else 0 for i in pad_before]
@@ -935,9 +924,9 @@ def crop_data_and_update_coordinates(
 
     # Assertions to check if the cropping and coordinate adjustments are correct
     try:
-        assert crop_data_cdi.shape == tuple(finalshape), (
-            "Cropped data shape doesn't match finalshape"
-        )
+        assert crop_data_cdi.shape == tuple(
+            finalshape
+        ), "Cropped data shape doesn't match finalshape"
         assert (
             len(new_x_crop) == finalshape[0]
             and len(new_y_crop) == finalshape[1]
@@ -946,17 +935,14 @@ def crop_data_and_update_coordinates(
 
         new_com = cropped_det_ref
         assert all(
-            np.abs(com - finalshape[i] // 2) < 2
-            for i, com in enumerate(new_com)
+            np.abs(com - finalshape[i] // 2) < 2 for i, com in enumerate(new_com)
         ), "Center of mass is not near the center of the new coordinate system"
     except AssertionError as e:
         logging.error(f"Assertion failed: {str(e)}")
         raise
 
     if verbose:
-        print(
-            f"Original shape: {data.shape}, Cropped shape: {crop_data_cdi.shape}"
-        )
+        print(f"Original shape: {data.shape}, Cropped shape: {crop_data_cdi.shape}")
         print(
             f"New coordinate ranges: x[{new_x_crop[0]:.2f}, {new_x_crop[-1]:.2f}], y[{new_y_crop[0]:.2f}, {new_y_crop[-1]:.2f}], z[{new_z_crop[0]:.2f}, {new_z_crop[-1]:.2f}]"
         )
@@ -988,19 +974,14 @@ def crop_3d_obj_pos_and_update_coordinates(
     if pos == "com":
         pos = np.array([int(np.round(i)) for i in C_O_M(density)])
     elif pos == "max":
-        pos = np.array(
-            [int(np.round(i)) for i in np.where(density == density.max())]
-        )
+        pos = np.array([int(np.round(i)) for i in np.where(density == density.max())])
     else:
         pos = np.array(pos)
     # Calculate padding
     k_add = 20
     pad_before = np.maximum(output_shape // 2 - pos, 0) + k_add
     pad_after = (
-        np.maximum(
-            (pos + output_shape // 2 + output_shape % 2) - orig_shape, 0
-        )
-        + k_add
+        np.maximum((pos + output_shape // 2 + output_shape % 2) - orig_shape, 0) + k_add
     )
 
     # Pad the data
@@ -1023,10 +1004,7 @@ def crop_3d_obj_pos_and_update_coordinates(
         new_pos = np.array([int(np.round(i)) for i in C_O_M(padded_density)])
     elif pos == "max":
         new_pos = np.array(
-            [
-                int(np.round(i))
-                for i in np.where(padded_density == padded_density.max())
-            ]
+            [int(np.round(i)) for i in np.where(padded_density == padded_density.max())]
         )
     else:
         new_pos = pos + (pad_before)
@@ -1072,9 +1050,9 @@ def crop_3d_obj_pos_and_update_coordinates(
     # Reconstruct the cropped complex object
     cropped_obj = cropped_density * np.exp(1j * cropped_phase)
     try:
-        assert cropped_obj.shape == tuple(output_shape), (
-            "Cropped object shape doesn't match output_shape"
-        )
+        assert cropped_obj.shape == tuple(
+            output_shape
+        ), "Cropped object shape doesn't match output_shape"
         assert (
             len(new_x_crop) == output_shape[2]
             and len(new_y_crop) == output_shape[1]
@@ -1084,29 +1062,21 @@ def crop_3d_obj_pos_and_update_coordinates(
         if pos == "com":
             new_com = C_O_M(np.abs(cropped_obj))
             assert all(
-                np.abs(com - output_shape[i] // 2) < 2
-                for i, com in enumerate(new_com)
-            ), (
-                "Center of mass is not near the center of the new coordinate system"
-            )
+                np.abs(com - output_shape[i] // 2) < 2 for i, com in enumerate(new_com)
+            ), "Center of mass is not near the center of the new coordinate system"
         elif pos == "max":
             new_max = np.unravel_index(
                 np.argmax(np.abs(cropped_obj)), cropped_obj.shape
             )
             assert all(
-                np.abs(m - output_shape[i] // 2) < 2
-                for i, m in enumerate(new_max)
-            ), (
-                "Maximum value is not near the center of the new coordinate system"
-            )
+                np.abs(m - output_shape[i] // 2) < 2 for i, m in enumerate(new_max)
+            ), "Maximum value is not near the center of the new coordinate system"
     except AssertionError as e:
         logging.error(f"Assertion failed: {str(e)}")
         raise
 
     if verbose:
-        logging.info(
-            f"Original shape: {obj.shape}, Cropped shape: {cropped_obj.shape}"
-        )
+        logging.info(f"Original shape: {obj.shape}, Cropped shape: {cropped_obj.shape}")
         logging.info(
             f"New coordinate ranges: x[{new_x_crop[0]:.2f}, {new_x_crop[-1]:.2f}], y[{new_y_crop[0]:.2f}, {new_y_crop[-1]:.2f}], z[{new_z_crop[0]:.2f}, {new_z_crop[-1]:.2f}]"
         )
@@ -1129,6 +1099,8 @@ def crop_3d_obj_pos(
     Returns:
     numpy.ndarray: Cropped complex 3D array
     """
+    import numpy as np
+
     density = np.abs(obj)
     phase = 0.0 - np.angle(np.exp(1j * np.angle(obj)))
     type_of_methods = check_type(methods)
@@ -1170,7 +1142,7 @@ def crop_3d_obj_pos(
     return obj
 
 
-def crop_3darray_pos_v00(
+def crop_3darray_pos(
     data,
     output_shape=[100, 100, 100],
     methods=["max", "com"],
@@ -1190,87 +1162,6 @@ def crop_3darray_pos_v00(
     """
     import numpy as np
 
-    # Ensure pos and output_shape are numpy arrays for easier manipulation
-    if ("max" in methods) or ("com" in methods):
-        pos = np.array([int(np.round(i)) for i in C_O_M(data)])
-    else:
-        pos = methods
-
-    output_shape = np.array(output_shape)
-    orig_shape = np.array(data.shape)
-    k_add = 10
-    # Calculate padding
-    pad_before = output_shape // 2 - pos
-    pad_after = (
-        np.maximum(
-            (pos + output_shape // 2 + output_shape % 2) - orig_shape, 0
-        )
-        + k_add
-    )
-    pad_after = [i if i > 0 else 0 for i in pad_after]
-    pad_before = [i if i > 0 else 0 for i in pad_before]
-    # Pad the array
-    padded_data = np.pad(
-        data,
-        list(zip(pad_before, pad_after)),
-        mode="constant",
-        constant_values=0,
-    )
-    if not isinstance(methods, (np.ndarray, list, tuple)):
-        if methods == "max":
-            methods = ["max"]
-        elif methods == "com":
-            methods = ["com"]
-    if ("max" in methods) or ("com" in methods):
-        print(
-            "the methods choosed to centering is max or com or combination of both"
-        )
-        (
-            crop_data_cdi,  # the output cropped data
-            det_ref,  # the detector reference voxel in the full detector frame
-            _,  # the detector reference voxel in the cropped detector frame
-            _,  # the region of interest (ROI) used to crop the data
-        ) = CroppingHandler.chain_centring(  # type: ignore
-            padded_data,
-            methods=methods,  # the list of methods used sequentially # type: ignore
-            output_shape=output_shape,  # the output shape you want to work with # type: ignore
-            verbose=verbose,  # whether to print logs during the reference voxel search
-        )
-    else:
-        print("the origin of the crop is given by user ", methods)
-        # Calculate crop indices
-        start = methods - output_shape // 2  # type: ignore
-        end = start + output_shape
-        print(start, end)
-        # Crop the padded array
-        crop_data_cdi = padded_data[
-            start[0] : end[0], start[1] : end[1], start[2] : end[2]
-        ]
-
-    if det_ref_return:
-        return det_ref, crop_data_cdi  # type: ignore
-    else:
-        return crop_data_cdi
-
-
-def crop_3darray_pos(
-    data,
-    output_shape=[100, 100, 100],
-    methods=["max", "com"],
-    verbose=True,
-    det_ref_return=False,
-):
-    """
-    Crop a 3D array around a specified position, with padding if necessary.
-
-    Parameters:
-    data (numpy.ndarray): 3D input array
-    pos (tuple): Center position for cropping (z, y, x)
-    output_shape (tuple): Desired shape of the output (z, y, x)
-
-    Returns:
-    numpy.ndarray: Cropped array of shape output_shape
-    """
     # Ensure pos and output_shape are numpy arrays for easier manipulation
     type_of_methods = check_type(methods)
     if verbose:
@@ -1292,9 +1183,7 @@ def crop_3darray_pos(
         pos = np.array([int(np.round(i)) for i in C_O_M(data)])
         if verbose:
             print("the methods choosed to centering is a tuple of strings")
-    elif (type_of_methods == "tuple of int") or (
-        type_of_methods == "tuple of float"
-    ):
+    elif (type_of_methods == "tuple of int") or (type_of_methods == "tuple of float"):
         if np.array(methods).size == 3:
             methods = (tuple(methods),)
         if len(methods) == 1:
@@ -1328,10 +1217,7 @@ def crop_3darray_pos(
     # Calculate padding
     pad_before = output_shape // 2 - pos
     pad_after = (
-        np.maximum(
-            (pos + output_shape // 2 + output_shape % 2) - orig_shape, 0
-        )
-        + k_add
+        np.maximum((pos + output_shape // 2 + output_shape % 2) - orig_shape, 0) + k_add
     )
     # print(pad_before)
     # print(pad_after)
@@ -1362,9 +1248,7 @@ def crop_3darray_pos(
         return crop_data_cdi
 
 
-def transform_data_paraview_style(
-    data, angle_x, angle_y, angle_z, padding_factor=1.5
-):
+def transform_data_paraview_style(data, angle_x, angle_y, angle_z, padding_factor=1.5):
     """
     Transform a 3D numpy array using rotation angles in a way similar to ParaView,
     with padding to avoid data loss at edges.
@@ -1376,15 +1260,13 @@ def transform_data_paraview_style(
     :param padding_factor: Factor by which to increase the grid size (default: 1.5)
     :return: Transformed 3D numpy array of the same shape as input
     """
-    from scipy.interpolate import RegularGridInterpolator
     import numpy as np
+    from scipy.interpolate import RegularGridInterpolator
 
     original_shape = data.shape
 
     # Pad the data
-    pad_width = tuple(
-        (int(s * (padding_factor - 1) / 2),) * 2 for s in original_shape
-    )
+    pad_width = tuple((int(s * (padding_factor - 1) / 2),) * 2 for s in original_shape)
     padded_data = np.pad(data, pad_width, mode="constant", constant_values=0)
     padded_shape = padded_data.shape
 
@@ -1449,9 +1331,7 @@ def transform_data_paraview_style(
     transformed_data = interpolator(rotated_coords).reshape(padded_shape)
 
     # Crop back to original size
-    start = tuple(
-        int((ps - os) / 2) for ps, os in zip(padded_shape, original_shape)
-    )
+    start = tuple(int((ps - os) / 2) for ps, os in zip(padded_shape, original_shape))
     end = tuple(s + os for s, os in zip(start, original_shape))
     transformed_data = transformed_data[
         start[0] : end[0], start[1] : end[1], start[2] : end[2]
@@ -1472,15 +1352,15 @@ def crop_3darray_pos_old(data, finalshape, pos="com"):
     Returns:
     numpy.ndarray: Cropped array of shape finalshape
     """
+    import numpy as np
+
     from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
 
     # Ensure pos and finalshape are numpy arrays for easier manipulation
     if pos == "com":
         pos = np.array([int(np.round(i)) for i in C_O_M(data)])
     elif pos == "max":
-        pos = np.array(
-            [int(np.round(i)) for i in np.where(data == np.nanmax(data))[0]]
-        )
+        pos = np.array([int(np.round(i)) for i in np.where(data == np.nanmax(data))[0]])
     else:
         pos = np.array(pos)
     finalshape = np.array(finalshape)
@@ -1489,8 +1369,7 @@ def crop_3darray_pos_old(data, finalshape, pos="com"):
     # Calculate padding
     pad_before = finalshape // 2 - pos
     pad_after = (
-        np.maximum((pos + finalshape // 2 + finalshape % 2) - orig_shape, 0)
-        + k_add
+        np.maximum((pos + finalshape // 2 + finalshape % 2) - orig_shape, 0) + k_add
     )
     pad_after = [i if i > 0 else 0 for i in pad_after]
     pad_before = [i if i > 0 else 0 for i in pad_before]
@@ -1527,9 +1406,7 @@ def crop_3darray_pos_old(data, finalshape, pos="com"):
     end = start + finalshape
     print(start, end)
     # Crop the padded array
-    cropped = padded_data[
-        start[0] : end[0], start[1] : end[1], start[2] : end[2]
-    ]
+    cropped = padded_data[start[0] : end[0], start[1] : end[1], start[2] : end[2]]
 
     return cropped
 
@@ -1584,9 +1461,7 @@ def mask_clusters(
     # If second cluster is requested, continue processing
     # Step 5: Find second global maximum
     max_value2 = np.max(data_after_first_mask)
-    max_coords2 = np.unravel_index(
-        np.argmax(data_after_first_mask), data.shape
-    )
+    max_coords2 = np.unravel_index(np.argmax(data_after_first_mask), data.shape)
 
     # Step 6: Identify second cluster containing maximum
     threshold2 = max_value2 * threshold_factor
@@ -1607,6 +1482,161 @@ def mask_clusters(
     return masked_data2, data_after_masking, dilated_mask2
 
 
+def pad_to_shape(arr, target_shape, pad_value=0):
+    import numpy as np
+
+    # Calculate the difference in shape
+    diff_shape = [(max(0, target_shape[i] - arr.shape[i])) for i in range(3)]
+
+    # Calculate the padding for the beginning and the end
+    pad_width = [(diff // 2, diff - diff // 2) for diff in diff_shape]
+
+    # Pad the array
+    padded_arr = np.pad(arr, pad_width, mode="constant", constant_values=pad_value)
+
+    return padded_arr
+
+
+def optimize_cropping(data, min_sym_crop=True):
+    """
+    Optimize cropping around the center of mass (COM) while avoiding zero cropping.
+
+    Parameters:
+    - data (numpy.ndarray): 3D array of shape (z, y, x).
+
+    Returns:
+    - crop_width (int): Maximum width for cropping in any direction.
+    """
+    import numpy as np
+
+    # Calculate sum along each direction
+    sum_z = np.sum(data, axis=(1, 2))
+    sum_y = np.sum(data, axis=(0, 2))
+    sum_x = np.sum(data, axis=(0, 1))
+
+    # Find the index of the first and last non-zero elements
+    first_nonzero_z = np.argmax(sum_z > 0)
+    last_nonzero_z = len(sum_z) - np.argmax(sum_z[::-1] > 0) - 1
+    first_nonzero_y = np.argmax(sum_y > 0)
+    last_nonzero_y = len(sum_y) - np.argmax(sum_y[::-1] > 0) - 1
+    first_nonzero_x = np.argmax(sum_x > 0)
+    last_nonzero_x = len(sum_x) - np.argmax(sum_x[::-1] > 0) - 1
+
+    # Calculate crop width for each direction
+    crop_width_z = max(last_nonzero_z - first_nonzero_z + 1, 0)
+    crop_width_y = max(last_nonzero_y - first_nonzero_y + 1, 0)
+    crop_width_x = max(last_nonzero_x - first_nonzero_x + 1, 0)
+
+    # Return the maximum crop width among the three directions
+    if min_sym_crop:
+        return max(crop_width_z, crop_width_y, crop_width_x)
+    else:
+        return (crop_width_z, crop_width_y, crop_width_x)
+
+
+def get_size_3D_pixel(data):
+    """
+    Calculate the maximum width for cropping in any direction based on the non-zero elements along each axis.
+
+    Parameters:
+    - data (numpy.ndarray): 3D array of shape (z, y, x).
+
+    Returns:
+    - crop_width (tuple): Maximum width for cropping in each direction (z, y, x).
+    """
+    import numpy as np
+
+    # Calculate sum along each direction
+    sum_z = np.sum(data, axis=(1, 2))
+    sum_y = np.sum(data, axis=(0, 2))
+    sum_x = np.sum(data, axis=(0, 1))
+
+    # Find the index of the first and last non-zero elements
+    first_nonzero_z = np.argmax(sum_z > 0)
+    last_nonzero_z = len(sum_z) - np.argmax(sum_z[::-1] > 0) - 1
+    first_nonzero_y = np.argmax(sum_y > 0)
+    last_nonzero_y = len(sum_y) - np.argmax(sum_y[::-1] > 0) - 1
+    first_nonzero_x = np.argmax(sum_x > 0)
+    last_nonzero_x = len(sum_x) - np.argmax(sum_x[::-1] > 0) - 1
+
+    # Calculate crop width for each direction
+    crop_width_z = max(last_nonzero_z - first_nonzero_z + 1, 0)
+    crop_width_y = max(last_nonzero_y - first_nonzero_y + 1, 0)
+    crop_width_x = max(last_nonzero_x - first_nonzero_x + 1, 0)
+
+    # Return the maximum crop width among the three directions
+    return (crop_width_z, crop_width_y, crop_width_x)
+
+
+def fit_model_regression(method, X, y, **kwargs):
+    """
+    Fit a regression model specified by the method.
+
+    Parameters:
+    - method (str): The name of the method to use for fitting the model.
+    - X (array-like): Input features.
+    - y (array-like): Target variable.
+    - **kwargs: Additional keyword arguments to pass to the model constructor.
+
+    Returns:
+    - model: Fitted regression model.
+    - predictions: Predictions made by the model.
+    """
+    # Import necessary regression models
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.linear_model import LinearRegression
+    from sklearn.neighbors import KNeighborsRegressor
+    from sklearn.neural_network import MLPRegressor
+    from sklearn.svm import SVR
+    from sklearn.tree import DecisionTreeRegressor
+
+    # Initialize the model based on the specified method
+    if method == "LinearRegression":
+        model = LinearRegression(**kwargs)
+    elif method == "RandomForestRegressor":
+        model = RandomForestRegressor(**kwargs)
+    elif method == "DecisionTreeRegressor":
+        model = DecisionTreeRegressor(**kwargs)
+    elif method == "KNeighborsRegressor":
+        model = KNeighborsRegressor(**kwargs)
+    elif method == "SVR":
+        model = SVR(**kwargs)
+    elif method == "MLPRegressor":
+        model = MLPRegressor(**kwargs)
+    else:
+        raise ValueError(
+            "Invalid method specified. Supported methods: LinearRegression, RandomForestRegressor, DecisionTreeRegressor, KNeighborsRegressor, SVR, MLPRegressor."
+        )
+
+    # Fit the model
+    model.fit(X, y)
+
+    # Make predictions
+    predictions = model.predict(X)
+
+    return model, predictions
+
+
+def get_max_or_com(ndata, off_set_y, max_or_com="com"):
+    import numpy as np
+
+    if max_or_com == "com":
+        try:
+            com_ = [int(i) for i in C_O_M(ndata)]  # type: ignore
+            com_[1] += off_set_y
+        except Exception:
+            com_ = [0, 0, 0]
+        return com_
+    else:
+        try:
+            max_ = [int(i) for i in np.where(ndata == ndata.max())]
+            max_[1] += off_set_y
+        except Exception:
+            max_ = [0, 0, 0]
+        return max_
+
+
+# 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 # data processing
 def data_processing(files, dirlist):
     """
@@ -1615,6 +1645,7 @@ def data_processing(files, dirlist):
     :param files: Description
     :param dirlist: Description
     """
+    import numpy as np
 
     def mean_z_run(data):
         sum_ = data[0]
@@ -1634,7 +1665,16 @@ def data_processing(files, dirlist):
         data_allscans_runs_meanz_phi,
         data_allscans_mask,
         data_allscans_COM,
-    ) = {}, {}, {}, {}, {}, {}, {}, {}
+    ) = (
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+    )
     rho_min = 1
     for dir_ in range(len(dirlist)):
         start = time.time()
@@ -1648,13 +1688,20 @@ def data_processing(files, dirlist):
             phi_data_cut,
             data_run_meanz_rho,
             data_run_meanz_phi,
-        ) = [], [], [], [], [], [], [], [], []
+        ) = (
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
         # size = len(files[dir_])
         scan_nb = files[dir_][0][
-            files[dir_][0].find("results/S") + 9 : files[dir_][0].find(
-                "results/S"
-            )
-            + 12
+            files[dir_][0].find("results/S") + 9 : files[dir_][0].find("results/S") + 12
         ]
         print(
             "********** scan "
@@ -1673,9 +1720,7 @@ def data_processing(files, dirlist):
             for i in files[dir_]
         ]  # type: ignore
         LLK_runs = [
-            IfStringRepresentsFloat(
-                i[i.find("LLKf") + 16 : i.find("LLKf") + 27]
-            )
+            IfStringRepresentsFloat(i[i.find("LLKf") + 16 : i.find("LLKf") + 27])
             for i in files[dir_]
         ]
 
@@ -1685,10 +1730,7 @@ def data_processing(files, dirlist):
         rho_data_mask = np.asarray(rho_data) * 0
         for i in range(len(rho_data)):
             rho_data_mask[i][np.where(rho_data[i] > rho_min)] = 1
-        i_COM = [
-            np.asarray(C_O_M(rho_data_mask[i]))
-            for i in range(len(files[dir_]))
-        ]
+        i_COM = [np.asarray(C_O_M(rho_data_mask[i])) for i in range(len(files[dir_]))]
         i_COM = [list(map(int, i_COM[i])) for i in range(len(i_COM))]
         rho_data_mask = [
             rho_data_mask[i][
@@ -1719,12 +1761,8 @@ def data_processing(files, dirlist):
         if len(rho_data_cut) == 0:
             continue
         i_COM = i_COM - 50 * np.asarray(i_COM) ** 0
-        data_run_meanz_rho = [
-            mean_z_run(rho_data_cut[i]) for i in range(len(i_COM))
-        ]
-        data_run_meanz_phi = [
-            mean_z_run(phi_data_cut[i]) for i in range(len(i_COM))
-        ]
+        data_run_meanz_rho = [mean_z_run(rho_data_cut[i]) for i in range(len(i_COM))]
+        data_run_meanz_phi = [mean_z_run(phi_data_cut[i]) for i in range(len(i_COM))]
         data_allscans_LLK = {
             **data_allscans_LLK,
             str(scan_nb): np.asarray(LLK_runs),
@@ -1802,7 +1840,13 @@ def modes_processing(files, mypath="/home/abdelrahman/data_sixs_2019/"):
         data_allscans_phi_modes,
         data_allscans_mask_modes,
         data_allscans_COM_modes,
-    ) = {}, {}, {}, {}, {}
+    ) = (
+        {},
+        {},
+        {},
+        {},
+        {},
+    )
     rho_min = 3
     for i_scan in final_selected_runs_allscsan.keys():
         start = time.time()
@@ -1815,12 +1859,7 @@ def modes_processing(files, mypath="/home/abdelrahman/data_sixs_2019/"):
             [],
         )
         destination_ = [
-            mypath
-            + "S"
-            + i_scan
-            + "/selected_runs/"
-            + str(i_run_list)
-            + "/modes.h5"
+            mypath + "S" + i_scan + "/selected_runs/" + str(i_run_list) + "/modes.h5"
             for i_run_list in range(len(final_selected_runs_allscsan[i_scan]))
         ]
         print(
@@ -1834,28 +1873,18 @@ def modes_processing(files, mypath="/home/abdelrahman/data_sixs_2019/"):
         data_run_nb = np.array(
             [
                 i_run_list
-                for i_run_list in range(
-                    len(final_selected_runs_allscsan[i_scan])
-                )
+                for i_run_list in range(len(final_selected_runs_allscsan[i_scan]))
             ]
         )
         rho_data = np.array(
             [
-                np.abs(
-                    np.array(
-                        h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]
-                    )
-                )
+                np.abs(np.array(h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]))
                 for f in destination_
             ]
         )  # type: ignore
         phi_data = np.array(
             [
-                np.angle(
-                    np.array(
-                        h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]
-                    )
-                )
+                np.angle(np.array(h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]))
                 for f in destination_
             ]
         )  # type: ignore
@@ -1863,10 +1892,7 @@ def modes_processing(files, mypath="/home/abdelrahman/data_sixs_2019/"):
         for i in range(len(rho_data)):
             rho_data_mask[i][np.where(rho_data[i] > rho_min)] = 1
         i_COM = np.array(
-            [
-                np.asarray(C_O_M(rho_data_mask[i]))
-                for i in range(len(destination_))
-            ]
+            [np.asarray(C_O_M(rho_data_mask[i])) for i in range(len(destination_))]
         )
         i_COM = np.array([list(map(int, i_COM[i])) for i in range(len(i_COM))])
         rho_data_mask = np.array(
@@ -1940,8 +1966,9 @@ def modes_processing(files, mypath="/home/abdelrahman/data_sixs_2019/"):
 
 def runsmode_read(files_sel):
     """read the selected modes from npy files"""
-    import numpy as np
     import time
+
+    import numpy as np
 
     scan_nb = np.array(
         [
@@ -1949,9 +1976,8 @@ def runsmode_read(files_sel):
                 int(
                     IfStringRepresentsFloat(
                         files_sel[dir_][0][
-                            files_sel[dir_][0].find("/S") + 2 : files_sel[
-                                dir_
-                            ][0].find("/S")
+                            files_sel[dir_][0].find("/S")
+                            + 2 : files_sel[dir_][0].find("/S")
                             + 6
                         ]
                     )
@@ -1979,15 +2005,11 @@ def runsmode_read(files_sel):
             + "modes"
             + "**********"
         )
-        rho_data = np.array(
-            [np.abs(np.array(np.load(i)["obj"])) for i in destination_]
-        )
+        rho_data = np.array([np.abs(np.array(np.load(i)["obj"])) for i in destination_])
         phi_data = np.array(
             [np.angle(np.array(np.load(i)["obj"])) for i in destination_]
         )
-        data_complex = np.array(
-            [np.array(np.load(i)["obj"]) for i in destination_]
-        )
+        data_complex = np.array([np.array(np.load(i)["obj"]) for i in destination_])
         mask = np.asarray(rho_data) * 0
         mask[np.where(rho_data > 5)] = 1
         rho_data = rho_data * mask
@@ -2022,9 +2044,10 @@ def runsmode_read(files_sel):
 
 def modes_read(mypath="/home/abdelrahman/data_sixs_2019/"):
     """read the selected modes from h5 files"""
+    import time
+
     import h5py
     import numpy as np
-    import time
 
     final_selected_runs_allscsan = {
         "100": [np.array([2, 4])],
@@ -2048,12 +2071,7 @@ def modes_read(mypath="/home/abdelrahman/data_sixs_2019/"):
         phi_data = []
 
         destination_ = [
-            mypath
-            + "S"
-            + i_scan
-            + "/selected_runs/"
-            + str(i_run_list)
-            + "/modes.h5"
+            mypath + "S" + i_scan + "/selected_runs/" + str(i_run_list) + "/modes.h5"
             for i_run_list in range(len(final_selected_runs_allscsan[i_scan]))
         ]
         print(
@@ -2066,21 +2084,13 @@ def modes_read(mypath="/home/abdelrahman/data_sixs_2019/"):
         )
         rho_data = np.array(
             [
-                np.abs(
-                    np.array(
-                        h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]
-                    )
-                )
+                np.abs(np.array(h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]))
                 for f in destination_
             ]
         )  # type: ignore
         phi_data = np.array(
             [
-                np.angle(
-                    np.array(
-                        h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]
-                    )
-                )
+                np.angle(np.array(h5py.File(f, "r+")["entry_1"]["data_1"]["data"][0]))
                 for f in destination_
             ]
         )  # type: ignore
@@ -2124,6 +2134,8 @@ def modes_read(mypath="/home/abdelrahman/data_sixs_2019/"):
 
 
 def get_dislocation_position(data_mask):
+    import numpy as np
+
     shape_ = data_mask.shape
     c = np.zeros(shape_)
     for x_i in range(shape_[0]):
@@ -2175,6 +2187,8 @@ def sum_y_run(data):
 
 
 def maxcorr_index(corr_data, shift_from_max, allowed_min):
+    import numpy as np
+
     for i_scan in corr_data.keys():
         min_corr = np.max(corr_data[i_scan]) - shift_from_max
         if min_corr < allowed_min:
@@ -2187,13 +2201,7 @@ def maxcorr_index(corr_data, shift_from_max, allowed_min):
         corr_data[i_scan][np.where(corr_data[i_scan] == 1)] = 0
         index_best_run = np.array(
             np.sort(
-                list(
-                    set(
-                        np.array(
-                            np.where(corr_data[i_scan] > min_corr)
-                        ).flatten()
-                    )
-                )
+                list(set(np.array(np.where(corr_data[i_scan] > min_corr)).flatten()))
             )
         )
 
@@ -2212,6 +2220,8 @@ def maxcorr_index(corr_data, shift_from_max, allowed_min):
 
 
 def std_dltaphi(data_phi, data_mask):
+    import numpy as np
+
     std_phi_allscan = {}
     for i_scan in data_phi.keys():
         start = time.time()
@@ -2233,19 +2243,14 @@ def std_dltaphi(data_phi, data_mask):
                     delta_phi = (
                         np.angle(
                             np.exp(
-                                1j
-                                * (
-                                    data_phi[i_scan][j_run]
-                                    - data_phi[i_scan][i_run]
-                                )
+                                1j * (data_phi[i_scan][j_run] - data_phi[i_scan][i_run])
                             )
                         )
                         * mask
                     )
                     mean_dphi = delta_phi.sum() / len_eff
                     std_phi_run[j_run, i_run] = np.sqrt(
-                        np.square((delta_phi - mean_dphi) * mask).sum()
-                        / len_eff
+                        np.square((delta_phi - mean_dphi) * mask).sum() / len_eff
                     )
             std_phi_run[:, j_run] = std_phi_run[j_run, :]
             std_phi_run[j_run, j_run] = 7
@@ -2256,6 +2261,8 @@ def std_dltaphi(data_phi, data_mask):
 
 
 def dltaphi(data_phi, data_mask):
+    import numpy as np
+
     # nb_scan = len(data_phi)
     dphi_allscan = {}
     for i_scan in data_phi.keys():
@@ -2284,13 +2291,7 @@ def dltaphi(data_phi, data_mask):
                 mask = data_mask[i_scan][j_run]
                 delta_phi[j_run, i_run] = (
                     np.angle(
-                        np.exp(
-                            1j
-                            * (
-                                data_phi[i_scan][j_run]
-                                - data_phi[i_scan][i_run]
-                            )
-                        )
+                        np.exp(1j * (data_phi[i_scan][j_run] - data_phi[i_scan][i_run]))
                     )
                     * mask
                 )
@@ -2311,6 +2312,7 @@ def dltaphi(data_phi, data_mask):
 
 def std_rho(data_):
     """calculate the std of rho data for all scans and all runs"""
+    import numpy as np
 
     def mean_z_run(data):
         sum_ = data[0]
@@ -2382,6 +2384,8 @@ def std_rho(data_):
 
 
 def flatten_dict_scan_list_run(dict_):
+    import numpy as np
+
     if type(dict_) is dict:
         a = [
             np.array(value)
@@ -2396,6 +2400,7 @@ def flatten_dict_scan_list_run(dict_):
 
 def get_sphere_intsum_mode(int_ortho_scan_cut_max, range_r, radius_step):
     """get the mean intensity in spherical shells of increasing radius"""
+    import numpy as np
 
     def xyz_to_thetaphir(x, y, z):
         hxy = np.hypot(x, y)
@@ -2425,27 +2430,10 @@ def get_sphere_intsum_mode(int_ortho_scan_cut_max, range_r, radius_step):
     return intensity_sum
 
 
-def get_max_or_com(ndata, off_set_y, max_or_com="com"):
-    if max_or_com == "com":
-        try:
-            com_ = [int(i) for i in C_O_M(ndata)]  # type: ignore
-            com_[1] += off_set_y
-        except Exception:
-            com_ = [0, 0, 0]
-        return com_
-    else:
-        try:
-            max_ = [int(i) for i in np.where(ndata == ndata.max())]
-            max_[1] += off_set_y
-        except Exception:
-            max_ = [0, 0, 0]
-        return max_
-
-
 def load_reco_from_cxinpz(path, multiply_by_mask=False):
     """Load the specfile from the given path"""
-    import silx.io
     import numpy as np
+    import silx.io
 
     #  return silx.io.specfile.SpecFile(path)
     if (path[-3:] == "cxi") or (path[-2:] == "h5"):
@@ -2465,6 +2453,8 @@ def load_reco_from_cxinpz(path, multiply_by_mask=False):
 
 
 def get_max_cut_parametre(parametre, wanted_nb=25):
+    import numpy as np
+
     to_sort_list = np.array(nan_to_zero(parametre))
     to_sort_list = to_sort_list[to_sort_list != 0]
     to_sort_list.sort()
@@ -2473,6 +2463,8 @@ def get_max_cut_parametre(parametre, wanted_nb=25):
 
 
 def format_vector(vector, decimal_places=4):
+    import numpy as np
+
     formatted = []
     for num in vector:
         num = float(num)
@@ -2483,136 +2475,3 @@ def format_vector(vector, decimal_places=4):
             str_num = f"{rounded:.{decimal_places}f}".rstrip("0").rstrip(".")
         formatted.append(str_num)
     return f"{', '.join(formatted)}"
-
-
-def pad_to_shape(arr, target_shape, pad_value=0):
-    # Calculate the difference in shape
-    diff_shape = [(max(0, target_shape[i] - arr.shape[i])) for i in range(3)]
-
-    # Calculate the padding for the beginning and the end
-    pad_width = [(diff // 2, diff - diff // 2) for diff in diff_shape]
-
-    # Pad the array
-    padded_arr = np.pad(
-        arr, pad_width, mode="constant", constant_values=pad_value
-    )
-
-    return padded_arr
-
-
-def optimize_cropping(data, min_sym_crop=True):
-    """
-    Optimize cropping around the center of mass (COM) while avoiding zero cropping.
-
-    Parameters:
-    - data (numpy.ndarray): 3D array of shape (z, y, x).
-
-    Returns:
-    - crop_width (int): Maximum width for cropping in any direction.
-    """
-
-    # Calculate sum along each direction
-    sum_z = np.sum(data, axis=(1, 2))
-    sum_y = np.sum(data, axis=(0, 2))
-    sum_x = np.sum(data, axis=(0, 1))
-
-    # Find the index of the first and last non-zero elements
-    first_nonzero_z = np.argmax(sum_z > 0)
-    last_nonzero_z = len(sum_z) - np.argmax(sum_z[::-1] > 0) - 1
-    first_nonzero_y = np.argmax(sum_y > 0)
-    last_nonzero_y = len(sum_y) - np.argmax(sum_y[::-1] > 0) - 1
-    first_nonzero_x = np.argmax(sum_x > 0)
-    last_nonzero_x = len(sum_x) - np.argmax(sum_x[::-1] > 0) - 1
-
-    # Calculate crop width for each direction
-    crop_width_z = max(last_nonzero_z - first_nonzero_z + 1, 0)
-    crop_width_y = max(last_nonzero_y - first_nonzero_y + 1, 0)
-    crop_width_x = max(last_nonzero_x - first_nonzero_x + 1, 0)
-
-    # Return the maximum crop width among the three directions
-    if min_sym_crop:
-        return max(crop_width_z, crop_width_y, crop_width_x)
-    else:
-        return (crop_width_z, crop_width_y, crop_width_x)
-
-
-def get_size_3D_pixel(data):
-    """
-    Calculate the maximum width for cropping in any direction based on the non-zero elements along each axis.
-
-    Parameters:
-    - data (numpy.ndarray): 3D array of shape (z, y, x).
-
-    Returns:
-    - crop_width (tuple): Maximum width for cropping in each direction (z, y, x).
-    """
-
-    # Calculate sum along each direction
-    sum_z = np.sum(data, axis=(1, 2))
-    sum_y = np.sum(data, axis=(0, 2))
-    sum_x = np.sum(data, axis=(0, 1))
-
-    # Find the index of the first and last non-zero elements
-    first_nonzero_z = np.argmax(sum_z > 0)
-    last_nonzero_z = len(sum_z) - np.argmax(sum_z[::-1] > 0) - 1
-    first_nonzero_y = np.argmax(sum_y > 0)
-    last_nonzero_y = len(sum_y) - np.argmax(sum_y[::-1] > 0) - 1
-    first_nonzero_x = np.argmax(sum_x > 0)
-    last_nonzero_x = len(sum_x) - np.argmax(sum_x[::-1] > 0) - 1
-
-    # Calculate crop width for each direction
-    crop_width_z = max(last_nonzero_z - first_nonzero_z + 1, 0)
-    crop_width_y = max(last_nonzero_y - first_nonzero_y + 1, 0)
-    crop_width_x = max(last_nonzero_x - first_nonzero_x + 1, 0)
-
-    # Return the maximum crop width among the three directions
-    return (crop_width_z, crop_width_y, crop_width_x)
-
-
-def fit_model_regression(method, X, y, **kwargs):
-    """
-    Fit a regression model specified by the method.
-
-    Parameters:
-    - method (str): The name of the method to use for fitting the model.
-    - X (array-like): Input features.
-    - y (array-like): Target variable.
-    - **kwargs: Additional keyword arguments to pass to the model constructor.
-
-    Returns:
-    - model: Fitted regression model.
-    - predictions: Predictions made by the model.
-    """
-    # Import necessary regression models
-    from sklearn.linear_model import LinearRegression
-    from sklearn.ensemble import RandomForestRegressor
-    from sklearn.tree import DecisionTreeRegressor
-    from sklearn.neighbors import KNeighborsRegressor
-    from sklearn.svm import SVR
-    from sklearn.neural_network import MLPRegressor
-
-    # Initialize the model based on the specified method
-    if method == "LinearRegression":
-        model = LinearRegression(**kwargs)
-    elif method == "RandomForestRegressor":
-        model = RandomForestRegressor(**kwargs)
-    elif method == "DecisionTreeRegressor":
-        model = DecisionTreeRegressor(**kwargs)
-    elif method == "KNeighborsRegressor":
-        model = KNeighborsRegressor(**kwargs)
-    elif method == "SVR":
-        model = SVR(**kwargs)
-    elif method == "MLPRegressor":
-        model = MLPRegressor(**kwargs)
-    else:
-        raise ValueError(
-            "Invalid method specified. Supported methods: LinearRegression, RandomForestRegressor, DecisionTreeRegressor, KNeighborsRegressor, SVR, MLPRegressor."
-        )
-
-    # Fit the model
-    model.fit(X, y)
-
-    # Make predictions
-    predictions = model.predict(X)
-
-    return model, predictions

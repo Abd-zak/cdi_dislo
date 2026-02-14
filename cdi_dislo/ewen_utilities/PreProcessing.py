@@ -4,7 +4,7 @@ import xrayutilities as xu
 
 from cdi_dislo.ewen_utilities.plot_utilities import MIR_Colormap
 from cdi_dislo.ewen_utilities.Global_utilities import check_path_create
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 import h5py
 from numpy.fft import fftn, fftshift, ifftshift
 import os
@@ -58,9 +58,7 @@ def create_Q_array(
     if "tilt" not in det_calib.keys():
         det_calib["tilt"] = 0
     if det_calib["distance"] < 0:
-        print(
-            "detector calibration has a negative distance. Forcing it positive"
-        )
+        print("detector calibration has a negative distance. Forcing it positive")
         det_calib["distance"] = abs(det_calib["distance"])
 
     if roi is None:
@@ -155,9 +153,7 @@ def create_Q_array(
 ###########################################################################################################################################
 
 
-def Q_space_transformation(
-    data, qx, qy, qz, return_3D_q=True, mask=None, plot=False
-):
+def Q_space_transformation(data, qx, qy, qz, return_3D_q=True, mask=None, plot=False):
     maxbins = []
     for dim in (qx, qy, qz):
         maxstep = max((abs(np.diff(dim, axis=j)).max() for j in range(3)))
@@ -289,9 +285,7 @@ def automatic_roi_selection(
         ax[2].scatter(piy, piz, color="r")
 
         # Check ROI
-        plot_3D_projections(
-            data[roi[0] : roi[1], roi[2] : roi[3], roi[4] : roi[5]]
-        )
+        plot_3D_projections(data[roi[0] : roi[1], roi[2] : roi[3], roi[4] : roi[5]])
 
     if crop:
         roi = crop_roi(data, roi, crop_array, plot=plot, fig_title="cropped")
@@ -333,9 +327,7 @@ def crop_roi(data, roi, crop_array, plot=False, fig_title=None):
     return roi_crop
 
 
-def crop_roi_given_final_size(
-    data, roi, final_size_array, plot=False, fig_title=None
-):
+def crop_roi_given_final_size(data, roi, final_size_array, plot=False, fig_title=None):
     for n in range(data.ndim):
         if final_size_array[n] is None:
             final_size_array[n] = roi[2 * n + 1] - roi[2 * n]
@@ -441,14 +433,10 @@ def check_custom_detector_ROI(scan, data, roi):
 
     fig, ax = plt.subplots(2, 3, figsize=(12, 8))
     for n in range(3):
-        ax[0, n].matshow(
-            xu.maplog(data.sum(axis=n), 5, 0), cmap=my_cmap, aspect="auto"
-        )
+        ax[0, n].matshow(xu.maplog(data.sum(axis=n), 5, 0), cmap=my_cmap, aspect="auto")
 
         ax[1, n].matshow(
-            xu.maplog(
-                data[:, roi[0] : roi[1], roi[2] : roi[3]].sum(axis=n), 5, 0
-            ),
+            xu.maplog(data[:, roi[0] : roi[1], roi[2] : roi[3]].sum(axis=n), 5, 0),
             cmap=my_cmap,
             aspect="auto",
             extent=extent[n],
@@ -614,9 +602,7 @@ def calculate_Q_center_of_mass(data, qx, qy, qz, remove_min=True, plot=False):
     qcen = np.array([np.nansum(proba * q) for q in (qx, qy, qz)])
 
     if plot:
-        plot_3D_projections_qcen(
-            data, qx, qy, qz, qcen, suptitle="q center of mass"
-        )
+        plot_3D_projections_qcen(data, qx, qy, qz, qcen, suptitle="q center of mass")
     return qcen
 
 
@@ -625,9 +611,7 @@ def calculate_qmax(data, qx, qy, qz, plot=False):
     qmax = np.array([qx[index_max], qy[index_max], qz[index_max]])
 
     if plot:
-        plot_3D_projections_qcen(
-            data, qx, qy, qz, qmax, suptitle="q maximum intensity"
-        )
+        plot_3D_projections_qcen(data, qx, qy, qz, qmax, suptitle="q maximum intensity")
     return qmax
 
 
@@ -664,9 +648,7 @@ def correct_flatfield(data, roi, flatfield_file, plot=False):
         plt.title("log flatfield (in ROI)", fontsize=20)
 
         plot_3D_projections(data, fig_title="before flatfield correction")
-        plot_3D_projections(
-            data_corrected, fig_title="After flatfield correction"
-        )
+        plot_3D_projections(data_corrected, fig_title="After flatfield correction")
 
     return data_corrected
 
@@ -683,9 +665,7 @@ def compute_oversampling_ratio(support, plot=False):
     """
 
     indices_support = np.where(support == 1)
-    size_per_dim = np.max(indices_support, axis=1) - np.min(
-        indices_support, axis=1
-    )
+    size_per_dim = np.max(indices_support, axis=1) - np.min(indices_support, axis=1)
     oversampling = np.divide(np.array(support.shape), size_per_dim)
 
     if plot:
@@ -766,7 +746,9 @@ def load_mask(scan, data, roi=None, plot=False):
             mask += scan.mask[None, :, :]
 
     else:
-        path_mask = "/data/id01/inhouse/bellec/software/sharedipynb/gitlab/bcdi_eb/saved_masks/"
+        path_mask = (
+            "/data/id01/inhouse/bellec/software/sharedipynb/gitlab/bcdi_eb/saved_masks/"
+        )
         path_mask_array = path_mask + "mask_{}.npy".format(scan.detector)
         if os.path.isfile(path_mask_array):
             mask2d = np.load(path_mask_array)

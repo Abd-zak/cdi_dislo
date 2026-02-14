@@ -1,11 +1,9 @@
-
 from cdi_dislo.ewen_utilities.plot_utilities import plot_2D_slices_middle_one_array3D
 
 import vtk
 from vtk.util import numpy_support
 import numpy as np
 import scipy
-
 
 ###########################################################################################################################################
 ################               Create custom strain array for surface interpolation in paraview                ############################
@@ -57,9 +55,7 @@ def get_distance_to_array_borders(support):
     return distance_border_array
 
 
-def padding_avoid_array_border_problems(
-    strain, support, Nb_surface_pixels_added
-):
+def padding_avoid_array_border_problems(strain, support, Nb_surface_pixels_added):
     """
     Pad the strain and support arrays in case you want to add too many additional surface pixels
     """
@@ -104,9 +100,7 @@ def one_run(strain, support, kernel):
     strain_frontier[support.astype("int") == 1] = (
         np.nan
     )  # remove all pixels inside the cristal
-    strain_frontier[weight == 0] = (
-        np.nan
-    )  # remove all pixels not touching the surface.
+    strain_frontier[weight == 0] = np.nan  # remove all pixels not touching the surface.
     weight[support.astype("int") == 1] = np.nan
     weight[weight == 0] = np.nan
 
@@ -118,8 +112,8 @@ def one_run(strain, support, kernel):
     )  # add these outside pixels to the already exsiting ones.
 
     support_update = np.copy(support)
-    support_update += (
-        1 - np.isnan(weight)
+    support_update += 1 - np.isnan(
+        weight
     )  # Update the support by adding these new pixels right outside the surface
 
     return strain_update, support_update
@@ -138,9 +132,7 @@ def several_run(strain, support, kernel, Nb_surface_pixels_added):
     support_update = np.copy(support)
     for n in range(Nb_surface_pixels_added):
         print(Nb_surface_pixels_added - n, end=" ")
-        strain_update, support_update = one_run(
-            strain_update, support_update, kernel
-        )
+        strain_update, support_update = one_run(strain_update, support_update, kernel)
 
     strain_update[support_update == 0] = np.nan
     return strain_update, support_update
@@ -154,7 +146,9 @@ def add_surface_pixels(
     plot=False,
 ):
     if kernel is None:
-        kernel = cross_kernel()  # I will use a kernel in form of a cross (the central pixel doesn't matter)
+        kernel = (
+            cross_kernel()
+        )  # I will use a kernel in form of a cross (the central pixel doesn't matter)
         # kernel = gaussian_kernel() # This one was giving me weird stuff
 
     support = 1 - np.isnan(strain)
@@ -300,9 +294,7 @@ def save_vti(
             image_data = vtk.vtkImageData()
             image_data.SetOrigin(origin)
             image_data.SetSpacing(voxel_size)
-            image_data.SetExtent(
-                0, shape[0] - 1, 0, shape[1] - 1, 0, shape[2] - 1
-            )
+            image_data.SetExtent(0, shape[0] - 1, 0, shape[1] - 1, 0, shape[2] - 1)
             point_data = image_data.GetPointData()
             is_init = True
 
@@ -333,9 +325,7 @@ def save_arrays_in_vti(
             shape = array.shape[::-1]
             image_data = vtk.vtkImageData()
             image_data.SetOrigin(origin)
-            image_data.SetExtent(
-                0, shape[0] - 1, 0, shape[1] - 1, 0, shape[2] - 1
-            )
+            image_data.SetExtent(0, shape[0] - 1, 0, shape[1] - 1, 0, shape[2] - 1)
             point_data = image_data.GetPointData()
             is_init = True
 

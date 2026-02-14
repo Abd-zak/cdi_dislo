@@ -1,8 +1,161 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdi_dislo"
+version = "0.1.0"
+description = "cdi_dislo is a scientific Python package for advanced analysis of Bragg Coherent Diffraction Imaging (BCDI) data, with a focus on dislocation identification, strain mapping, diffraction peak analysis, and nanomechanical characterization of crystalline nanoparticles."
+readme = { file = "README.md", content-type = "text/markdown" }
+license = "MIT"
+license-files = ["LICENSE*"]
+
+requires-python = ">=3.10"
+
+authors = [
+  { name = "Abdelrahman Zakaria", email = "abdelrahman.Zakaria@im2np.fr" },
+]
+maintainers = [
+  { name = "Abdelrahman Zakaria", email = "abdelrahman.Zakaria@im2np.fr" },
+]
+
+keywords = [
+  "Bragg coherent diffraction imaging",
+  "BCDI",
+  "coherent X-ray diffraction",
+  "synchrotron",
+  "nanocrystals",
+  "nanoparticles",
+  "nanomechanics",
+  "strain mapping",
+  "displacement fields",
+  "dislocations",
+  "Burgers vector",
+  "elasticity theory",
+  "anisotropic elasticity",
+  "finite element modeling",
+  "FEM",
+  "diffraction peak analysis",
+  "FWHM analysis",
+  "phase retrieval",
+  "reciprocal space",
+  "X-ray scattering",
+  "materials science",
+  "computational physics",
+  "scientific computing",
+]
+
+dependencies = [
+  "numpy>=1.23",
+  "scipy>=1.9",
+  "matplotlib>=3.6",
+  "pandas>=1.5",
+  "h5py>=3.8",
+  "scikit-image>=0.20",
+  "pywavelets",
+  "imageio",
+  "ruptures",
+  "networkx",
+  "tabulate",
+  "xrayutilities",
+  "astropy",
+  "hdf5plugin",
+  "silx",
+]
+
+[project.optional-dependencies]
+viz = [
+  "vtk",
+  "pyvista",
+  "ipywidgets",
+  "ipyvolume",
+  "plotly",
+  "mpl_interactions",
+  "mpld3",
+  "bokeh",
+  "jupyter_bokeh",
+  "panel",
+]
+
+docs = [
+  "sphinx>=4.0",
+  "pydata-sphinx-theme",
+  "nbsphinx",
+]
+
+dev = [
+  "pytest",
+  "ruff",
+  "black",
+  "mypy",
+  "pre-commit",
+]
+
+all = [
+  "vtk",
+  "pyvista",
+  "ipywidgets",
+  "ipyvolume",
+  "plotly",
+  "mpl_interactions",
+  "mpld3",
+  "bokeh",
+  "jupyter_bokeh",
+  "panel",
+  "sphinx>=4.0",
+  "pydata-sphinx-theme",
+  "nbsphinx",
+  "pytest",
+  "ruff",
+  "black",
+  "mypy",
+  "pre-commit",
+]
+
+[project.scripts]
+cdi-dislo = "cdi_dislo.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Abd-zak/cdi_dislo"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cdi_dislo*"]
+
 [tool.ruff]
+line-length = 88
 exclude = [
-    "*.ipynb",
-    "**/*.ipynb",'ewen_utilities','ewen_utilities/*/*/*','cdi_dislo\common_imports.py','lib'
+  "*.ipynb",
+  "**/*.ipynb",
+  "ewen_utilities",
+  "ewen_utilities/**",
+  "cdi_dislo/common_imports.py",
+  "lib",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+extend-exclude = '''
+(
+    \.ipynb
+  | \.ipynb_checkpoints
+)
+'''
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+filterwarnings = [
+    "ignore:Gimbal lock detected.*:UserWarning"
 ]

@@ -2,7 +2,6 @@ import numpy as np
 import pylab as plt
 from scipy.optimize import curve_fit
 
-
 ###########################################################################################################################################
 ############################################          Homemade Gaussian fit functions           ###########################################
 ###########################################################################################################################################
@@ -27,9 +26,7 @@ def calculate_std(array1d, x=None):
     return np.sqrt(np.sum(proba * ((x - x_cen) ** 2.0)))
 
 
-def GaussianAndLinearBackground(
-    x, A, x0, sig, background_slope, background_const
-):
+def GaussianAndLinearBackground(x, A, x0, sig, background_slope, background_const):
     return (
         A * np.exp(-0.5 * (x - x0) ** 2.0 / sig**2.0)
         + background_slope * x
@@ -60,9 +57,7 @@ def GaussianAndLinearBackgroundFit(
 
     if background:
         N_background = 5
-        background_const = np.nanmean(
-            array1d[np.argsort(array1d)[:N_background]]
-        )
+        background_const = np.nanmean(array1d[np.argsort(array1d)[:N_background]])
         background_slope = 0.0
         A = np.max(array1d) - background_const
     else:

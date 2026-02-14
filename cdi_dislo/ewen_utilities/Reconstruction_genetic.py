@@ -18,6 +18,7 @@ from cdi_dislo.ewen_utilities.Reconstruction import (
     dummy_file_dict,
 )
 
+
 def make_several_reconstruction(
     data, nb_recon, params_init, obj_list=None, support_list=None
 ):
@@ -37,13 +38,11 @@ def make_several_reconstruction(
         fail = True
         while fail:
             try:  # I use this try in case pynx reconstruction get lost and crashes
-                obj, llk, support, return_dict = CDI_one_reconstruction(
-                    data, params
-                )
+                obj, llk, support, return_dict = CDI_one_reconstruction(data, params)
                 obj_list_new[n] += obj
                 support_list_new[n] += support
                 fail = False
-            except Exception :
+            except Exception:
                 pass
 
     return obj_list_new, support_list_new
@@ -137,9 +136,7 @@ def press_button_genetic(
     return obj_result
 
 
-def save_reconstruction_genetic(
-    file_dict, obj, llk, support, n_reconstruction
-):
+def save_reconstruction_genetic(file_dict, obj, llk, support, n_reconstruction):
     """
     Save the final object automatically.
     Not an important function> You could do that in another way if you want.
@@ -160,13 +157,9 @@ def save_reconstruction_genetic(
     check_path_create("Reconstructions_Genetic")
     check_path_create(path_save)
 
-    savename = path_save + "reconstruction{}_{}".format(
-        ortho_string, n_reconstruction
-    )
+    savename = path_save + "reconstruction{}_{}".format(ortho_string, n_reconstruction)
 
-    np.savez_compressed(
-        savename, obj=obj, support=support, llk=llk, **file_dict
-    )
+    np.savez_compressed(savename, obj=obj, support=support, llk=llk, **file_dict)
     return
 
 
@@ -213,9 +206,7 @@ def make_several_reconstructions_genetic(
     for n_reconstruction in range(Nb_reconstruction):
         if plot:
             plt.figure()
-            plt.title(
-                "Reconstruction {}".format(n_reconstruction), fontsize=20
-            )
+            plt.title("Reconstruction {}".format(n_reconstruction), fontsize=20)
 
         obj = press_button_genetic(
             data,

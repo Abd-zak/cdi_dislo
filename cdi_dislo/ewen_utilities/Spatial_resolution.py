@@ -24,6 +24,7 @@ from cdi_dislo.ewen_utilities.Global_utilities import (
 from numpy import cos, sin
 
 from scipy.signal import fftconvolve
+
 #########################################################################################################################################
 ###############################                    Using the sample surface fit                  ########################################
 #########################################################################################################################################
@@ -130,13 +131,11 @@ def Fourier_correlation_shell_plot(
     ax2.set_xticklabels(np.round(0.1 * 2.0 * pi / ax1.get_xticks()))
     ax2.set_xlim(
         0,
-        ax1.get_xticks()[-2]
-        + (ax1.get_xticks()[-1] - ax1.get_xticks()[-2]) / 2.0,
+        ax1.get_xticks()[-2] + (ax1.get_xticks()[-1] - ax1.get_xticks()[-2]) / 2.0,
     )
     ax1.set_xlim(
         0,
-        ax1.get_xticks()[-2]
-        + (ax1.get_xticks()[-1] - ax1.get_xticks()[-2]) / 2.0,
+        ax1.get_xticks()[-2] + (ax1.get_xticks()[-1] - ax1.get_xticks()[-2]) / 2.0,
     )
 
     ax2.set_xlabel("resolution (nm)", fontsize=15)
@@ -224,9 +223,7 @@ def compute_Fourier_shell_correlation_two_object(
     print(f"\nreal space resolution : {round(0.1 * resolution, 2)} nm")
 
     if plot:
-        Fourier_correlation_shell_plot(
-            fsc, q1d, threshold, resolution=resolution
-        )
+        Fourier_correlation_shell_plot(fsc, q1d, threshold, resolution=resolution)
 
     return fsc, q1d, resolution
 
@@ -265,9 +262,7 @@ def compute_resolution_Fourier_shell_correlation(
         plot=plot,
     )
     if not plot and plot_fsc:
-        Fourier_correlation_shell_plot(
-            fsc, q1d, threshold, resolution=resolution
-        )
+        Fourier_correlation_shell_plot(fsc, q1d, threshold, resolution=resolution)
     if return_fsc:
         return resolution, fsc, q1d
     else:
@@ -330,9 +325,7 @@ def compute_resolution_Fourier_shell_correlation_orthogonalized_objects(
         plot=plot,
     )
     if not plot and plot_fsc:
-        Fourier_correlation_shell_plot(
-            fsc, q1d, threshold, resolution=resolution
-        )
+        Fourier_correlation_shell_plot(fsc, q1d, threshold, resolution=resolution)
     if return_fsc:
         return resolution, fsc, q1d
     else:
@@ -390,9 +383,7 @@ def PTRF_resolution(
     if plot:
         from cdi_dislo.ewen_utilities.plot_utilities import plot_3D_projections
 
-        plot_3D_projections(
-            data, fig_title="experimental data", axes_labels=True
-        )
+        plot_3D_projections(data, fig_title="experimental data", axes_labels=True)
         plot_3D_projections(data_recon, fig_title="reconstructed data")
         plot_3D_projections(prtf3d, log_scale=False, fig_title="PRTF")
 
@@ -442,9 +433,7 @@ def Gaussian3D(N, sig):
     return gaussian
 
 
-def richardson_lucy_mine(
-    image, psf, iterations=50, clip=True, filter_epsilon=None
-):
+def richardson_lucy_mine(image, psf, iterations=50, clip=True, filter_epsilon=None):
     float_type = np.promote_types(image.dtype, np.float32)
     image = image.astype(float_type, copy=False)
     psf = psf.astype(float_type, copy=False)
@@ -466,9 +455,9 @@ def richardson_lucy_mine(
             #         im_deconv *= convolve(relative_blur, psf_mirror, mode='same')
             im_deconv *= fftconvolve(relative_blur, psf_mirror, mode="same")
 
-        deconv_error[n] += np.sum(
-            np.abs(im_deconv - im_deconv_start)
-        ) / np.sum(im_deconv_start)
+        deconv_error[n] += np.sum(np.abs(im_deconv - im_deconv_start)) / np.sum(
+            im_deconv_start
+        )
 
     if clip:
         im_deconv[im_deconv > 1] = 1
@@ -552,9 +541,7 @@ def resolution_cherukara(
         plt.plot(deconv_error, ".-")
         plt.yscale("log")
         plt.xlabel("iteration", fontsize=15)
-        plt.ylabel(
-            r"$\sum$|psf$_{n+1}$ - psf$_n$| / $\sum$psf$_n$", fontsize=15
-        )
+        plt.ylabel(r"$\sum$|psf$_{n+1}$ - psf$_n$| / $\sum$psf$_n$", fontsize=15)
         plt.title("deconvolution error", fontsize=20)
 
         plot_3D_projections(

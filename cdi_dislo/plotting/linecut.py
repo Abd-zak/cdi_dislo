@@ -8,8 +8,8 @@
 import logging
 import os
 from typing import Any
-import numpy as np
 
+import numpy as np
 
 # import matplotlib.pyplot as plt
 # from lmfit import Parameters, minimize
@@ -80,10 +80,7 @@ def upsample(array: np.ndarray | list, factor: int = 2) -> np.ndarray:
     grid = np.meshgrid(*upsampled_positions, indexing="ij")
     new_grid = np.asarray(
         np.concatenate(
-            [
-                new_grid.reshape((1, new_grid.size))
-                for _, new_grid in enumerate(grid)
-            ]
+            [new_grid.reshape((1, new_grid.size)) for _, new_grid in enumerate(grid)]
         ).transpose()
     )
     # interpolate array #
@@ -162,8 +159,7 @@ def pseudovoigt(x_axis, amp, cen, sig, ratio):
     scaling_lorentzian = 1  # the Lorentzian is normalized
     return amp * (
         ratio * gaussian(x_axis, scaling_gaussian, cen, scaling_gaussian)
-        + (1 - ratio)
-        * lorentzian(x_axis, scaling_lorentzian, cen, sigma_lorentzian)
+        + (1 - ratio) * lorentzian(x_axis, scaling_lorentzian, cen, sigma_lorentzian)
     )
 
 
@@ -187,9 +183,7 @@ def function_lmfit(params, x_axis, distribution, iterator=0):
         loc = params[f"loc_{iterator}"].value
         sig = params[f"sig_{iterator}"].value
         alpha = params[f"alpha_{iterator}"].value
-        return skewed_gaussian(
-            x_axis=x_axis, amp=amp, loc=loc, sig=sig, alpha=alpha
-        )
+        return skewed_gaussian(x_axis=x_axis, amp=amp, loc=loc, sig=sig, alpha=alpha)
     if distribution == "lorentzian":
         amp = params[f"amp_{iterator}"].value
         cen = params[f"cen_{iterator}"].value
@@ -310,9 +304,7 @@ class LinecutGenerator:
             )
             return
         if self._current_linecut is None:
-            self.logger.info(
-                f"No defined linecut for axis {self._current_axis}"
-            )
+            self.logger.info(f"No defined linecut for axis {self._current_axis}")
             return
 
         dcut = abs(np.gradient(self._current_linecut))
@@ -323,9 +315,9 @@ class LinecutGenerator:
             index_stop = min(len(dcut), peak + 10)
             cropped_xaxis = np.arange(index_start, index_stop)
             cropped_dcut = dcut[index_start:index_stop]
-            self.result[f"dimension_{self._current_axis}"][
-                f"derivative_{peak_id}"
-            ] = np.vstack((cropped_xaxis, cropped_dcut))
+            self.result[f"dimension_{self._current_axis}"][f"derivative_{peak_id}"] = (
+                np.vstack((cropped_xaxis, cropped_dcut))
+            )
 
             fit_params = Parameters()
             fit_params.add("amp_0", value=1, min=0.1, max=10)
@@ -350,12 +342,10 @@ class LinecutGenerator:
                 x_axis=interp_xaxis,
                 distribution="gaussian",
             )
-            self.result[f"dimension_{self._current_axis}"][
-                f"fit_{peak_id}"
-            ] = np.vstack((interp_xaxis, y_fit))
-            self.result[f"dimension_{self._current_axis}"][
-                f"param_{peak_id}"
-            ] = {
+            self.result[f"dimension_{self._current_axis}"][f"fit_{peak_id}"] = (
+                np.vstack((interp_xaxis, y_fit))
+            )
+            self.result[f"dimension_{self._current_axis}"][f"param_{peak_id}"] = {
                 "amp": fit_result.params["amp_0"].value,
                 "sig": fit_result.params["sig_0"].value,
                 "cen": fit_result.params["cen_0"].value,
@@ -392,8 +382,7 @@ class LinecutGenerator:
             (
                 np.arange(
                     self.indices[self._current_axis][self._current_axis][0],
-                    self.indices[self._current_axis][self._current_axis][1]
-                    + 1,
+                    self.indices[self._current_axis][self._current_axis][1] + 1,
                 ),
                 self._current_linecut,
             )
@@ -429,16 +418,10 @@ class LinecutGenerator:
         """
         import matplotlib.pyplot as plt
 
-        fig, axes = plt.subplots(
-            nrows=self.array.ndim, ncols=2, figsize=(12, 9)
-        )
+        fig, axes = plt.subplots(nrows=self.array.ndim, ncols=2, figsize=(12, 9))
         try:
             for idx, key in enumerate(self.result.keys()):
-                factor = (
-                    self.voxel_sizes[idx]
-                    if self.voxel_sizes is not None
-                    else 1
-                )
+                factor = self.voxel_sizes[idx] if self.voxel_sizes is not None else 1
                 for subkey in self.result[key].keys():
                     if subkey.startswith("derivative"):
                         index = int(subkey[-1])
@@ -454,9 +437,7 @@ class LinecutGenerator:
                             "-r",
                             label="gaussian fit",
                         )
-                        axes[idx][index].set_xlabel(
-                            self.plot_labels.get(key, key)
-                        )
+                        axes[idx][index].set_xlabel(self.plot_labels.get(key, key))
                         axes[idx][index].legend(handles=[line1, line2])
                         fwhm = (
                             2
@@ -505,13 +486,9 @@ class LinecutGenerator:
         """
         import matplotlib.pyplot as plt
 
-        fig, axes = plt.subplots(
-            nrows=self.array.ndim, ncols=1, figsize=(12, 9)
-        )
+        fig, axes = plt.subplots(nrows=self.array.ndim, ncols=1, figsize=(12, 9))
         for idx, key in enumerate(self.result.keys()):
-            factor = (
-                self.voxel_sizes[idx] if self.voxel_sizes is not None else 1
-            )
+            factor = self.voxel_sizes[idx] if self.voxel_sizes is not None else 1
 
             axes[idx].plot(
                 self.result[key]["linecut"][0] * factor,
@@ -603,9 +580,7 @@ def linecut(
     if not isinstance(indices, list):
         raise TypeError(f"'indices' should be a list, got {type(indices)}")
     num_points = int(
-        np.sqrt(
-            sum((val[1] - val[0] + 1) ** 2 for _, val in enumerate(indices))
-        )
+        np.sqrt(sum((val[1] - val[0] + 1) ** 2 for _, val in enumerate(indices)))
     )
 
     cut = map_coordinates(

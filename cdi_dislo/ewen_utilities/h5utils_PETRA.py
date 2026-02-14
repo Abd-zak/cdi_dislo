@@ -24,9 +24,7 @@ class Scan:
         self.verbose = verbose
 
         self.get_master_h5file()
-        self.h5file = (
-            self.master_h5file
-        )  # to avoid issues later during BCDI processing
+        self.h5file = self.master_h5file  # to avoid issues later during BCDI processing
         self.get_data_h5file_list()
         self.get_fio_file()
         self.get_command()
@@ -115,28 +113,28 @@ class Scan:
     def getMotorPosition(self, motor_name):
         try:
             motor = self.getAllMotorDictionary()[motor_name]
-        except Exception :
+        except Exception:
             motor = self.getMotorStartPosition(motor_name)
         return motor
 
     def getDetCalibInfo(self):
         det_calib = {}
         with h5.File(self.master_h5file, "r") as h5f:
-            det_calib["distance"] = h5f[
-                "entry/instrument/detector/detector_distance"
-            ][()]
-            det_calib["beam_center_x"] = h5f[
-                "entry/instrument/detector/beam_center_x"
-            ][()]
-            det_calib["beam_center_y"] = h5f[
-                "entry/instrument/detector/beam_center_y"
-            ][()]
-            det_calib["x_pixel_size"] = h5f[
-                "entry/instrument/detector/x_pixel_size"
-            ][()]
-            det_calib["y_pixel_size"] = h5f[
-                "entry/instrument/detector/y_pixel_size"
-            ][()]
+            det_calib["distance"] = h5f["entry/instrument/detector/detector_distance"][
+                ()
+            ]
+            det_calib["beam_center_x"] = h5f["entry/instrument/detector/beam_center_x"][
+                ()
+            ]
+            det_calib["beam_center_y"] = h5f["entry/instrument/detector/beam_center_y"][
+                ()
+            ]
+            det_calib["x_pixel_size"] = h5f["entry/instrument/detector/x_pixel_size"][
+                ()
+            ]
+            det_calib["y_pixel_size"] = h5f["entry/instrument/detector/y_pixel_size"][
+                ()
+            ]
         self.det_calib = det_calib
         return det_calib
 
@@ -157,9 +155,7 @@ class Scan:
 
         if len(self.data_h5file_list) == 1:
             with h5.File(self.data_h5file_list[0], "r") as h5f:
-                data = h5f["entry/data/data"][
-                    :, roi[0] : roi[1], roi[2] : roi[3]
-                ]
+                data = h5f["entry/data/data"][:, roi[0] : roi[1], roi[2] : roi[3]]
         else:
             data = np.zeros((nb_elements,) + detector_shape)
             for ii, data_h5file in enumerate(self.data_h5file_list):
@@ -169,9 +165,9 @@ class Scan:
                             :, roi[0] : roi[1], roi[2] : roi[3]
                         ]
                     else:
-                        data[ii * 2000 : (ii + 1) * 2000] += h5f[
-                            "entry/data/data"
-                        ][:, roi[0] : roi[1], roi[2] : roi[3]]
+                        data[ii * 2000 : (ii + 1) * 2000] += h5f["entry/data/data"][
+                            :, roi[0] : roi[1], roi[2] : roi[3]
+                        ]
         if apply_mask:
             mask = data[0] == np.max(data[0])
             data = data * (1 - mask[None])
@@ -237,7 +233,6 @@ class D2Scan(Scan):
         return self.getImageRaw(apply_mask=apply_mask, roi=roi)
 
 
-
 ############################################################################################################################
 #######################################       Dmesh scan                ####################################################
 ############################################################################################################################
@@ -293,9 +288,7 @@ class DmeshScan(Scan):
         det_sum = np.nansum(data, axis=(0, 1))
         return data, mesh_map, det_sum
 
-    def plot_dmesh_map_det_sum(
-        self, mesh_map, det_sum, fw=8, return_fig=False
-    ):
+    def plot_dmesh_map_det_sum(self, mesh_map, det_sum, fw=8, return_fig=False):
         fig, ax = plt.subplots(1, 2, figsize=(2 * fw, fw))
 
         extent = [
@@ -319,6 +312,7 @@ class DmeshScan(Scan):
 ############################################################################################################################
 #################################           Other functions                   ##############################################
 ############################################################################################################################
+
 
 def openScan(folder_name, verbose=False):
     scan = Scan(folder_name, verbose=False)

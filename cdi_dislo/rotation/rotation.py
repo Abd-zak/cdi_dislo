@@ -65,7 +65,6 @@ SUGGESTIONS & IMPROVEMENTS
 ####################################################################################################################
 
 
-import numpy as np
 from scipy.spatial.transform import Rotation as R
 import math
 
@@ -80,6 +79,8 @@ import math
 
 """
 
+import numpy as np
+
 
 def orthogonalize_basis(basis, method="svd"):
     """
@@ -89,7 +90,6 @@ def orthogonalize_basis(basis, method="svd"):
     :param method: 'svd' (default) for Singular Value Decomposition, 'qr' for Gram-Schmidt (QR decomposition)
     :return: 3x3 orthonormalized basis matrix
     """
-    import numpy as np
 
     basis = np.array(basis, dtype=float)
 
@@ -105,11 +105,7 @@ def orthogonalize_basis(basis, method="svd"):
         raise ValueError("Invalid method. Choose 'svd' (default) or 'qr'.")
 
 
-def get_select_circle_data_2d(
-    data_mask, dislo_position, radius, radius_deviation
-):
-    import numpy as np
-
+def get_select_circle_data_2d(data_mask, dislo_position, radius, radius_deviation):
     dim_y, dim_x = data_mask.shape
     circle_matrix = np.zeros(data_mask.shape)
     d_dislo_circle = np.zeros(data_mask.shape)
@@ -123,10 +119,7 @@ def get_select_circle_data_2d(
             #    circle_matrix[i_x,i_y,i_z]=1
     # d_dislo_circle=np.rint(d_dislo_circle)
     bool_d = np.where(
-        (
-            (d_dislo_circle <= radius + radius_deviation)
-            & (d_dislo_circle >= radius)
-        )
+        ((d_dislo_circle <= radius + radius_deviation) & (d_dislo_circle >= radius))
     )
     circle_matrix[bool_d] = 1
     circle_matrix = circle_matrix * data_mask
@@ -145,16 +138,12 @@ def referent_2d_trans(x, y, dislo_pos):
 
 
 def cart2pol(x, y):
-    import numpy as np
-
     rho = np.sqrt(x**2 + y**2)
     phi = np.arctan2(y, x)
     return phi, rho
 
 
 def xyz_to_thetaphir(x, y, z):
-    import numpy as np
-
     hxy = np.hypot(x, y)
 
     r = np.hypot(hxy, z)
@@ -164,8 +153,6 @@ def xyz_to_thetaphir(x, y, z):
 
 
 def spheric_to_cart(r, theta, phi):
-    import numpy as np
-
     x = r * np.cos(phi) * np.sin(theta)
     y = r * np.sin(phi) * np.sin(theta)
     z = r * np.cos(theta)
@@ -173,8 +160,6 @@ def spheric_to_cart(r, theta, phi):
 
 
 def cartesian_to_cylind(x, y, z):
-    import numpy as np
-
     hxy = np.hypot(x, y)
 
     r = hxy
@@ -184,20 +169,18 @@ def cartesian_to_cylind(x, y, z):
 
 
 def angle_btw_two_vect2(vect1, vect2):
-    import numpy as np
-
-    vect_norm = [0, 0, 1]
+    vect1 = np.asarray(vect1, dtype=float)
+    vect2 = np.asarray(vect2, dtype=float)
+    vect_norm = np.array([0.0, 0.0, 1.0])
     return np.arctan2(
-        np.dot(np.cross(vect1, vect2), vect_norm), np.dot(vect2, vect2)
+        np.dot(np.cross(vect1, vect2), vect_norm),
+        np.dot(vect1, vect2),
     )
 
 
 def angle_btw_two_vect(vect1, vect2):
-    import numpy as np
-
     return np.arccos(
-        np.dot(vect1, vect2)
-        / np.sqrt(np.dot(vect1, vect1) * np.dot(vect2, vect2))
+        np.dot(vect1, vect2) / np.sqrt(np.dot(vect1, vect1) * np.dot(vect2, vect2))
     )
 
 
@@ -205,8 +188,6 @@ def angle_btw_two_vect(vect1, vect2):
 def get_select_circle_data(
     data_mask, dislo_position, angle, radius, radius_deviation, z_min
 ):
-    import numpy as np
-
     dim_z, dim_y, dim_x = data_mask.shape
     circle_matrix = np.zeros(data_mask.shape)
     d_dislo_circle = np.zeros(data_mask.shape)
@@ -227,10 +208,7 @@ def get_select_circle_data(
                 # if (( (d_dislo_circle[i_z, i_y, i_x]<=radius) & (d_dislo_circle[i_z, i_y, i_x]>=radius-2)) & (zc_<10)):
                 #    circle_matrix[i_x,i_y,i_z]=1
     bool_d = np.where(
-        (
-            (d_dislo_circle <= radius + radius_deviation)
-            & (d_dislo_circle >= radius)
-        )
+        ((d_dislo_circle <= radius + radius_deviation) & (d_dislo_circle >= radius))
         & (z_c < z_min)
     )
     circle_matrix[bool_d] = 1
@@ -245,8 +223,6 @@ def get_select_circle_data(
 
 # ------------------------------------------------------------------------------------------------------------
 def referent_rotzy_trans_xyz(x, y, z, dislo_pos, angle_xd, angle_zd):
-    import numpy as np
-
     x0, y0, z0 = dislo_pos
     x_rotz = (x - x0) * np.cos(angle_xd) - (y - y0) * np.sin(angle_xd)
     y_rotz = (y - y0) * np.cos(angle_xd) + (x - x0) * np.sin(angle_xd)
@@ -261,8 +237,6 @@ def referent_rotzy_trans_xyz(x, y, z, dislo_pos, angle_xd, angle_zd):
 
 # ------------------------------------------------------------------------------------------------------------
 def referent_roty(x, y, z, angle_):
-    import numpy as np
-
     x_d = x * np.cos(angle_) + z * np.sin(angle_)
     z_d = z * np.cos(angle_) - x * np.sin(angle_)
     y_d = y
@@ -271,47 +245,47 @@ def referent_roty(x, y, z, angle_):
 
 # ------------------------------------------------------------------------------------------------------------
 def referent_rotz_(x, y, z, angle_):
-    import numpy as np
-
     x_rotz = x * np.cos(angle_) - y * np.sin(angle_)
     y_rotz = y * np.cos(angle_) + x * np.sin(angle_)
     z_rotz = z
     return x_rotz, y_rotz, z_rotz
 
 
-def rotation_matrix_from_vectors(vec1, vec2):
+def rotation_matrix_from_vectors(vec1, vec2, eps: float = 1e-12):
     """Find the rotation matrix that aligns vec1 to vec2
     :param vec1: A 3d "source" vector
     :param vec2: A 3d "destination" vector
     :return mat: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
     """
-    import numpy as np
-
-    a, b = (
-        (vec1 / np.linalg.norm(vec1)).reshape(3),
-        (vec2 / np.linalg.norm(vec2)).reshape(3),
-    )
+    a = normalize_vector(vec1, eps=eps)
+    b = normalize_vector(vec2, eps=eps)
     v = np.cross(a, b)
     c = np.dot(a, b)
+
+    if np.linalg.norm(v) < eps:
+        # parallel or anti-parallel
+        if c > 0:
+            return np.eye(3)
+        # 180° rotation: pick an orthogonal axis
+        axis = normalize_vector(
+            np.cross(a, [1, 0, 0]) if abs(a[0]) < 0.9 else np.cross(a, [0, 1, 0]),
+            eps=eps,
+        )
+        return 2 * np.outer(axis, axis) - np.eye(3)
+
     s = np.linalg.norm(v)
     kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
-    rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s**2))
-    return rotation_matrix
+    return np.eye(3) + kmat + kmat @ kmat * ((1 - c) / (s**2))
 
 
 # ------------------------------------------------------------------------------------------------------------
 def normalize_rotation_matrix(R):
-    import numpy as np
-
     U, _, Vt = np.linalg.svd(R)
     return U @ Vt
 
 
 # ------------------------------------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------------------------------
 def test_rotation():
-    import numpy as np
-
     v = np.array([1, 0, 0])  # Initial vector
 
     R1 = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
@@ -340,7 +314,6 @@ def compute_rotation_matrix(v1, v2):
     :param v2: The target vector to align with (3D).
     :return: 3x3 rotation matrix.
     """
-    import numpy as np
 
     # Normalize input vectors
     v1 = normalize_vector(v1)
@@ -358,9 +331,7 @@ def compute_rotation_matrix(v1, v2):
         else:
             # 180-degree rotation around an arbitrary perpendicular axis
             arbitrary = (
-                np.array([1, 0, 0])
-                if abs(v1[0]) < abs(v1[1])
-                else np.array([0, 1, 0])
+                np.array([1, 0, 0]) if abs(v1[0]) < abs(v1[1]) else np.array([0, 1, 0])
             )
             axis = normalize_vector(np.cross(v1, arbitrary))
             K = np.array(
@@ -375,7 +346,7 @@ def compute_rotation_matrix(v1, v2):
     axis = axis / axis_norm
 
     # Compute angle
-    cos_theta = np.dot(v1, v2)
+    cos_theta = float(np.clip(np.dot(v1, v2), -1.0, 1.0))
     sin_theta = np.sqrt(1 - cos_theta**2)
 
     # Rodrigues' formula
@@ -391,17 +362,17 @@ def compute_rotation_matrix(v1, v2):
 
 
 # ------------------------------------------------------------------------------------------------------------
-def normalize_vector(v):
-    """Normalize a vector."""
-    import numpy as np
-
-    return v / np.linalg.norm(v)
+def normalize_vector(v, eps: float = 1e-15):
+    v = np.asarray(v, dtype=float)
+    n = np.linalg.norm(v)
+    if n < eps:
+        raise ValueError("Cannot normalize a near-zero vector.")
+    return v / n
 
 
 # ------------------------------------------------------------------------------------------------------------
 def align_x_to_z():
     """Align the vector [1, 0, 0] with [0, 0, 1]."""
-    import numpy as np
 
     v1 = np.array([1, 0, 0])
     v2 = np.array([0, 0, 1])
@@ -411,7 +382,6 @@ def align_x_to_z():
 # ------------------------------------------------------------------------------------------------------------
 def align_x_to_y():
     """Align the vector [1, 0, 0] with [0, 1, 0]."""
-    import numpy as np
 
     v1 = np.array([1, 0, 0])
     v2 = np.array([0, 1, 0])
@@ -421,7 +391,6 @@ def align_x_to_y():
 # ------------------------------------------------------------------------------------------------------------
 def align_x_to_111():
     """Align the vector [1, 0, 0] with [1, 1, 1]."""
-    import numpy as np
 
     v1 = np.array([1, 0, 0])
     v2 = np.array([1, 1, 1])
@@ -436,14 +405,11 @@ def rotation_matrix_z(angle_degrees):
     :param angle_degrees: Rotation angle in degrees
     :return: 3x3 rotation matrix
     """
-    import numpy as np
 
     angle_radians = np.radians(angle_degrees)  # Convert degrees to radians
     cos_theta = np.cos(angle_radians)
     sin_theta = np.sin(angle_radians)
-    R = np.array(
-        [[cos_theta, -sin_theta, 0], [sin_theta, cos_theta, 0], [0, 0, 1]]
-    )
+    R = np.array([[cos_theta, -sin_theta, 0], [sin_theta, cos_theta, 0], [0, 0, 1]])
     return R
 
 
@@ -455,14 +421,11 @@ def rotation_matrix_x(angle_degrees):
     :param angle_degrees: Rotation angle in degrees
     :return: 3x3 rotation matrix
     """
-    import numpy as np
 
     angle_radians = np.radians(angle_degrees)  # Convert degrees to radians
     cos_theta = np.cos(angle_radians)
     sin_theta = np.sin(angle_radians)
-    R = np.array(
-        [[1, 0, 0], [0, cos_theta, -sin_theta], [0, sin_theta, cos_theta]]
-    )
+    R = np.array([[1, 0, 0], [0, cos_theta, -sin_theta], [0, sin_theta, cos_theta]])
     return R
 
 
@@ -474,14 +437,11 @@ def rotation_matrix_y(angle_degrees):
     :param angle_degrees: Rotation angle in degrees
     :return: 3x3 rotation matrix
     """
-    import numpy as np
 
     angle_radians = np.radians(angle_degrees)  # Convert degrees to radians
     cos_theta = np.cos(angle_radians)
     sin_theta = np.sin(angle_radians)
-    R = np.array(
-        [[cos_theta, 0, sin_theta], [0, 1, 0], [-sin_theta, 0, cos_theta]]
-    )
+    R = np.array([[cos_theta, 0, sin_theta], [0, 1, 0], [-sin_theta, 0, cos_theta]])
     return R
 
 
@@ -498,12 +458,10 @@ def rotation_matrix_to_angles(rotation_matrix, order="xyz", degrees=True):
     Returns:
     numpy.ndarray: Rotation angles in the specified order.
     """
-    import numpy as np
+
     from scipy.spatial.transform import Rotation as R
 
-    if not isinstance(
-        rotation_matrix, np.ndarray
-    ) or rotation_matrix.shape != (3, 3):
+    if not isinstance(rotation_matrix, np.ndarray) or rotation_matrix.shape != (3, 3):
         raise ValueError("Input must be a 3x3 numpy array.")
 
     # Ensure the matrix is valid for a rotation (orthonormal and determinant == 1)
@@ -512,9 +470,7 @@ def rotation_matrix_to_angles(rotation_matrix, order="xyz", degrees=True):
             "Input matrix must be a valid rotation matrix with determinant 1."
         )
 
-    if not np.allclose(
-        rotation_matrix @ rotation_matrix.T, np.eye(3), atol=1e-6
-    ):
+    if not np.allclose(rotation_matrix @ rotation_matrix.T, np.eye(3), atol=1e-6):
         raise ValueError("Input matrix must be orthonormal.")
 
     # Compute the rotation angles
@@ -542,7 +498,6 @@ def compute_rotation_matrix_paraview_style(
     :param target_basis: 3x3 matrix where each row is a basis vector of the target orthogonal space
     :return: 3x3 rotation matrix
     """
-    import numpy as np
 
     if input_type == "basis":
         # Check inputs for basis transformation
@@ -581,9 +536,8 @@ def compute_rotation_matrix_paraview_style(
         vector_direction_toalign_with = np.array(
             vector_direction_toalign_with, dtype=float
         )
-        vector_direction_toalign_with = (
+        vector_direction_toalign_with = vector_direction_toalign_with / np.linalg.norm(
             vector_direction_toalign_with
-            / np.linalg.norm(vector_direction_toalign_with)
         )
 
         # Define the new x-axis (aligned with the vector)
@@ -611,9 +565,7 @@ def compute_rotation_matrix_paraview_style(
         current_basis = np.eye(3)
 
         # Compute the rotation matrix: target_basis * current_basis^-1
-        rotation_matrix = (
-            target_basis.T
-        )  # Since current_basis is the identity matrix
+        rotation_matrix = target_basis.T  # Since current_basis is the identity matrix
     else:
         raise ValueError("Invalid 'input_type'. Must be 'basis' or 'vector'.")
 
@@ -630,15 +582,13 @@ def apply_rotation_to_data(data, rotation_matrix, padding_factor=1.5):
     :param padding_factor: Factor by which to increase the grid size (default: 1.5)
     :return: Transformed 3D numpy array of the same shape as the input
     """
-    import numpy as np
+
     from scipy.interpolate import RegularGridInterpolator
 
     original_shape = data.shape
 
     # Pad the data
-    pad_width = tuple(
-        (int(s * (padding_factor - 1) / 2),) * 2 for s in original_shape
-    )
+    pad_width = tuple((int(s * (padding_factor - 1) / 2),) * 2 for s in original_shape)
     padded_data = np.pad(data, pad_width, mode="constant", constant_values=0)
     padded_shape = padded_data.shape
 
@@ -672,9 +622,7 @@ def apply_rotation_to_data(data, rotation_matrix, padding_factor=1.5):
     transformed_data = interpolator(rotated_coords).reshape(padded_shape)
 
     # Crop back to original size
-    start = tuple(
-        int((ps - os) / 2) for ps, os in zip(padded_shape, original_shape)
-    )
+    start = tuple(int((ps - os) / 2) for ps, os in zip(padded_shape, original_shape))
     end = tuple(s + os for s, os in zip(start, original_shape))
     transformed_data = transformed_data[
         start[0] : end[0], start[1] : end[1], start[2] : end[2]
@@ -687,11 +635,7 @@ def apply_rotation_to_data(data, rotation_matrix, padding_factor=1.5):
 def analyze_and_transform_vectors(
     dir111, dir11m1, dir100, loop_direction, max_index=10
 ):
-    import numpy as np
-
-    def find_closest_integer_direction(
-        vector, max_index=5, angle_threshold=1.0
-    ):
+    def find_closest_integer_direction(vector, max_index=5, angle_threshold=1.0):
         closest_directions = []
         for x in range(-max_index, max_index + 1):
             for y in range(-max_index, max_index + 1):
@@ -703,10 +647,7 @@ def analyze_and_transform_vectors(
                         np.arccos(
                             np.clip(
                                 np.dot(vector, int_vec)
-                                / (
-                                    np.linalg.norm(vector)
-                                    * np.linalg.norm(int_vec)
-                                ),
+                                / (np.linalg.norm(vector) * np.linalg.norm(int_vec)),
                                 -1.0,
                                 1.0,
                             )
@@ -835,7 +776,6 @@ def calculate_rotation_angles(vector, target=[1, 0, 0]):
     :param target: A list or numpy array of 3 elements [x, y, z] representing the target vector (default is [1, 0, 0])
     :return: A tuple (theta_x, theta_y, theta_z) with rotation angles in degrees around each axis
     """
-    import numpy as np
 
     # Ensure inputs are numpy arrays and normalize them
     v1 = np.array(vector)
@@ -886,21 +826,16 @@ def calculate_rotation_angles(vector, target=[1, 0, 0]):
 
 
 # ------------------------------------------------------------------------------------------------------------
-def angle_between_vectors(u, v):
-    import math
-
-    # Calculate dot product
-    dot_product = sum(u_i * v_i for u_i, v_i in zip(u, v))
-
-    # Calculate magnitudes
-    magnitude_u = math.sqrt(sum(u_i**2 for u_i in u))
-    magnitude_v = math.sqrt(sum(v_i**2 for v_i in v))
-
-    # Calculate angle in radians and then convert to degrees
-    angle_radians = math.acos(dot_product / (magnitude_u * magnitude_v))
-    angle_degrees = math.degrees(angle_radians)
-
-    return angle_degrees
+def angle_between_vectors(u, v, degrees: bool = True):
+    u = np.asarray(u, dtype=float)
+    v = np.asarray(v, dtype=float)
+    nu = np.linalg.norm(u)
+    nv = np.linalg.norm(v)
+    if nu == 0 or nv == 0:
+        raise ValueError("Zero-length vector.")
+    c = np.clip(np.dot(u, v) / (nu * nv), -1.0, 1.0)
+    ang = np.arccos(c)
+    return np.degrees(ang) if degrees else ang
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -919,15 +854,13 @@ def transform_data_paraview_style_with_new_axes(
     :param padding_factor: Factor by which to increase the grid size (default: 1.5)
     :return: Transformed 3D numpy array of the same shape as input, and new x, y, z axis values
     """
-    import numpy as np
+
     from scipy.interpolate import RegularGridInterpolator
 
     original_shape = data.shape
 
     # Pad the data array
-    pad_width = tuple(
-        (int(s * (padding_factor - 1) / 2),) * 2 for s in original_shape
-    )
+    pad_width = tuple((int(s * (padding_factor - 1) / 2),) * 2 for s in original_shape)
     padded_data = np.pad(data, pad_width, mode="constant", constant_values=0)
     padded_shape = padded_data.shape
 
@@ -990,9 +923,7 @@ def transform_data_paraview_style_with_new_axes(
     )
 
     # Crop back to the original size
-    start = tuple(
-        int((ps - os) / 2) for ps, os in zip(padded_shape, original_shape)
-    )
+    start = tuple(int((ps - os) / 2) for ps, os in zip(padded_shape, original_shape))
     end = tuple(s + os for s, os in zip(start, original_shape))
     transformed_data = transformed_data[
         start[0] : end[0], start[1] : end[1], start[2] : end[2]
@@ -1033,13 +964,10 @@ def transform_grid_to_crystallographic(grid_shape, R):
     Returns:
         - Transformed grid coordinates in the crystallographic basis.
     """
-    import numpy as np
 
     # Generate the original coordinate grid
     nx, ny, nz = grid_shape
-    x, y, z = np.meshgrid(
-        np.arange(nx), np.arange(ny), np.arange(nz), indexing="ij"
-    )
+    x, y, z = np.meshgrid(np.arange(nx), np.arange(ny), np.arange(nz), indexing="ij")
 
     # Stack into coordinate array (flattened)
     original_coords = np.vstack((x.ravel(), y.ravel(), z.ravel()))
@@ -1070,7 +998,6 @@ def transform_coordinates_to_crystallographic(x, y, z, R):
     Returns:
         - Transformed (x, y, z) in the crystallographic basis.
     """
-    import numpy as np
 
     # Stack input coordinates into a matrix form
     original_coords = np.vstack(
@@ -1102,7 +1029,6 @@ def transform_known_vector_to_crystallographic(vx, vy, vz, R):
     Returns:
         - Transformed vector components (vx_cryst, vy_cryst, vz_cryst) in the crystallographic basis.
     """
-    import numpy as np
 
     # Stack vector components into a matrix form
     original_vector = np.array([vx, vy, vz]).reshape(3, -1)
@@ -1132,7 +1058,6 @@ def normalize_vectors_3d(vx, vy, vz):
     Returns:
         - Normalized vector components (vx_norm, vy_norm, vz_norm)
     """
-    import numpy as np
 
     # Convert to numpy arrays if inputs are scalars
     vx, vy, vz = np.asarray(vx), np.asarray(vy), np.asarray(vz)
@@ -1149,6 +1074,3 @@ def normalize_vectors_3d(vx, vy, vz):
     vz_norm = vz / magnitudes
 
     return vx_norm, vy_norm, vz_norm
-
-
-# ------------------------------------------------------------------------------------------------------------

@@ -13,7 +13,7 @@ def get_dataset_hdf5(h5path, filename):
     try:
         with h5.File(filename, "r") as h5f:
             counter = h5f[h5path][()]
-    except Exception :
+    except Exception:
         print("... %s does not exist ..." % h5path)
         counter = None
 
@@ -45,12 +45,12 @@ def get_scan_counters_dict_hdf5(scan_no, filename, counters=[], prefix=""):
                 if counters_list.count(counter):
                     try:
                         counter_keys[counter] = counter
-                    except Exception :
+                    except Exception:
                         print("channel:%s not found" % counter)
             print("Found:", counter_keys.keys())
             print("#################\n")
 
-    except Exception :
+    except Exception:
         print("could not return a list of counters")
     return counter_keys
 
@@ -102,9 +102,7 @@ def get_scan_start_time_hdf5(scan_no, filename, prefix=""):
 
     with h5.File(filename, "r") as h5f:
         start_time = h5f[h5path][()]
-        epoch = datetime.strptime(
-            start_time, "%Y-%m-%dT%H:%M:%S.%f%z"
-        ).timestamp()
+        epoch = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%f%z").timestamp()
     return epoch
 
 
@@ -144,35 +142,33 @@ class Scan:
             self.scan_string = "{}.1".format(scan_nb)
 
         self.verbose = verbose
-        self.command = str(
-            h5.File(self.h5file, "r")[self.scan_string]["title"][()]
-        )
+        self.command = str(h5.File(self.h5file, "r")[self.scan_string]["title"][()])
 
         if verbose:
             print(f"Scan no: {self.scan_string}")
             print(f"{self.command}")
 
         try:
-            self.sample = h5.File(self.h5file, "r")[self.scan_string][
-                "sample/name"
-            ][()].decode("UTF-8")
-        except Exception :
+            self.sample = h5.File(self.h5file, "r")[self.scan_string]["sample/name"][
+                ()
+            ].decode("UTF-8")
+        except Exception:
             pass
 
         try:
             self.getDetectorShape()
-        except Exception :
+        except Exception:
             pass
 
         try:
             self.getDetectorName()
-        except Exception :
+        except Exception:
             if self.verbose:
                 print("detector name not found. Give it.")
 
         try:
             self.getDetectorShape()
-        except Exception :
+        except Exception:
             pass
 
     def show_scaninfo(
@@ -207,9 +203,7 @@ class Scan:
     def getAllMotorDictionary(self):
         with h5.File(self.h5file, "r") as h5f:
             motor_dict = {}
-            for motor_name in h5f[self.scan_string][
-                "instrument/positioners/"
-            ].keys():
+            for motor_name in h5f[self.scan_string]["instrument/positioners/"].keys():
                 motor_dict[motor_name] = h5f[self.scan_string][
                     "instrument/positioners/{}".format(motor_name)
                 ][()]
@@ -283,13 +277,11 @@ class Scan:
                         * 1e10
                     )
                 ) * 1e3  # energy in eV
-            except Exception :
+            except Exception:
                 energy = (
-                    h5f[
-                        "{}/instrument/positioners/mononrj".format(
-                            self.scan_string
-                        )
-                    ][()]
+                    h5f["{}/instrument/positioners/mononrj".format(self.scan_string)][
+                        ()
+                    ]
                     * 1e3
                 )
         self.energy = energy
@@ -305,9 +297,7 @@ class Scan:
 
     def getCounter(self, counter_name):
         with h5.File(self.h5file, "r") as h5f:
-            return h5f[self.scan_string][
-                "measurement/{}".format(counter_name)
-            ][()]
+            return h5f[self.scan_string]["measurement/{}".format(counter_name)][()]
 
     def printCountersList(self, return_list=False):
         import h5py as h5
@@ -368,9 +358,7 @@ class Scan:
     def getImageRaw(self, roi=None):
         with h5.File(self.h5file, "r") as h5f:
             if roi is None:
-                data = h5f[self.scan_string][
-                    "measurement/{}".format(self.detector)
-                ][()]
+                data = h5f[self.scan_string]["measurement/{}".format(self.detector)][()]
             else:
                 if len(roi) == 4:
                     data = h5f[self.scan_string][
@@ -431,18 +419,14 @@ class Scan:
             .split("+")[0]
         )
 
-        start_time = datetime(
-            year, month, day, hour, minutes, seconds, microseconds
-        )
+        start_time = datetime(year, month, day, hour, minutes, seconds, microseconds)
 
         year = int(end_time.split("-")[0])
         month = int(end_time.split("-")[1])
         day = int(end_time.split("-")[2].split("T")[0])
         hour = int(end_time.split("-")[2].split("T")[1].split(":")[0])
         minutes = int(end_time.split("-")[2].split("T")[1].split(":")[1])
-        seconds = int(
-            end_time.split("-")[2].split("T")[1].split(":")[2].split(".")[0]
-        )
+        seconds = int(end_time.split("-")[2].split("T")[1].split(":")[2].split(".")[0])
         microseconds = int(
             end_time.split("-")[2]
             .split("T")[1]
@@ -451,9 +435,7 @@ class Scan:
             .split("+")[0]
         )
 
-        end_time = datetime(
-            year, month, day, hour, minutes, seconds, microseconds
-        )
+        end_time = datetime(year, month, day, hour, minutes, seconds, microseconds)
 
         if return_seconds:
             return start_time.timestamp(), end_time.timestamp()
@@ -514,9 +496,7 @@ class StandardScan(Scan):
 
     def getRoiData(self, roi_name, plot=False, fig_title=""):
         with h5.File(self.h5file, "r") as h5f:
-            roidata = h5f[self.scan_string]["measurement/{}".format(roi_name)][
-                ()
-            ]
+            roidata = h5f[self.scan_string]["measurement/{}".format(roi_name)][()]
         if plot:
             plt.figure()
             plt.plot(self.motor, roidata, ".-")
@@ -588,9 +568,7 @@ class DmeshScan(Scan):
 
     def getRoiData(self, roi_name, plot=False):
         with h5.File(self.h5file, "r") as h5f:
-            roidata = h5f[self.scan_string]["measurement/{}".format(roi_name)][
-                ()
-            ]
+            roidata = h5f[self.scan_string]["measurement/{}".format(roi_name)][()]
         roidata = roidata.reshape(self.motor1.shape)
 
         if plot:
@@ -639,7 +617,7 @@ class SXDM_Scan(Scan):
                 motor2 = h5f[self.scan_string][
                     "instrument/{}_position/value".format(motor2_name)
                 ][()]
-            except Exception :
+            except Exception:
                 motor1 = h5f[self.scan_string][
                     "instrument/{}/value".format(motor1_name)
                 ][()]
@@ -665,9 +643,7 @@ class SXDM_Scan(Scan):
 
     def getRoiData(self, roi_name, plot=False):
         with h5.File(self.h5file, "r") as h5f:
-            roidata = h5f[self.scan_string]["measurement/{}".format(roi_name)][
-                ()
-            ]
+            roidata = h5f[self.scan_string]["measurement/{}".format(roi_name)][()]
         roidata = roidata.reshape(self.motor1.shape)
 
         if plot:
@@ -764,17 +740,9 @@ class SXDM_3D_Scan:
         motor2_name = sxdm_scan.motor2_name
 
         if self.verbose:
-            print(
-                "motor1 : {},   shape : {}".format(motor1_name, motor1.shape)
-            )
-            print(
-                "motor2 : {},   shape : {}".format(motor2_name, motor2.shape)
-            )
-            print(
-                "motor3 : {},   shape : {}".format(
-                    self.motor3_name, motor3.shape
-                )
-            )
+            print("motor1 : {},   shape : {}".format(motor1_name, motor1.shape))
+            print("motor2 : {},   shape : {}".format(motor2_name, motor2.shape))
+            print("motor3 : {},   shape : {}".format(self.motor3_name, motor3.shape))
 
         self.motor1 = motor1
         self.motor2 = motor2
@@ -824,9 +792,7 @@ class SXDM_3D_Scan:
                     )
                 axe.set_xlabel(self.motor1_name, fontsize=15)
                 axe.set_ylabel(self.motor2_name, fontsize=15)
-                axe.set_title(
-                    "{} : {}".format(self.motor3_name, self.motor3[n])
-                )
+                axe.set_title("{} : {}".format(self.motor3_name, self.motor3[n]))
             else:
                 fig.delaxes(axe)
         fig.tight_layout()
@@ -912,11 +878,7 @@ class Scan_ct(Scan):
 def openScan(filename, scan_nb, verbose=False):
     command = get_command(scan_nb, filename)
 
-    if (
-        "scan" in command
-        and "lookupscan" not in command
-        and "loopscan" not in command
-    ):
+    if "scan" in command and "lookupscan" not in command and "loopscan" not in command:
         return StandardScan(filename, scan_nb, verbose=verbose)
 
     if "lookupscan" in command:
