@@ -33,7 +33,7 @@ jobs:
 
       - name: Format check with Black
       run: |
-      black --check .
+        black --check .
 
       - name: Install cdiutils
         run: |
@@ -42,7 +42,7 @@ jobs:
       - name: Install pynx
         run: |
           pip install git+https://gitlab.esrf.fr/favre/PyNX@devel
-          
+
       - name: Run tests
         run: |
           pytest
