@@ -4,3 +4,5 @@
 # Ignore Python bytecode
 **/__pycache__/
 
+cdi_dislo.egg-info/
+dist/

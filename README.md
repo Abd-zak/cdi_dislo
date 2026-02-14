@@ -24,13 +24,16 @@ cdi_dislo/
 ├── README.md
 ├── requirements.txt
 └── cdi_dislo/
-    ├── common_imports.py
-    ├── diff_calib_handler
-    │   └── cdi_dislo_diffcalib.py
-    ├── diff_utils_handler
-    │   └── cdi_dislo_diffutils.py
-    ├── dislo_handler
-    │   └── cdi_dislo_dislocation.py
+    ├── calibration
+    │   ├── cdi_dislo_diffcalib.py
+    │   ├── diffcalib.py
+    │   └── README.md
+    ├── diffraction
+    │   ├── diffutils.py
+    │   └── README.md
+    ├── dislocations
+    │   ├── dislocation.py
+    │   └── README.md
     ├── ewen_utilities  https://github.com/ewbellec/alienclustering.git
     │   ├── Reconstruction.py
     │   ├── PostProcessing.py
@@ -38,22 +41,28 @@ cdi_dislo/
     │   ├── Orthogonalization_reciprocal_space.py
     │   ├── Object_utilities.py
     │   └── (and other utilities...)
-    ├── femtotools_handler
-    │   └── cdi_dislo_femto.py
-    ├── general_utilities
-    │   └── cdi_dislo_utils.py
-    ├── genetic_handler
-    │   └── cdi_dislo_genetic.py
-    ├── orthogonalisation_handler
-    │   └── cdi_dislo_ortho_handler.py
-    ├── plotutilities
-    │   └── cdi_dislo_plotutilities.py
-    ├── reco_handler
-    │   └── cdi_dislo_reconstruction.py
-    ├── rotation_handler
-    │   └── cdi_dislo_rotation.py
-    └── statdiff_handler
-        └── cdi_dislo_statdiff_handler.py
+    ├── utils
+    │   ├── utils.py
+    │   └── README.md
+    ├── genetic
+    │   ├── genetic.py
+    │   └── README.md
+    ├── geometry
+    │   ├── ortho_handler.py
+    │   └── README.md
+    ├── plotting
+    │   ├── plotutilities.py
+    │   ├── linecut.py
+    │   └── README.md
+    ├── reconstruction
+    │   ├── reconstruction.py
+    │   └── README.md
+    ├── rotation
+    │   ├── rotation.py
+    │   └── README.md
+    └── statistics
+        ├── statdiff_handler.py
+        └── README.md
 ```
 
 ---
@@ -80,18 +89,17 @@ pip install -r requirements.txt
 
 Each submodule has a dedicated `README.md` for detailed information:
 
-- **[`diff_calib_handler`](cdi_dislo/diff_calib_handler/README.md)**: Diffraction data calibration.
-- **[`diff_utils_handler`](cdi_dislo/diff_utils_handler/README.md)**: Diffraction utilities.
-- **[`dislo_handler`](cdi_dislo/dislo_handler/README.md)**: Dislocation and deformation analysis.
+- **[`calibration`](cdi_dislo/calibration/README.md)**: Diffraction data calibration.
+- **[`diffraction`](cdi_dislo/diffraction/README.md)**: Diffraction utilities.
+- **[`dislocations`](cdi_dislo/dislocations/README.md)**: Dislocation and deformation analysis.
 - **[`ewen_utilities`](cdi_dislo/ewen_utilities/README.md)**: Reconstruction and post-processing.
-- **[`femtotools_handler`](cdi_dislo/femtotools_handler/README.md)**: Nanoindentation utilities.
-- **[`general_utilities`](cdi_dislo/general_utilities/README.md)**: General-purpose utilities.
-- **[`genetic_handler`](cdi_dislo/genetic_handler/README.md)**: Genetic optimization algorithms.
-- **[`orthogonalisation_handler`](cdi_dislo/orthogonalisation_handler/README.md)**: Data orthogonalization.
-- **[`plotutilities`](cdi_dislo/plotutilities/README.md)**: Visualization tools.
-- **[`reco_handler`](cdi_dislo/reco_handler/README.md)**: Reconstruction selection.
-- **[`rotation_handler`](cdi_dislo/rotation_handler/README.md)**: Data rotation and alignment.
-- **[`statdiff_handler`](cdi_dislo/statdiff_handler/README.md)**: Statistical diffraction analysis.
+- **[`utils`](cdi_dislo/utils/README.md)**: General-purpose utilities.
+- **[`genetic`](cdi_dislo/genetic/README.md)**: Genetic optimization algorithms.
+- **[`geometry`](cdi_dislo/geometry/README.md)**: Data orthogonalization.
+- **[`plotting`](cdi_dislo/plotting/README.md)**: Visualization tools.
+- **[`reconstruction`](cdi_dislo/reconstruction/README.md)**: Reconstruction selection.
+- **[`rotation`](cdi_dislo/rotation/README.md)**: Data rotation and alignment.
+- **[`statistics`](cdi_dislo/statistics/README.md)**: Statistical diffraction analysis.
 
 ---
 

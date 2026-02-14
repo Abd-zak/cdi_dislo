@@ -6,6 +6,9 @@ pandas
 h5py
 seaborn
 scikit-learn
+bokeh
+jupyter_bokeh
+gif
 
 # Signal Processing & Image Analysis
 pywavelets
@@ -41,3 +44,5 @@ silx
 
 # Miscellaneous
 pytest
+ipython_genutils
+panel
